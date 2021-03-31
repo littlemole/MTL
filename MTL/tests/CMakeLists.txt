@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 
 
-link_directories(${PROJECT_SOURCE_DIR}/out/build/x64-Debug/lib)
+link_directories(${PROJECT_SOURCE_DIR}/extern/googletest/lib/Debug/)
 
 # Add source to this project's executable.
 add_executable (tests 
