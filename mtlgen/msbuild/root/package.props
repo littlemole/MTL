@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project DefaultTargets='Build' ToolsVersion='4.0' xmlns='http://schemas.microsoft.com/developer/msbuild/2003'>
+ 
+ <Import Project='..\mtl.props'/>
+
+ <PropertyGroup Label='Configuration'>
+
+  <!-- registration type, eg Apartment|Free|Both -->
+  <apartment>Apartment</apartment>
+ 
+  <projectName Condition="$(projectName)==''"></projectName>
+  <manufacturer Condition="$(manufacturer)==''"></manufacturer>
+  <upgradeUuid Condition="$(upgradeUuid)==''"></upgradeUuid>
+  <vendorUuid Condition="$(vendorUuid)==''">*</vendorUuid>
+
+  <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+  <Platform Condition="'$(Platform)'==''">x64</Platform>
+
+  <installPrefix Condition="$(installPrefix)==''">..</installPrefix>
+
+ </PropertyGroup>
+
+</Project>
+
