@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 
 
-link_directories(${PROJECT_SOURCE_DIR}/extern/googletest/lib/Debug/)
+link_directories(${PROJECT_SOURCE_DIR}/lib/lib/)
 
 # Add source to this project's executable.
 add_executable (tests 
@@ -13,7 +13,7 @@ add_executable (tests
 )
 
 
-target_include_directories(tests PRIVATE "../../extern/googletest/googletest/include")
+target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/lib/include")
 
 target_link_libraries(tests gtestd )#gtest_maind)
 gtest_add_tests(TARGET      tests

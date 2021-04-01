@@ -70,10 +70,10 @@ void init()
 {
     std::string self = pathToSelf();
     std::string mtl_dir;
-    size_t pos = self.find("\\mtlgen\\out\\build\\");
+    size_t pos = self.find("\\bin\\");
     if (pos != std::string::npos)
     {
-        mtl_dir = self.substr(0, pos + 8);
+        mtl_dir = self.substr(0, pos ) + "\\share\\mtl\\msbuild";
     }
     else
     {
@@ -81,11 +81,22 @@ void init()
     }
 
     std::ostringstream oss;
-    oss << "xcopy \"" << mtl_dir << "\\msbuild\\root\\" << "\" \".\" /s /e /y ";
+    oss << "xcopy \"" << mtl_dir << "\\root\\" << "\" \".\" /s /e /y /q > NUL";
     std::string cmd = oss.str();
+
+//    std::cout << cmd << std::endl;
 
     system(cmd.c_str());
 
+//    ::Sleep(2000);
+
+    std::cout << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" << std::endl;
+    std::cout << "<Project DefaultTargets='Build' ToolsVersion='4.0' xmlns='http://schemas.microsoft.com/developer/msbuild/2003'>" << std::endl;
+
+    std::cout << " <Import Project='" << mtl_dir << "\\mtl.xml'/>" << std::endl;
+    std::cout << " </Project>" << std::endl;
+
+    /*
     std::ostringstream oss2;
     oss2 << "xcopy \"" << mtl_dir << "\\msbuild\\root\\mtl.xml" << "\" \".\" /s /e /y";
     cmd = oss2.str();
@@ -97,7 +108,7 @@ void init()
     cmd = oss3.str();
 
     system(cmd.c_str());
-
+    */
 }
 
 /////////////////////////////////////////////

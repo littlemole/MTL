@@ -1,5 +1,6 @@
 .vs
 out/
+lib/
 
 # Prerequisites
 *.d
