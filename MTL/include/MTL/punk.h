@@ -117,7 +117,8 @@ namespace MTL {
     public:
         punk() : interface_(0) { }
 
-        explicit punk(const I*& i)
+
+        explicit punk(I* i)
             :interface_(0)
         {
             if (i)
@@ -125,12 +126,6 @@ namespace MTL {
                 interface_ = (I*)i;
                 interface_->AddRef();
             }
-        }
-
-        explicit punk(I*&& i)
-            :interface_(i)
-        {
-            i = 0;
         }
 
         punk(const punk<I>& rhs)
@@ -292,6 +287,15 @@ namespace MTL {
                 interface_->AddRef();
             }
             return interface_;
+        }
+
+        template<class I>
+        void take_ownership(I* i)
+        {
+            if (interface_)
+                interface_->Release();
+
+            interface_ = i;
         }
 
         I* interface_;

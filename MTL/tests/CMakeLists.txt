@@ -10,10 +10,11 @@ link_directories(${PROJECT_SOURCE_DIR}/lib/lib/)
 # Add source to this project's executable.
 add_executable (tests 
 	"test.cpp" 
-)
+ "variant.cpp" "collection.cpp")
 
 
 target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/lib/include")
+target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/MTL/include")
 
 target_link_libraries(tests gtestd )#gtest_maind)
 gtest_add_tests(TARGET      tests

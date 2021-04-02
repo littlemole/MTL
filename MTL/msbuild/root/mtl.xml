@@ -3,18 +3,23 @@
 
   <Import Project="package.props"/>
   
+  <!-- always to this -->
   <PropertyGroup Label="Configuration">
-
-  <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-  <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
   </PropertyGroup>
 
+  <!-- deploy folder files -->
   <ItemGroup>
     <deployFiles Include=".\deploy\**\*.*" Exclude=""/>
   </ItemGroup>
-  
 
+  <!-- wix object files to delete on clean -->
+  <ItemGroup>
+    <FilesToDelete Include=".\wixobj\*.wixobj;deploy.wxs"/>
+  </ItemGroup>
+  
+  <!-- main configure step. all targets rely on this -->
   <Target Name="Configure">
     <XmlPeek XmlInputPath="$([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)')).vcxproj" Query="s:Project/s:PropertyGroup[@Label='Globals']/s:RootNamespace/text()"
         Namespaces="&lt;Namespace Prefix='s' Uri='http://schemas.microsoft.com/developer/msbuild/2003' /&gt;">
@@ -30,7 +35,8 @@
     </XmlPeek>
 
     <PropertyGroup Label="DynamicConfiguration">
-      <!-- Change BranchName value if BranchName equals 'master' -->
+
+      <!-- patch project type-->
       <ProjectType Condition="'$(ProjectType)'=='Application'">.exe</ProjectType>
       <ProjectType Condition="'$(ProjectType)'=='DynamicLibrary'">.dll</ProjectType>
 
@@ -58,14 +64,15 @@
 
     </PropertyGroup>
   </Target>
-  
 
- <!-- wix object files to delete on clean -->
- <ItemGroup>
-  <FilesToDelete Include=".\wixobj\*.wixobj;deploy.wxs"/>
- </ItemGroup>
+  <!-- Clean -->
+  <Target Name="Clean" DependsOnTargets="Configure">
+    <Delete Files="$(msiTarget)" />
+    <Delete Files="@(FilesToDelete)" />
+  </Target>
 
- <!-- make installer setup MSI package -->
+
+  <!-- make installer setup MSI package -->
  <Target Name="Setup" DependsOnTargets="Configure;Clean">
 
 	<Message Text="building Wix Installer $(projectName)" />
@@ -106,16 +113,6 @@
   <Exec Command='"$(projectName)-unreg.reg"' WorkingDirectory="."/>
  </Target>
 
- <!-- Clean -->
- <Target Name="Clean" DependsOnTargets="Configure">
-  <Delete Files="$(msiTarget)" />
-  <Delete Files="@(FilesToDelete)" />
- </Target>
-
- <!-- test the midlparser -->
- <Target Name="Show" DependsOnTargets="Configure">
-  <Exec Command='"$(midlparser)" show "$(projectName).idl" ' WorkingDirectory="."/>
- </Target>
 
  <!-- generate a dispid.h file from midl -->
  <Target Name="Disp" DependsOnTargets="Configure">
@@ -181,6 +178,11 @@
 
     <Message Text="PROJECT: $(midlparser)" />
 
+  </Target>
+
+  <!-- test the midlparser -->
+  <Target Name="Show" DependsOnTargets="Configure">
+    <Exec Command='"$(midlparser)" show "$(projectName).idl" ' WorkingDirectory="."/>
   </Target>
 
 </Project>

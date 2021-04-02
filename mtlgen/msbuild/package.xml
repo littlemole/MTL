@@ -7,6 +7,12 @@
     <deployFiles Include=".\deploy\**\*.*" Exclude=""/>
   </ItemGroup>
   
+ <!-- wix object files to delete on clean -->
+ <ItemGroup>
+  <FilesToDelete Include=".\wixobj\*.wixobj;fragment.wxs;deploy.wxs"/>
+ </ItemGroup>
+
+   
   <Target Name="Configure">
     
     <PropertyGroup Label="DynamicConfiguration">
@@ -54,12 +60,12 @@
  
   </Target>
   
-
- <!-- wix object files to delete on clean -->
- <ItemGroup>
-  <FilesToDelete Include=".\wixobj\*.wixobj;fragment.wxs;deploy.wxs"/>
- </ItemGroup>
-
+ <!-- Clean -->
+ <Target Name="Clean" DependsOnTargets="Configure">
+  <Delete Files="$(msiTarget)" />
+  <Delete Files="@(FilesToDelete)" />
+ </Target>
+  
 
  <!-- make installer setup MSI package -->
  <Target Name="Setup" DependsOnTargets="Configure;Clean">
@@ -117,11 +123,7 @@
   </Target>
 
 
-  <!-- Clean -->
- <Target Name="Clean" DependsOnTargets="Configure">
-  <Delete Files="$(msiTarget)" />
-  <Delete Files="@(FilesToDelete)" />
- </Target>
+
 
 
   <Target Name="Test" DependsOnTargets="Configure">

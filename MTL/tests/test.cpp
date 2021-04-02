@@ -1,15 +1,19 @@
 #include "gtest/gtest.h"
+#include "MTL/uni.h"
+#include "MTL/bstr.h"
+#include <string>
+#include <sstream>
 
-class FooTest : public ::testing::Test {
+class BstrTest : public ::testing::Test {
 protected:
     // You can remove any or all of the following functions if their bodies would
     // be empty.
 
-    FooTest() {
+    BstrTest() {
         // You can do set-up work for each test here.
     }
 
-    ~FooTest() override {
+    ~BstrTest() override {
         // You can do clean-up work that doesn't throw exceptions here.
     }
 
@@ -19,6 +23,8 @@ protected:
     void SetUp() override {
         // Code here will be called immediately after the constructor (right
         // before each test).
+
+        reset_tout();
     }
 
     void TearDown() override {
@@ -28,11 +34,141 @@ protected:
 
     // Class members declared here can be used by all tests in the test suite
     // for Foo.
+
+    std::wostringstream tout;
+
+    void reset_tout()
+    {
+        tout.str(L"");
+        tout.clear();
+    }
+
+    // consumes a BSTR
+    HRESULT api_taking_BSTR_by_value(BSTR b)
+    {
+        if (!b)
+            return S_OK;
+        std::wstring s(b, ::SysStringLen(b));
+        tout << b << std::endl;
+        return S_OK;
+    }
+
+    // returns a BSTR in the out param
+    HRESULT api_taking_BSTR_by_ref(BSTR* b)
+    {
+        if (!b)
+            return E_INVALIDARG;
+
+        *b = ::SysAllocString(L"api_taking_BSTR_by_ref was called");
+        return S_OK;
+    }
 };
 
-TEST(FooTest, testIt) {
-	EXPECT_EQ(1, 1);
 
+
+TEST_F(BstrTest, testIt) {
+
+    
+    BSTR b = ::SysAllocString(L"call via raw BSTR");
+    HRESULT hr = api_taking_BSTR_by_value(b);
+    ::SysFreeString(b);
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"call via raw BSTR\n", tout.str().c_str());
+}
+
+
+TEST_F(BstrTest, construct_bstr_from_olechar) {
+
+    using namespace MTL;
+
+    bstr b(ole_char(L"using a bstr constructed from OLECHAR"));
+    HRESULT hr = api_taking_BSTR_by_value(*b);
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"using a bstr constructed from OLECHAR\n", tout.str().c_str());
+}
+
+
+TEST_F(BstrTest, construct_bstr_from_bstr) {
+
+    using namespace MTL;
+
+    bstr b(ole_char(L"using a bstr copy constructed from other bstr"));
+
+    bstr c(b);
+    HRESULT hr = api_taking_BSTR_by_value(*c);
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"using a bstr copy constructed from other bstr\n", tout.str().c_str());
+}
+
+
+TEST_F(BstrTest, construct_bstr_from_BSTR) {
+
+    using namespace MTL;
+
+    BSTR b = ::SysAllocString(L"using a bstr copy constructed from other BSTR");
+
+    bstr c = bstr(b_copy(b));
+    HRESULT hr = api_taking_BSTR_by_value(*c);
+    ::SysFreeString(b);
+
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"using a bstr copy constructed from other BSTR\n", tout.str().c_str());
+}
+
+
+TEST_F(BstrTest, construct_bstr_from_moved_bstr) {
+     
+    using namespace MTL;
+
+    bstr b(ole_char(L"using a bstr move constructed from moved bstr"));
+
+    bstr c(std::move(b));
+    HRESULT hr = api_taking_BSTR_by_value(*c);
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"using a bstr move constructed from moved bstr\n", tout.str().c_str());
+}
+
+TEST_F(BstrTest, construct_bstr_from_moved_BSTR) {
+
+    using namespace MTL;
+
+    BSTR b = ::SysAllocString(L"using a bstr move constructed from moved BSTR");
+    bstr c(std::move(b_move(b)));
+
+    HRESULT hr = api_taking_BSTR_by_value(*c);
+
+    EXPECT_EQ( 0, b);
+
+    //::SysFreeString(b);
+
+    EXPECT_EQ(S_OK, hr);
+    EXPECT_STREQ(L"using a bstr move constructed from moved BSTR\n", tout.str().c_str());
+}
+
+TEST_F(BstrTest, assign_some_bstrs) {
+
+    using namespace MTL;
+
+    bstr b(ole_char(L"INIT"));
+
+    EXPECT_STREQ(L"INIT", b.str().c_str());
+
+    b = ole_char(L"FIRST");
+    EXPECT_STREQ(L"FIRST", b.str().c_str());
+
+    bstr tmp(ole_char(L"SECOND"));
+    b = tmp;
+    EXPECT_STREQ(L"SECOND", b.str().c_str());
+
+    tmp = ole_char(L"THIRD");
+    b = std::move(tmp);
+    EXPECT_STREQ(L"THIRD", b.str().c_str());
+    EXPECT_EQ(0, tmp.data());
+
+    BSTR x = ::SysAllocString(L"FOURTH");
+    b = b_move(x);
+    EXPECT_STREQ(L"FOURTH", b.str().c_str());
+    EXPECT_EQ(0, x);
 }
 
 int main(int argc, char** argv) {
