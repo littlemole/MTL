@@ -8,10 +8,18 @@
 
 int usage()
 {
-    std::cout << "Usage: mdiparser <show|debug|unreg|disp>|def <midl>" << std::endl;
-    std::cout << "       mdiparser <reg|wix|manifest|selfreg> <arch> <apartment> <server> <midl>" << std::endl;
-    std::cout << "       mdiparser <isolate> <arch> <version> <server> <dependency1:version> [dep2:ver ...]" << std::endl;
-    std::cout << "       mdiparser <package> <projectname> <manufactuer> <subproj1> [subproj2 ...]" << std::endl;
+    std::cout << "Usage: mdiparser show|debug|unreg|disp>|def <midl>" << std::endl;
+    std::cout << "       mdiparser reg|wix|manifest|selfreg <arch> <apartment> <server> <midl>" << std::endl;
+    std::cout << "       mdiparser isolate <arch> <version> <server> <dependency1:version> [dep2:ver ...]" << std::endl;
+    std::cout << "       mdiparser package <subproj1> [subproj2 ...]" << std::endl;
+    std::cout << "       mdiparser init|setup" << std::endl;
+    std::cout << std::endl;
+    std::cout << "where:" << std::endl;
+    std::cout << "       <midl> : midl filename, ie <Project>.idl" << std::endl;
+    std::cout << "       <arch> : target architecture x64|x86. Win32 also works for x86" << std::endl;
+    std::cout << "       <apartment> : com apartment type Apartment|Both|Free " << std::endl;
+    std::cout << "       <server> : server file name, like <Project>.dll. for reg command FULL path to file" << std::endl;
+    std::cout << "       <version> : 4 digit version like 1.0.0.0 for regsitry-free com assembly identity" << std::endl;
     return 1;
 }
 
@@ -66,50 +74,7 @@ Parser* parse(Parser& parser, bool debug, const std::string& midl)
 }
 
 
-void init()
-{
-    std::string self = pathToSelf();
-    std::string mtl_dir;
-    size_t pos = self.find("\\bin\\");
-    if (pos != std::string::npos)
-    {
-        mtl_dir = self.substr(0, pos ) + "\\share\\mtl\\msbuild";
-    }
-    else
-    {
-        // todo : add vcpkg version !!
-    }
 
-    std::ostringstream oss;
-    oss << "xcopy \"" << mtl_dir << "\\root\\" << "\" \".\" /s /e /y /q > NUL";
-    std::string cmd = oss.str();
-
-//    std::cout << cmd << std::endl;
-
-    system(cmd.c_str());
-
-//    ::Sleep(2000);
-
-    std::cout << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" << std::endl;
-    std::cout << "<Project DefaultTargets='Build' ToolsVersion='4.0' xmlns='http://schemas.microsoft.com/developer/msbuild/2003'>" << std::endl;
-
-    std::cout << " <Import Project='" << mtl_dir << "\\mtl.xml'/>" << std::endl;
-    std::cout << " </Project>" << std::endl;
-
-    /*
-    std::ostringstream oss2;
-    oss2 << "xcopy \"" << mtl_dir << "\\msbuild\\root\\mtl.xml" << "\" \".\" /s /e /y";
-    cmd = oss2.str();
-
-    system(cmd.c_str());
-
-    std::ostringstream oss3;
-    oss3 << "xcopy \"" << mtl_dir << "\\msbuild\\root\\package.props" << "\" \".\" /s /e /y";
-    cmd = oss3.str();
-
-    system(cmd.c_str());
-    */
-}
 
 /////////////////////////////////////////////
 // main
@@ -126,7 +91,18 @@ int main(int argc, char** argv)
     std::string cmd = argv[1];
     if (cmd == "init")
     {
-        init();
+        std::string apartment = "Apartment";
+        if (argc > 2)
+        {
+            apartment = argv[2];
+        }
+        init(apartment);
+        return 0;
+    }
+
+    if (cmd == "setup")
+    {
+        init_package();
         return 0;
     }
 
@@ -146,12 +122,12 @@ int main(int argc, char** argv)
 
     if (cmd == "package")
     {
-        if (argc < 5)
+        if (argc < 3)
         {
             return usage();
         }
 
-        for (size_t i = 4; i < argc; i++)
+        for (size_t i = 2; i < argc; i++)
         {
             projects.push_back(std::string(argv[i]));
         }
@@ -219,7 +195,7 @@ int main(int argc, char** argv)
     // generate output
     if (cmd == "package")
     {
-        Packer packer(argv[2], argv[3], projects);
+        Packer packer(projects);
         packer.print();
     }
 

@@ -183,7 +183,7 @@ namespace MTL {
 
 
 		template<size_t N>
-		explicit bstr(const wchar_t b[N])
+		explicit bstr(const wchar_t (&b)[N])
 			:bstr_(::SysAllocStringLen(b, N))
 		{
 			std::cout << "bstr(const wchar_t b[N])" << std::endl;
@@ -209,6 +209,12 @@ namespace MTL {
 			: bstr_(::SysAllocString(b.data()))
 		{
 			std::cout << "bstr(const ole_char& b)" << std::endl;
+		}
+
+		explicit bstr(const ole_char& b, size_t len)
+			: bstr_(::SysAllocStringLen(b.data(), (UINT)len))
+		{
+			std::cout << "bstr(const ole_char& b,len)" << std::endl;
 		}
 
 		bstr& operator=(const ole_char& b)
@@ -392,6 +398,20 @@ namespace MTL {
 	inline bstr bstr_view::as_bstr()
 	{
 		return bstr(b_copy(str_));
+	}
+
+	inline bstr from_olechar(wchar_t* str, size_t len = -1)
+	{
+		if (len == -1)
+		{
+			len = wcslen(str);
+		}
+		return bstr(ole_char(str),len);
+	}
+
+	inline bstr from_olechar(const std::wstring& str)
+	{
+		return bstr(ole_char(str.c_str()), str.size());
 	}
 
 } // end namespace 

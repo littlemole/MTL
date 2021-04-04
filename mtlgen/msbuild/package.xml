@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
- <Import Project="package.props"/>
+  <PropertyGroup Label="Configuration">
 
+  <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+  <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+
+  </PropertyGroup>
+  
+  <Import Condition="Exists('$(MSBuildProjectDirectory)\package.props')" Project="$(MSBuildProjectDirectory)\package.props"/>
+  
   <ItemGroup>
     <deployFiles Include=".\deploy\**\*.*" Exclude=""/>
   </ItemGroup>
@@ -18,6 +25,8 @@
     <PropertyGroup Label="DynamicConfiguration">
 
       <!-- Configuration -->
+
+      <mtlgen>$(MSBuildThisFileDirectory)\..\..\..\bin\mtlgen.exe</mtlgen>
 
       <projectName Condition="$(projectName)==''">$([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)'))</projectName>
       <manufacturer Condition="$(manufacturer)=='$(projectName)'"></manufacturer>
@@ -112,13 +121,13 @@
   <Target Name="Package" DependsOnTargets="Rebuild;Setup">
  </Target>
 
-  <Target Name="Init" DependsOnTargets="Configure;Clean">
+  <Target Name="Features" DependsOnTargets="Configure;Clean">
 
     <ItemGroup>
       <deps Include="$(Projects)" />
     </ItemGroup>
 
-    <Exec Command='"$(mtlgen)" package $(projectName) $(manufacturer) "$(installPrefix)\@(deps, &apos;" "$(installPrefix)\&apos;)" > package.props ' WorkingDirectory="."/>
+    <Exec Command='"$(mtlgen)" package "$(installPrefix)\@(deps, &apos;" "$(installPrefix)\&apos;)" > package.props ' WorkingDirectory="."/>
     
   </Target>
 

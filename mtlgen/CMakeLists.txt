@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.8)
 add_executable (mtlgen 
 	"mtlgen.cpp" "util.cpp" 
 	"mtlgen.h" "disp.h" "dllmodule.h" "manifest.h" "packer.h" "Parser.h" "reg.h" "selfreg.h" "util.h" "wix.h"
-)
+ "init.h")
 
 # TODO: Add tests and install targets if needed.
 

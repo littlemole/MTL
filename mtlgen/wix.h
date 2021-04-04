@@ -116,15 +116,16 @@ public:
                 // interfaces
                 for (auto& iface : coClass.interfaces)
                 {
+                    std::string proxystub = psi;
                     if (iface.disp || iface.ole || iface.dual || psi.empty())
                     {
-                        continue;
+                        proxystub = oleaut;
                     }
 
                     std::cout << "       <Interface Id=\""
                         << iface.uuid << "\" "
                         << "Name=\"" << iface.name << "\" "
-                        << "ProxyStubClassId32=\"" << psi << "\" />"
+                        << "ProxyStubClassId32=\"" << proxystub << "\" />"
                         << std::endl;
                 }
                 std::cout << "      </Class>" << std::endl;

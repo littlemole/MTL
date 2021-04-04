@@ -9,3 +9,4 @@
 #include "reg.h"
 #include "selfreg.h"
 #include "wix.h"
+#include "init.h"

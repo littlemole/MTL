@@ -332,7 +332,7 @@ namespace MTL {
 			::SafeArrayCopy(sf, &(this->sfArray_));
 		}
 
-		explicitsf_array(SAFEARRAY*&& sf)
+		explicit sf_array(SAFEARRAY*&& sf)
 		{
 			this->sfArray_ = sf;
 			sf = 0;

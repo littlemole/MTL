@@ -574,7 +574,7 @@ namespace MTL {
 		}
 
 		template<size_t N>
-		explicit variant(const wchar_t wc[N])
+		explicit variant(const wchar_t (&wc)[N])
 		{
 			::VariantInit(this);
 			vt = VT_BSTR;

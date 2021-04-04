@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project=" $(MSBuildProjectDirectory)\package.props"/>
-  
+
   <PropertyGroup Label="Configuration">
 
   <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -45,6 +45,9 @@
       <confPath Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">$(installPrefix)\Release</confPath>
       <confPath Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">$(installPrefix)\x64\Debug</confPath>
       <confPath Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">$(installPrefix)\x64\Release</confPath>
+
+      <outpath>$(MSBuildProjectDirectory)\$(confPath)\$(ProjectName)$(ProjectType)</outpath>
+      <binPath>$([MSBuild]::NormalizePath('$(outPath)'))</binPath>
 
       <arch Condition=" '$(Platform)' == 'x64' ">x64</arch>
       <arch Condition=" '$(Platform)' == 'Win32' ">x86</arch>
@@ -94,7 +97,7 @@
 
  <!-- generate registry files for developer quick registration -->
  <Target Name="RegGen" DependsOnTargets="Configure">
-  <Exec Command='"$(mtlgen)" reg $(arch) $(apartment) "$(projectName)$(ProjectType)" "$(projectName).idl" >  "$(projectName).reg" ' WorkingDirectory="."/>
+  <Exec Command='"$(mtlgen)" reg $(arch) $(apartment) "$(binPath)" "$(projectName).idl" >  "$(projectName).reg" ' WorkingDirectory="."/>
   <Exec Command='"$(mtlgen)" unreg "$(projectName).idl" >  "$(projectName)-unreg.reg" ' WorkingDirectory="."/>
  </Target>
 
@@ -131,7 +134,7 @@
  </Target>
   
  <Target Name="SelfReg" DependsOnTargets="Configure">
-   <Exec Command='"$(mtlgen)" selfreg $(arch) $(apartment) "$(projectName)$(ProjectType)" "$(projectName).idl" > reg.cpp ' WorkingDirectory="."/>
+   <Exec Command='"$(mtlgen)" selfreg $(arch) $(apartment) "$(binPath)" "$(projectName).idl" > reg.cpp ' WorkingDirectory="."/>
  </Target>
 
 
@@ -178,11 +181,16 @@
     <Message Text="XXX: $([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)'))" />
     <Message Text="thisflleName: $(MSBuildThisFileName)" />
 
-    <Message Text="PROJECT: $(projectName)" />
+    <Message Text="PROJECT: $(ProjectName)" />
     <Message Text="GUID: $(ProjectGuid)" />
     <Message Text="PROJECT: $(ProjectType)" />
 
     <Message Text="PROJECT: $(mtlgen)" />
+
+    <Message Text="confPath: $(confPath)" />
+    <Message Text="binPath: $(binPath)" />
+
+    
 
   </Target>
 

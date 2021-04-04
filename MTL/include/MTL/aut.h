@@ -16,7 +16,7 @@ namespace MTL {
 	{
 	public:
 
-		disp(const IDispatch* disp)
+		disp(IDispatch* disp)
 			: disp_(disp), id_(DISPID_VALUE)
 		{
 			this->cArgs = 0;
@@ -25,7 +25,7 @@ namespace MTL {
 			this->rgvarg = 0;
 		}
 
-		disp(const IDispatch* disp, DISPID id)
+		disp(IDispatch* disp, DISPID id)
 			: disp_(disp), id_(id)
 		{
 			this->cArgs = 0;
@@ -34,7 +34,7 @@ namespace MTL {
 			this->rgvarg = 0;
 		}
 
-		disp(const IDispatch* disp, const std::wstring& member)
+		disp(IDispatch* disp, const std::wstring& member)
 			: disp_(disp), id_(0)
 		{
 			this->cArgs = 0;

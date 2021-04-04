@@ -67,7 +67,7 @@ public:
             std::cout << "@=\"" << lib.desc << "\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\TypeLib\\{" << lib.uuid << "}\\" << lib.version << "\\0\\" << arch_ << "]" << std::endl;
-            std::cout << "@=\"" << server_ << "\"" << std::endl;
+            std::cout << "@=\"" << escape(server_) << "\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\TypeLib\\{" << lib.uuid << "}\\" << lib.version << "\\FLAGS]" << std::endl;
             std::cout << "@=\"0\"" << std::endl;
@@ -92,7 +92,7 @@ public:
             std::cout << "@=\"" << coClass.name << "\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << coClass.uuid << "}\\" << serverType_ << "]" << std::endl;
-            std::cout << "@=\"" << server_ << "\"" << std::endl;
+            std::cout << "@=\"" << escape(server_) << "\"" << std::endl;
             std::cout << "\"ThreadingModel\"=\"" << apartment_ << "\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << coClass.uuid << "}\\Version]" << std::endl;
@@ -100,7 +100,7 @@ public:
 
             if (hasTypelib)
             {
-                std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << coClass.uuid << "}\\Typelib]" << std::endl;
+                std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << coClass.uuid << "}\\TypeLib]" << std::endl;
                 std::cout << "@=\"{" << lib.uuid << "}\"" << std::endl;
             }
             std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << coClass.uuid << "}\\ProgID]" << std::endl;
@@ -145,6 +145,8 @@ public:
             else
             {
                 std::cout << "@=\"{" << oleaut << "}\"" << std::endl;
+                std::cout << "[HKEY_CLASSES_ROOT\\Interface\\{" << iface.uuid << "}\\TypeLib]" << std::endl;
+                std::cout << "@=\"{" << lib.uuid << "}\"" << std::endl;
             }
 
             std::cout << std::endl;
@@ -160,7 +162,7 @@ public:
             std::cout << "@=\"" << serverName_ << "PS\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << psi << "}\\InprocServer32]" << std::endl;
-            std::cout << "@=\"" << serverPS_ << "\"" << std::endl;
+            std::cout << "@=\"" << escape(serverPS_) << "\"" << std::endl;
             std::cout << "\"ThreadingModel\"=\"Both\"" << std::endl;
 
             std::cout << "[HKEY_CLASSES_ROOT\\CLSID\\{" << psi << "}\\Version]" << std::endl;
