@@ -145,6 +145,21 @@ namespace MTL {
         }
 
         template<class T>
+        explicit punk(T* rhs)
+        {
+            interface_ = 0;
+            if (rhs)
+            {
+                HRESULT hr = rhs->QueryInterface(__uuidof(I),(void**)&interface_);
+                if (S_OK != hr)
+                {
+                    interface_ = 0;
+                    throw hr;
+                }
+            }
+        }
+
+        template<class T>
         explicit punk(const punk<T>& rhs)
         {
             interface_ = 0;
@@ -219,7 +234,8 @@ namespace MTL {
         details::protect_refcnt<I>* operator->()             { return (details::protect_refcnt<I>*) interface_; }
         I* operator*()                                       { return interface_; }
         I** operator&()                                      { return &interface_; }
-        bool operator()() const                              { return (interface_ != 0); }
+        operator bool() const                                { return (interface_ != 0); }
+        bool operator!() const                               { return (interface_ == 0); }
 
         punk& operator=(I* p)
         {

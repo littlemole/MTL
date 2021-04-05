@@ -3,6 +3,7 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+include_directories("../MTL/include")
 # Add source to this project's executable.
 add_executable (mtlgen 
 	"mtlgen.cpp" "util.cpp" 

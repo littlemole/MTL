@@ -481,6 +481,11 @@ namespace MTL {
 			return (v_.vt == VT);
 		}
 
+		void clear()
+		{
+			::VariantClear(&v_);
+		}
+
 		std::string to_string(int cp = CP_UTF8) const;
 		std::wstring to_wstring() const;
 
@@ -1002,6 +1007,11 @@ namespace MTL {
 		bool is_type(VARTYPE VT) const
 		{
 			return (vt == VT);
+		}
+
+		void clear()
+		{
+			::VariantClear(this);
 		}
 
 		HRESULT changeType(VARTYPE VT)

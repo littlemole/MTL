@@ -3,7 +3,6 @@
 #include <mtl/uni.h>
 
 #include <oleauto.h>
-#include <iostream>
 
 namespace MTL {
 
@@ -138,13 +137,10 @@ namespace MTL {
 		bstr(const bstr& b)
 			: bstr_(::SysAllocStringLen(b.bstr_,b.len()))
 		{
-			std::cout << "bstr(const bstr& b)" << std::endl;
 		}
 
 		bstr& operator=(const bstr& b)
 		{
-			std::cout << "operator=(const bstr& b)" << std::endl;
-
 			if (this == b.address_of())
 				return *this;
 
@@ -161,7 +157,6 @@ namespace MTL {
 
 		bstr(bstr&& b) noexcept
 		{
-			std::cout << "bstr(bstr&& b)" << std::endl;
 			bstr_ = b.bstr_;
 			b.bstr_ = 0;
 		}
@@ -169,8 +164,6 @@ namespace MTL {
 
 		bstr& operator=(bstr&& b)
 		{
-			std::cout << "bstr(bstr&& b)" << std::endl;
-
 			if (this == b.address_of())
 				return *this;
 
@@ -186,14 +179,11 @@ namespace MTL {
 		explicit bstr(const wchar_t (&b)[N])
 			:bstr_(::SysAllocStringLen(b, N))
 		{
-			std::cout << "bstr(const wchar_t b[N])" << std::endl;
 		}
 
 		template<size_t N>
 		bstr& operator=(const wchar_t b[N])
 		{
-			std::cout << "bstr(const wchar_t b[N])" << std::endl;
-
 			if (bstr_ == b)
 				return *this;
 
@@ -208,19 +198,15 @@ namespace MTL {
 		explicit bstr(const ole_char& b)
 			: bstr_(::SysAllocString(b.data()))
 		{
-			std::cout << "bstr(const ole_char& b)" << std::endl;
 		}
 
 		explicit bstr(const ole_char& b, size_t len)
 			: bstr_(::SysAllocStringLen(b.data(), (UINT)len))
 		{
-			std::cout << "bstr(const ole_char& b,len)" << std::endl;
 		}
 
 		bstr& operator=(const ole_char& b)
 		{
-			std::cout << "operator=(const ole_char& b)" << std::endl;
-
 			if (bstr_ == b.data())
 				return *this;
 
@@ -237,14 +223,10 @@ namespace MTL {
 		{
 			if(b.data())
 				bstr_ = ::SysAllocStringLen(b.data(), ::SysStringLen(b.data()));
-
-			std::cout << "bstr(const b_copy& b)" << std::endl;
 		}
 
 		bstr& operator=(const b_copy& b)
 		{
-			std::cout << "operator=(const b_copy& b)" << std::endl;
-
 			if (bstr_ == b.data())
 				return *this;
 
@@ -258,15 +240,12 @@ namespace MTL {
 
 		explicit bstr(b_move&& b)
 		{
-			std::cout << "bstr(b_move&& b)" << std::endl;
 			bstr_ = b.data();
 			b.str_ = 0;
 		}
 
 		bstr& operator=(b_move&& str)
 		{
-			std::cout << "operator=(b_move&& b)" << std::endl;
-
 			if (bstr_ == str.data())
 				return *this;
 
@@ -283,15 +262,12 @@ namespace MTL {
 
 		explicit bstr(const std::string& str, int cp = CP_UTF8)
 		{
-			std::cout << "bstr(const std::string& str)" << std::endl;
 			std::wstring ws = to_wstring(str, cp);
 			bstr_ = ::SysAllocStringLen(ws.c_str(),(UINT)ws.size());
 		}
 
 		bstr& operator=(const std::string& str)
 		{
-			std::cout << "operator=(const std::string& str)" << std::endl;
-
 			if (bstr_) ::SysFreeString(bstr_);
 			bstr_ = 0;
 
@@ -316,7 +292,6 @@ namespace MTL {
 		~bstr()
 		{
 			::SysFreeString(bstr_);
-			std::cout << "~bstr()" << std::endl;
 		}
 
 		int len() const

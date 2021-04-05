@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     std::string arch = "win64";
     std::string apartment = "Apartment";
     std::string version;
-    std::vector<std::pair<std::string, std::string>> dependencies;
+    std::vector<std::string> dependencies;
     std::vector<std::string> projects;
 
     if (cmd == "package")
@@ -135,9 +135,9 @@ int main(int argc, char** argv)
         midl = "";
     }
 
-    if (cmd == "isolate")
+    if (cmd == "isolate" || cmd == "parse")
     {
-        if (argc < 6)
+        if (argc < 5)
         {
             return usage();
         }
@@ -153,14 +153,7 @@ int main(int argc, char** argv)
         for (int i = 5; i < argc; i++)
         {
             std::string d = trim(argv[i]);
-            size_t pos = d.find(":");
-            if (pos == std::string::npos)
-            {
-                return usage();
-            }
-            std::string n = d.substr(0, pos);
-            std::string v = d.substr(pos + 1);
-            dependencies.push_back(std::make_pair(n, v));
+            dependencies.push_back(d);
         }
     }
 
@@ -187,6 +180,8 @@ int main(int argc, char** argv)
             midl = "";
         }
     }
+
+    ::CoInitialize(NULL);
 
     // PARSE the midl file, if any
     Parser parser;
@@ -251,5 +246,13 @@ int main(int argc, char** argv)
         man.print();
     }
 
+    if (cmd == "parse")
+    {
+        IsoManifest man(parser, server, arch, version, dependencies);
+        //man.parse("..\\TestCom\\TestCom.manifest");
+        man.print();
+    }
+
+    ::CoUninitialize();
     return 0;
 }

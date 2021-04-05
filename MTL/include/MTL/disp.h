@@ -1,6 +1,9 @@
 #pragma once
 
 #include "MTL/impl.h"
+#include "ocidl.h"
+#include <map>
+#include <string>
 
 namespace MTL {
 
@@ -13,7 +16,7 @@ namespace MTL {
 	//////////////////////////////////////////////////////////////////////////////
 
 	template<class T, class I, class ... Args>
-	class implements<dispatch_object<T>(I, Args...)> : public implements<T(of<I,IDispatch>,I,Args...)> // public details::derives<void(I, Args...)>
+	class implements<dispatch_object<T>(I, Args...)> : public implements<T(of<I,IDispatch>,I, IProvideClassInfo,Args...)> // public details::derives<void(I, Args...)>
 	{
 	public:
 
@@ -71,6 +74,13 @@ namespace MTL {
 		{
 			HRESULT hr = ::DispInvoke(this, typeInfo_, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 			return hr;
+		}
+
+		virtual HRESULT __stdcall GetClassInfo(ITypeInfo** ppTI)
+		{
+			if (typeInfo_)
+				return typeInfo_->QueryInterface(IID_ITypeInfo,(void**)ppTI);
+			return E_FAIL;
 		}
 
 	protected:

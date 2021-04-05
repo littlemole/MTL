@@ -48,6 +48,19 @@ namespace MTL {
 		return std::wstring(path);
 	}
 
+	inline std::wstring pathToSelfDirectory()
+	{
+		std::wstring self = pathToSelf();
+
+		std::size_t pos = self.find_last_of(L"\\");
+		if (pos == std::wstring::npos)
+		{
+			return L"";
+		}
+
+		return self.substr(0, pos);
+	}
+
 	class ComModule
 	{
 	public:
