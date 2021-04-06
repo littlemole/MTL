@@ -70,9 +70,8 @@ protected:
     }
 };
 
-
-template<class T, class I>
-class LongCollection : public implements<T(I)>
+template<class T, class I, class C>
+class MtlCollection : public dispatch<T(I)>
 {
 public:
 
@@ -92,20 +91,12 @@ public:
 
     virtual  HRESULT __stdcall get_Length(long* cnt)
     {
-        if (!cnt)
-            return E_INVALIDARG;
-
-        *cnt = (long)data_.size();
-        return S_OK;
+        return get_Count(cnt);
     }
 
     virtual  HRESULT __stdcall get_Size(long* cnt)
     {
-        if (!cnt)
-            return E_INVALIDARG;
-
-        *cnt = (long)data_.size();
-        return S_OK;
+        return get_Count(cnt);
     }
 
     virtual  HRESULT __stdcall Empty(VARIANT_BOOL* vb)
@@ -117,7 +108,25 @@ public:
         return S_OK;
     }
 
-    virtual HRESULT __stdcall get_Value(long index, long* value)
+    virtual HRESULT __stdcall Clear()
+    {
+        data_.clear();
+        return S_OK;
+    }
+
+protected:
+
+    MtlCollection() {};
+
+    std::vector<C> data_;
+};
+
+template<class T, class I>
+class LongCollection : public MtlCollection<T,I,long>
+{
+public:
+
+    virtual HRESULT __stdcall Value(long index, long* value)
     {
         if (!value)
             return E_INVALIDARG;
@@ -129,16 +138,9 @@ public:
         return S_OK;
     }
 
-    virtual HRESULT __stdcall get_Item(long index, long* value)
+    virtual HRESULT __stdcall Item(long index, long* value)
     {
-        if (!value)
-            return E_INVALIDARG;
-
-        if (index >= data_.size())
-            return E_INVALIDARG;
-
-        *value = data_[index];
-        return S_OK;
+        return Value(index,value);
     }
 
     virtual HRESULT __stdcall Put(long index, long value)
@@ -155,29 +157,131 @@ public:
         data_.push_back(value);
         return S_OK;
     }
+};
 
-    virtual HRESULT __stdcall Clear()
+template<class T, class I>
+class BstrCollection : public MtlCollection<T,I,bstr>
+{
+public:
+
+    virtual HRESULT __stdcall Value(long index, BSTR* value)
     {
-        data_.clear();
+        if (!value)
+            return E_INVALIDARG;
+
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        return data_[index].copy_to(value);
+    }
+
+    virtual HRESULT __stdcall Item(long index, BSTR* value)
+    {
+        return Value(index,value);
+    }
+
+    virtual HRESULT __stdcall Put(long index, BSTR value)
+    {
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        data_[index] = bstr(b_copy(value));
         return S_OK;
     }
 
-//protected:
-
-    LongCollection() {};
-
-    std::vector<long> data_;
+    virtual HRESULT __stdcall Add(BSTR value)
+    {
+        data_.push_back(bstr(b_copy(value)));
+        return S_OK;
+    }
 };
 
+template<class T, class I>
+class VriantCollection : public MtlCollection<T,I,variant>
+{
+public:
 
+    virtual HRESULT __stdcall Value(long index, VARIANT* value)
+    {
+        if (!value)
+            return E_INVALIDARG;
+
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        return data_[index].copy_to(value);
+    }
+
+    virtual HRESULT __stdcall Item(long index, VARIANT* value)
+    {
+        return Value(index,value);
+    }
+
+    virtual HRESULT __stdcall Put(long index, VARIANT value)
+    {
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        data_[index] = variant(value);
+        return S_OK;
+    }
+
+    virtual HRESULT __stdcall Add(VARIANT value)
+    {
+        data_.push_back(variant(value));
+        return S_OK;
+    }
+};
+
+template<class T, class I>
+class DispCollection : public MtlCollection<T,I,punk<IDispatch>>
+{
+public:
+
+    virtual HRESULT __stdcall Value(long index, IDispatch** value)
+    {
+        if (!value)
+            return E_INVALIDARG;
+
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        return data_[index].queryInterface(value);
+    }
+
+    virtual HRESULT __stdcall Item(long index, IDispatch** value)
+    {
+        return Value(index,value);
+    }
+
+    virtual HRESULT __stdcall Put(long index, IDispatch* value)
+    {
+        if (index >= data_.size())
+            return E_INVALIDARG;
+
+        data_[index] = punk<IDispatch>(value);
+        return S_OK;
+    }
+
+    virtual HRESULT __stdcall Add(IDispatch* value)
+    {
+        data_.push_back( punk<IDispatch>(value) );
+        return S_OK;
+    }
+};
+
+/*
 struct __declspec(uuid("{3D816763-FB52-4759-9FAF-3DE1F3963F06}"))
-ILongCollection : public IUnknown
+ILongCollection : public IDispatch
 {
     virtual HRESULT __stdcall get_Count(long* cnt) = 0;
     virtual HRESULT __stdcall get_Value(long index, long* value) = 0;
 };
+*/
 
-class MyLongCollection : public LongCollection< MyLongCollection, ILongCollection>
+#include "IFace.h"
+
+class MyLongCollection : public LongCollection< MyLongCollection, ITestLongCollection>
 {
 public:
 
@@ -195,7 +299,7 @@ public:
 };
 
 
-TEST_F(CollectionTest, testcolelction) {
+TEST_F(CollectionTest, testcollection) {
 
     using namespace MTL;
 
@@ -204,7 +308,7 @@ TEST_F(CollectionTest, testcolelction) {
     collection->Add(2);
     collection->Add(3);
 
-    punk<ILongCollection> col(collection);
+    punk<ITestLongCollection> col(collection);
 
     
     long cnt = 0;
@@ -214,8 +318,9 @@ TEST_F(CollectionTest, testcolelction) {
     for (long i = 0; i < cnt; i++)
     {
         long val = 0;
-        HR hr = col->get_Value(i, &val);
+        HR hr = col->Item(i, &val);
         std::cout << val << std::endl;
+        EXPECT_EQ(i+1,val);
     }
     
 }

@@ -1,6 +1,7 @@
 .vs
 out/
 lib/
+build/
 
 # Prerequisites
 *.d
