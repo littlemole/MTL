@@ -9,11 +9,13 @@ public:
     Wix(Parser* parser,
         std::string server,
         std::string arch,
-        std::string apartment)
+        std::string apartment,
+        std::string pt)
         : parser_(parser),
         server_(server),
         arch_(arch),
-        apartment_(apartment)
+        apartment_(apartment),
+        package_type_(pt)
     {
         serverType_ = "InprocServer32";
         if (server.substr(server.size() - 4, 4) == ".exe")
@@ -83,7 +85,7 @@ public:
             << "Source=\"$(var.SourceDir)\\"
             << server_short << "\">" << std::endl;
 
-        if (parser_)
+        if (parser_ && package_type_ != "iso")
         {
             std::cout << "     <TypeLib Id=\"" << lib.uuid << "\" ";
             std::cout << "Language=\"0\" ";
@@ -151,11 +153,14 @@ public:
                 << "Source=\"$(var.SourceDir)\\"
                 << server_short << "\">" << std::endl;
 
-            std::cout << "     <Class Id=\"" << psi << "\" ";
-            std::cout << "Context=\"InprocServer32\" ";
-            std::cout << "Description=\"" << serverName_ << "PS\" ";
-            std::cout << "ThreadingModel=\"both\" ";
-            std::cout << "Version=\"" << lib.version << "\" />" << std::endl;
+            if (package_type_ != "iso")
+            {
+                std::cout << "     <Class Id=\"" << psi << "\" ";
+                std::cout << "Context=\"InprocServer32\" ";
+                std::cout << "Description=\"" << serverName_ << "PS\" ";
+                std::cout << "ThreadingModel=\"both\" ";
+                std::cout << "Version=\"" << lib.version << "\" />" << std::endl;
+            }
 
             std::cout << "    </File>" << std::endl;
             std::cout << "   </Component>" << std::endl;
@@ -188,4 +193,5 @@ private:
     std::string serverName_;
     std::string arch_;
     std::string apartment_;
+    std::string package_type_;
 };

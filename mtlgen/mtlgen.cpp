@@ -9,7 +9,8 @@
 int usage()
 {
     std::cout << "Usage: mdiparser show|debug|unreg|disp>|def <midl>" << std::endl;
-    std::cout << "       mdiparser reg|wix|manifest|selfreg <arch> <apartment> <server> <midl>" << std::endl;
+    std::cout << "       mdiparser reg|manifest|selfreg <arch> <apartment> <server> <midl>" << std::endl;
+    std::cout << "       mdiparser wix <arch> <apartment> <type> <server> <midl>" << std::endl;
     std::cout << "       mdiparser isolate <arch> <apartment> <version> <server> <midl> <dependency1.manifest> [dep2.manifest ...]" << std::endl;
     std::cout << "       mdiparser package <subproj1> [subproj2 ...]" << std::endl;
     std::cout << "       mdiparser init|setup" << std::endl;
@@ -18,6 +19,7 @@ int usage()
     std::cout << "       <midl> : midl filename, ie <Project>.idl" << std::endl;
     std::cout << "       <arch> : target architecture x64|x86. Win32 also works for x86" << std::endl;
     std::cout << "       <apartment> : com apartment type Apartment|Both|Free " << std::endl;
+    std::cout << "       <type> : testration type, reg|iso << std::endl;" << std::endl;
     std::cout << "       <server> : server file name, like <Project>.dll. for reg command FULL path to file" << std::endl;
     std::cout << "       <version> : 4 digit version like 1.0.0.0 for regsitry-free com assembly identity" << std::endl;
     return 1;
@@ -117,6 +119,7 @@ int main(int argc, char** argv)
     std::string arch = "win64";
     std::string apartment = "Apartment";
     std::string version;
+    std::string package_type;
     std::vector<std::string> dependencies;
     std::vector<std::string> projects;
 
@@ -159,7 +162,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if (cmd == "reg" || cmd == "wix" || cmd == "manifest" || cmd == "selfreg")
+    if (cmd == "reg" || cmd == "manifest" || cmd == "selfreg")
     {
         if (argc < 5)
         {
@@ -177,6 +180,31 @@ int main(int argc, char** argv)
         if (argc > 5)
         {
             midl = argv[5];
+        }
+        else {
+            midl = "";
+        }
+    }
+
+    if (cmd == "wix" )
+    {
+        if (argc < 6)
+        {
+            return usage();
+        }
+
+        std::string a = argv[2];
+        if (a == "win32" || a == "x86")
+        {
+            arch = "win32";
+        }
+
+        apartment = argv[3];
+        package_type = argv[4];
+        server = argv[5];
+        if (argc > 6)
+        {
+            midl = argv[6];
         }
         else {
             midl = "";
@@ -226,7 +254,7 @@ int main(int argc, char** argv)
 
     if (cmd == "wix")
     {
-        Wix wix(p, server, arch, apartment);
+        Wix wix(p, server, arch, apartment, package_type);
         wix.print();
     }
 

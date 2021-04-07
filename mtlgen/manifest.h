@@ -271,10 +271,10 @@ public:
         if (arch_ == "win64") arch_ = "amd64";
         if (arch_ == "Win32") arch_ = "x86";
 
-        std::string version = parser_.lib().version;
-        if (!version.empty())
+        std::string v = parser_.lib().version;
+        if (!v.empty())
         {
-            version_ = version + ".0.0";
+            version_ = v + ".0.0";
         }
     }
 
@@ -299,14 +299,14 @@ public:
         HRESULT hr = xmlDoc.CreateInstance(__uuidof(MSXML::DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
         if (hr != S_OK)
         {
-            std::cout << "create parser failed" << std::endl;
+            //std::cout << "create parser failed" << std::endl;
             return hr;
         }
 
         xmlDoc->put_async(VARIANT_FALSE);
         if (xmlDoc->load(MTL::to_wstring(manifest).c_str()) != VARIANT_TRUE)
         {
-            std::cout << "load manifest " << manifest << " failed" << std::endl;
+            //std::cout << "load manifest " << manifest << " failed" << std::endl;
             return E_FAIL;
         }
 
@@ -361,7 +361,7 @@ public:
         hr = load_doc(manifest,xmlDoc);
         if (hr != S_OK)
         {
-            std::cout << "create parser failed" << std::endl;
+            //std::cout << "create parser failed" << std::endl;
             return;
         }
         /*

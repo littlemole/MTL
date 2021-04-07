@@ -8,7 +8,13 @@ namespace MTL {
 	namespace details {
 
 		template<class T>
-		class Registrar;
+		class Registrar
+		{
+		public:
+
+			static void register_class_objects(std::vector<DWORD>& cookies)
+			{}
+		};
 
 		template<class T>
 		class Registrar<void(T)>
@@ -82,16 +88,7 @@ namespace MTL {
 
 		int run()
 		{
-			MSG msg;
-
-			// Main message loop:
-			while (GetMessage(&msg, nullptr, 0, 0))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-
-			return (int)msg.wParam;
+			return run_message_loop();
 		}
 
 	private:
