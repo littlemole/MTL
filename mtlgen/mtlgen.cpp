@@ -10,7 +10,7 @@ int usage()
 {
     std::cout << "Usage: mdiparser show|debug|unreg|disp>|def <midl>" << std::endl;
     std::cout << "       mdiparser reg|wix|manifest|selfreg <arch> <apartment> <server> <midl>" << std::endl;
-    std::cout << "       mdiparser isolate <arch> <version> <server> <dependency1:version> [dep2:ver ...]" << std::endl;
+    std::cout << "       mdiparser isolate <arch> <apartment> <version> <server> <midl> <dependency1.manifest> [dep2.manifest ...]" << std::endl;
     std::cout << "       mdiparser package <subproj1> [subproj2 ...]" << std::endl;
     std::cout << "       mdiparser init|setup" << std::endl;
     std::cout << std::endl;
@@ -135,9 +135,9 @@ int main(int argc, char** argv)
         midl = "";
     }
 
-    if (cmd == "isolate" || cmd == "parse")
+    if (cmd == "isolate" )
     {
-        if (argc < 5)
+        if (argc < 7)
         {
             return usage();
         }
@@ -146,11 +146,13 @@ int main(int argc, char** argv)
         {
             arch = "win32";
         }
-        version = argv[3];
-        server = argv[4];
 
+        apartment = argv[3];
+        version = argv[4];
+        server = argv[5];
+        midl = argv[6];
 
-        for (int i = 5; i < argc; i++)
+        for (int i = 7; i < argc; i++)
         {
             std::string d = trim(argv[i]);
             dependencies.push_back(d);
@@ -242,14 +244,7 @@ int main(int argc, char** argv)
 
     if (cmd == "isolate")
     {
-        IsoManifest man(parser, server, arch, version, dependencies);
-        man.print();
-    }
-
-    if (cmd == "parse")
-    {
-        IsoManifest man(parser, server, arch, version, dependencies);
-        //man.parse("..\\TestCom\\TestCom.manifest");
+        IsoManifest man(parser, server, arch, apartment, version,midl, dependencies);
         man.print();
     }
 

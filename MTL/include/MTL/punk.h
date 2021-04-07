@@ -84,6 +84,67 @@ namespace MTL {
             return hr_;
         }
 
+        enum {
+            WCODE_HRESULT_FIRST = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x200),
+            WCODE_HRESULT_LAST = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF + 1, 0) - 1
+        };
+
+        static WORD HRESULT2WCode(HRESULT hr)
+        {
+            return (hr >= WCODE_HRESULT_FIRST && hr <= WCODE_HRESULT_LAST)
+                ? WORD(hr - WCODE_HRESULT_FIRST)
+                : 0;
+        }
+
+        static std::wstring msg(HRESULT hr)
+        {
+            wchar_t* buffer = nullptr;
+
+            ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                FORMAT_MESSAGE_FROM_SYSTEM |
+                FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL,
+                hr,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPWSTR)&buffer,
+                0,
+                NULL);
+                
+            if (buffer != NULL)
+            {
+                size_t const nLen = wcslen(buffer);
+                if (nLen > 1 && buffer[nLen - 1] == '\n')
+                {
+                    buffer[nLen - 1] = 0;
+                    if (buffer[nLen - 2] == '\r')
+                    {
+                        buffer[nLen - 2] = 0;
+                    }
+                }
+            }
+            else 
+            {
+                long size = 32 * sizeof(wchar_t);
+                buffer = (LPWSTR)LocalAlloc(0, size);
+                if (msg != NULL) 
+                {
+                    WORD wCode = HRESULT2WCode(hr);
+                    if (wCode != 0) 
+                    {
+                        _snwprintf_s(buffer,size, _TRUNCATE, L"IDispatch error #%d", (int)wCode);
+                    }
+                    else 
+                    {
+                        _snwprintf_s(buffer, size, _TRUNCATE, L"Unknown error 0x%0lX", hr);
+                    }
+                }
+            }
+
+            std::wstring result(buffer);
+            ::LocalFree(buffer);
+            return result;
+        }
+
     private:
         HRESULT hr_ = S_OK;
     };

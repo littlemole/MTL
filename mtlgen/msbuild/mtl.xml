@@ -199,15 +199,21 @@
     <ItemGroup>
       <deps Include="$(Projects)" />
     </ItemGroup>
-    
-    <Message Text="%(deps.Identity)" />
 
-    <XmlPeek XmlInputPath="..\%(deps.Identity)\%(deps.Identity).manifest" Query="s:assembly/s:comInterfaceExternalProxyStub"
-      Namespaces="&lt;Namespace Prefix='s' Uri='urn:schemas-microsoft-com:asm.v1' /&gt;">
-      <Output TaskParameter="Result" ItemName="proxystub"  />
-    </XmlPeek>
+    <PropertyGroup>
+      <identityVersion Condition="$(entityVersion)==''">1.0.0.0</identityVersion>
+      <manifests>"@(deps->'$(installPrefix)\%(filename)\%(filename).manifest', '" "')"</manifests>
+      <midl Condition="Exists('$(projectName).idl')">"$(projectName).idl"</midl>
+      <midl Condition="!Exists('$(projectName).idl')">""</midl>
+    </PropertyGroup>
 
-    <Message Text="%(proxystub.Identity)" />
+    <Message Text="manPath: $(manifests)" />
+
+    <Exec Condition="$(ProjectType)=='.dll'" Command='"$(mtlgen)" wix $(arch) $(apartment) "$(projectName)$(ProjectType)" > fragment.wxs ' WorkingDirectory="."/>
+    <Exec Condition="$(ProjectType)=='.exe'" Command='"$(mtlgen)" wix $(arch) $(apartment) "$(projectName)$(ProjectType)" > fragment.wxs ' WorkingDirectory="."/>
+
+    <Exec Condition="$(ProjectType)=='.dll'" Command='"$(mtlgen)" isolate "$(arch)" "$(apartment)" "$(identityVersion)" "$(projectName).dll" $(midl) $(manifests) > $(projectName).manifest ' WorkingDirectory="."/>
+    <Exec Condition="$(ProjectType)=='.exe'" Command='"$(mtlgen)" isolate "$(arch)" "$(apartment)" "$(identityVersion)" "$(projectName).exe" $(midl) $(manifests) > $(projectName).manifest ' WorkingDirectory="."/>
 
   </Target>
   

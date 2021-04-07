@@ -52,11 +52,11 @@ public:
 
         for (auto& iface : parser_.interfaces())
         {
-            if (iface.ole == false && iface.dual == false)
+            if (iface.ole == false && iface.dual == false && iface.disp == false)
             {
                 psi = parser_.interfaces()[0].uuid;
             }
-            if (iface.ole == true || iface.dual == true)
+            if (iface.ole == true || iface.dual == true || iface.disp)
             {
                 hasTypelib = true;
             }
@@ -108,8 +108,15 @@ public:
                 std::cout << "           flags=\"HASDISKIMAGE\" >" << std::endl;
                 std::cout << "  </typelib>" << std::endl;
             }
-
             std::cout << " </file>" << std::endl;
+
+            if (!psi.empty())
+            {
+                std::cout << " <file name='" << serverPS_ << "'>" << std::endl;
+                std::cout << "  <comClass clsid=\"{" << psi << "}\" threadingModel=\"Both\" />" << std::endl;
+                std::cout << " </file>" << std::endl;
+            }
+
 
             for (auto& coClass : parser_.coClasses())
             {
@@ -160,6 +167,46 @@ public:
                 << " </dependency>" << std::endl
                 << "-->" << std::endl;
 
+            if (hasTypelib && !lib.uuid.empty())
+            {
+                std::cout << " <file name='" << serverName_ << ".exe'>" << std::endl;
+                std::cout << "  <typelib tlbid=\"{" << lib.uuid << "}\" " << std::endl;
+                std::cout << "           version=\"" << lib.version << "\" " << std::endl;
+                std::cout << "           helpdir=\"\" " << std::endl;
+                std::cout << "           flags=\"HASDISKIMAGE\" >" << std::endl;
+                std::cout << "  </typelib>" << std::endl;
+                std::cout << " </file>" << std::endl;
+            }
+
+            for (auto& coClass : parser_.coClasses())
+            {
+                // interfaces
+                for (auto& iface : coClass.interfaces)
+                {
+                    if (seen.count(iface.name) != 0)
+                    {
+                        continue;
+                    }
+
+                    seen.insert(iface.name);
+
+                    std::string ps = psi;
+                    if (iface.disp || iface.ole || iface.dual)
+                    {
+                        ps = oleaut;
+                    }
+
+                    std::cout << " <comInterfaceExternalProxyStub name=\"" << iface.name << "\" " << std::endl;
+                    std::cout << "    iid=\"{" << iface.uuid << "}\" " << std::endl;
+                    if (ps == oleaut)
+                    {
+                        std::cout << "    tlbid=\"{" << lib.uuid << "}\" " << std::endl;
+                    }
+                    std::cout << "    proxyStubClsid32=\"{" << ps << "}\" >" << std::endl;
+                    std::cout << " </comInterfaceExternalProxyStub>" << std::endl;
+                }
+            }
+
             std::cout << "<!-- UAccess Mode. patch as desired  -->" << std::endl;
             std::cout << " <trustInfo xmlns=\"urn:schemas-microsoft-com:asm.v3\">" << std::endl;
             std::cout << "  <security>" << std::endl;
@@ -192,13 +239,17 @@ public:
     IsoManifest(Parser& parser,
         std::string server,
         std::string arch,
+        std::string apartment,
         std::string version,
+        std::string midl,
         const std::vector<std::string>& dependencies
     )
         : parser_(parser),
         server_(server),
         arch_(arch),
+        apartment_(apartment),
         version_(version),
+        midl_(midl),
         dependencies_(dependencies)
     {
 //        std::cout << "IsoManifest " << server << " " << arch << " " << version << std::endl;
@@ -220,6 +271,11 @@ public:
         if (arch_ == "win64") arch_ = "amd64";
         if (arch_ == "Win32") arch_ = "x86";
 
+        std::string version = parser_.lib().version;
+        if (!version.empty())
+        {
+            version_ = version + ".0.0";
+        }
     }
 
     std::wstring get_attr(MSXML::IXMLDOMNodePtr& node, const wchar_t* n)
@@ -236,6 +292,44 @@ public:
         att->get_nodeValue(&v);
 
         return v.to_wstring();
+    }
+
+    HRESULT load_doc(const std::string& manifest, MSXML::IXMLDOMDocument2Ptr& xmlDoc)
+    {
+        HRESULT hr = xmlDoc.CreateInstance(__uuidof(MSXML::DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
+        if (hr != S_OK)
+        {
+            std::cout << "create parser failed" << std::endl;
+            return hr;
+        }
+
+        xmlDoc->put_async(VARIANT_FALSE);
+        if (xmlDoc->load(MTL::to_wstring(manifest).c_str()) != VARIANT_TRUE)
+        {
+            std::cout << "load manifest " << manifest << " failed" << std::endl;
+            return E_FAIL;
+        }
+
+        xmlDoc->setProperty("SelectionLanguage", "XPath");
+        xmlDoc->setProperty("SelectionNamespaces", "xmlns:ms='urn:schemas-microsoft-com:asm.v1'");
+
+        return S_OK;
+    }
+
+    void for_each(MSXML::IXMLDOMDocument2Ptr& xmlDoc, const std::string& xpath, std::function<void(MSXML::IXMLDOMNodePtr&)> fun)
+    {
+        MSXML::IXMLDOMNodeListPtr files = xmlDoc->selectNodes(xpath.c_str());
+
+        long filesCount = 0;
+        files->get_length(&filesCount);
+
+        for (long j = 0; j < filesCount; j++)
+        {
+            MSXML::IXMLDOMNodePtr n;
+            files->get_item(j, &n);
+
+            fun(n);
+        }
     }
 
     void parse(const std::string& exe)
@@ -261,8 +355,17 @@ public:
         //std::cout << file << std::endl << manifest << std::endl << ext << std::endl << psdll << std::endl;
 
         MSXML::IXMLDOMDocument2Ptr xmlDoc; 
+
+        HRESULT hr;
         
-        HRESULT hr = xmlDoc.CreateInstance(__uuidof(MSXML::DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
+        hr = load_doc(manifest,xmlDoc);
+        if (hr != S_OK)
+        {
+            std::cout << "create parser failed" << std::endl;
+            return;
+        }
+        /*
+        hr = xmlDoc.CreateInstance(__uuidof(MSXML::DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
         if (hr != S_OK)
         {
             std::cout << "create parser failed" << std::endl;
@@ -270,7 +373,7 @@ public:
         }
 
         xmlDoc->put_async(VARIANT_FALSE);
-        if (xmlDoc->load(manifest.c_str()) != VARIANT_TRUE)
+        if (xmlDoc->load(MTL::to_wstring(manifest).c_str()) != VARIANT_TRUE)
         {
             std::cout << "load manifest " << manifest << " failed" << std::endl;
             return;
@@ -278,7 +381,25 @@ public:
 
         xmlDoc->setProperty("SelectionLanguage", "XPath");
         xmlDoc->setProperty("SelectionNamespaces", "xmlns:ms='urn:schemas-microsoft-com:asm.v1'");
+        */
 
+        std::vector<std::wstring> psv;
+
+        for_each(xmlDoc, "/ms:assembly/ms:file", [this,file,&ext,&psv](MSXML::IXMLDOMNodePtr& n) 
+        {
+            std::wstring fn = get_attr(n, L"name");
+            if (fn == MTL::to_wstring(file) + L".dll")
+            {
+                ext = ".dll";
+            }
+            else
+            {
+                MTL::bstr b;
+                n->get_xml(&b);
+                psv.push_back(b.str());
+            }
+        });
+        /*
         MSXML::IXMLDOMNodeListPtr files = xmlDoc->selectNodes("/ms:assembly/ms:file");
 
         long filesCount = 0;
@@ -295,6 +416,7 @@ public:
                 ext = ".dll";
             }
         }
+        */
 
         std::string server = file + ext;
 
@@ -309,6 +431,7 @@ public:
             bool hasPs = false;
             bool wantTypelib = false;
 
+
             for (long j = 0; j < proxyCount; j++)
             {
                 MSXML::IXMLDOMNodePtr n;
@@ -319,22 +442,29 @@ public:
                 std::wstring tlbid = get_attr(n, L"tlbid");
                 std::wstring ps = get_attr(n, L"proxyStubClsid32");
 
-                if (tlbid.empty())
+                if (ps != L"{00020424-0000-0000-C000-000000000046}")
                 {
                     hasPs = true;
-                    continue;
+                    //continue;
                 }
-                wantTypelib = true;
+                else
+                {
+                    wantTypelib = true;
+                }
 
 
                 std::cout << "  <comInterfaceExternalProxyStub iid='" << MTL::to_string(iid) << "' "
                     << "name='" << MTL::to_string(psname) << "'  "
-                    << "proxyStubClsid32='" << MTL::to_string(ps) << "' "
-                    << "tlbid='" << MTL::to_string(tlbid) << "'  "
-                    << "threadingModel='Both' />"
-                    << std::endl;
+                    << "proxyStubClsid32='" << MTL::to_string(ps) << "' ";
+                if (!tlbid.empty())
+                {
+                    std::cout << "tlbid='" << MTL::to_string(tlbid) << "' ";
+                }
+// NO ACTUALLY NOT          << "threadingModel='Both' />"
+                std::cout << " /> " << std::endl;
             }
 
+            /*
             if (wantTypelib)
             {
                 MSXML::IXMLDOMNodeListPtr typelibs = xmlDoc->selectNodes("/ms:assembly/ms:file/ms:typelib");
@@ -358,12 +488,12 @@ public:
                               << " </file>" << std::endl;
                 }
             }
-
-            if (hasPs)
+            */
+            for (auto& i : psv)
             {
-                std::cout << " <file name='" << psdll << "'>" << std::endl;
+                std::wcout << i << std::endl;
             }
-
+            /*
             for (long j = 0; j < proxyCount; j++)
             {
                 MSXML::IXMLDOMNodePtr n;
@@ -389,6 +519,7 @@ public:
             {
                 std::cout << " </file>" << std::endl;
             }
+            */
         }
         else
         {
@@ -433,11 +564,11 @@ public:
 
         for (auto& iface : parser_.interfaces())
         {
-            if (iface.ole == false && iface.dual == false)
+            if (iface.ole == false && iface.dual == false && iface.disp == false)
             {
                 psi = parser_.interfaces()[0].uuid;
             }
-            if (iface.ole == true || iface.dual == true)
+            if (iface.ole == true || iface.dual == true || iface.disp == true)
             {
                 hasTypelib = true;
             }
@@ -453,32 +584,106 @@ public:
         std::cout << "version=\"" << version_ << "\" /> " << std::endl;
         std::cout << "" << std::endl;
 
-        if (hasTypelib && !lib.uuid.empty())
+        if (serverType_ == ".exe")
         {
-            std::cout << " <file name=\"" << serverName_  << serverType_ << "\"> " << std::endl;
-            std::cout << "  <typelib tlbid=\"{" << lib.uuid << "}\" version=\"" << lib.version << "\" helpdir=\"\" />" << std::endl;
+            if (hasTypelib && !lib.uuid.empty())
+            {
+                std::cout << " <file name=\"" << serverName_ << serverType_ << "\"> " << std::endl;
+                std::cout << "  <typelib tlbid=\"{" << lib.uuid << "}\" version=\"" << lib.version << "\" helpdir=\"\" />" << std::endl;
+                std::cout << " </file>" << std::endl;
+                std::cout << "" << std::endl;
+            }
+
+            for (auto& iface : parser_.interfaces())
+            {
+                std::cout << "<comInterfaceExternalProxyStub name=\"" << iface.name << "\" "
+                    << "iid=\"{" << iface.uuid << "}\" ";
+                if (hasTypelib && !lib.uuid.empty() && iface.typelib)
+                {
+                    std::cout << "tlbid=\"{" << lib.uuid << "}\" ";
+                }
+                if (iface.disp || iface.dual || iface.ole)
+                {
+                    std::cout << "proxyStubClsid32=\"{" << oleaut << "}\" ";
+                }
+                else
+                {
+                    std::cout << "proxyStubClsid32=\"{" << psi << "}\" ";
+                }
+                std::cout << " /> " << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << " <file name=\"" << serverName_ << serverType_ << "\" hashalg=\"SHA1\">" << std::endl;
+
+            for (auto& coClass : parser_.coClasses())
+            {
+                std::string progid = lib.name + "." + coClass.name + "." + lib.version;
+                std::string versionless_progid = lib.name + "." + coClass.name;
+
+                std::cout << "  <comClass clsid=\"{" << coClass.uuid << "}\" " << std::endl;
+                if (hasTypelib)
+                {
+                    std::cout << "         tlbid=\"{" << lib.uuid << "}\" " << std::endl;
+                }
+
+                std::cout << "         threadingModel=\"" << apartment_ << "\" " << std::endl;
+                std::cout << "         progid=\"" << versionless_progid << "\" " << std::endl;
+                std::cout << "         description=\"\" >" << std::endl;
+                std::cout << "  </comClass>" << std::endl;
+            }
+
+            if (hasTypelib)
+            {
+                std::cout << "  <typelib tlbid=\"{" << lib.uuid << "}\" " << std::endl;
+                std::cout << "           version=\"" << lib.version << "\" " << std::endl;
+                std::cout << "           helpdir=\"\" " << std::endl;
+                std::cout << "           flags=\"HASDISKIMAGE\" >" << std::endl;
+                std::cout << "  </typelib>" << std::endl;
+            }
             std::cout << " </file>" << std::endl;
-            std::cout << "" << std::endl;
+
+
+
+            for (auto& coClass : parser_.coClasses())
+            {
+                // interfaces
+                for (auto& iface : coClass.interfaces)
+                {
+                    if (seen.count(iface.name) != 0)
+                    {
+                        continue;
+                    }
+
+                    seen.insert(iface.name);
+
+                    std::string ps = psi;
+                    if (iface.disp || iface.ole || iface.dual)
+                    {
+                        ps = oleaut;
+                    }
+
+                    std::cout << " <comInterfaceExternalProxyStub name=\"" << iface.name << "\" " << std::endl;
+                    std::cout << "    iid=\"{" << iface.uuid << "}\" " << std::endl;
+                    if (hasTypelib)
+                    {
+                        std::cout << "    tlbid=\"{" << lib.uuid << "}\" " << std::endl;
+                    }
+                    std::cout << "    proxyStubClsid32=\"{" << ps << "}\" >" << std::endl;
+                    std::cout << " </comInterfaceExternalProxyStub>" << std::endl;
+                }
+            }
+        }
+        std::cout << "" << std::endl;
+
+        if (!psi.empty())
+        {
+            std::cout << " <file name='" << serverPS_ << "'>" << std::endl;
+            std::cout << "  <comClass clsid=\"{" << psi << "}\" threadingModel=\"Both\" />" << std::endl;
+            std::cout << " </file>" << std::endl;
         }
 
-        for (auto& iface : parser_.interfaces())
-        {
-            std::cout << "<comInterfaceExternalProxyStub name=\"" << iface.name << "\" "
-                << "iid=\"{" << iface.uuid << "}\" ";
-            if (hasTypelib && !lib.uuid.empty() && iface.typelib)
-            {
-                std::cout << "tlbid=\"{" << lib.uuid << "}\" ";
-            }
-            if (iface.disp || iface.dual || iface.ole)
-            {
-                std::cout << "proxyStubClsid32=\"{" << oleaut << "}\" ";
-            }
-            else
-            {
-                std::cout << "proxyStubClsid32=\"{" << psi << "}\" ";
-            }
-            std::cout << " /> " << std::endl;
-        }
         std::cout << "" << std::endl;
 
         for (auto& d : dependencies_)
@@ -530,7 +735,9 @@ private:
     std::string serverName_;
     std::vector<std::string> dependencies_;
     std::string arch_;
+    std::string apartment_;
     std::string version_;
+    std::string midl_;
 };
 
 

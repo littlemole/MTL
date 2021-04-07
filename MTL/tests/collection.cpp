@@ -324,3 +324,52 @@ TEST_F(CollectionTest, testcollection) {
     }
     
 }
+
+TEST_F(CollectionTest, testDisp) {
+
+    try {
+        using namespace MTL;
+
+        punk<MyLongCollection> collection = MyLongCollection::create();
+        collection->Add(1);
+        collection->Add(2);
+        collection->Add(3);
+
+        punk<IDispatch> col(collection);
+        DISPPARAMS disp{ 0,0,0,0 };
+
+        long cnt = 0;
+        variant vResult;
+        //    HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        cnt = vResult.value_of<long>();
+        std::cout << cnt << std::endl;
+
+        EXPECT_EQ(3, cnt);
+
+        for (long i = 0; i < cnt; i++)
+        {
+            long val = 0;
+            variant v;
+            variant index(i);
+            DISPPARAMS disp{ 0,0,0,0 };
+            disp.cArgs = 1;
+            disp.rgvarg = &index;
+
+//            HR hr = col->Invoke(2, IID_NULL, 0, DISPATCH_METHOD, &disp, &v, 0, 0);
+            HR hr = col->Invoke(2, IID_NULL, 0, DISPATCH_METHOD, &disp, &v, 0, 0);
+            val = v.value_of<long>();
+            std::cout << val << std::endl;
+            EXPECT_EQ(i + 1, val);
+        }
+    }
+    catch (HRESULT hr)
+    {
+        if (hr == DISP_E_MEMBERNOTFOUND)
+        {
+            std::cout << "        DISP_E_MEMBERNOTFOUND" << std::endl;
+        }
+        std::wstring errMsg = HR::msg(hr);
+        std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
+    }
+}
