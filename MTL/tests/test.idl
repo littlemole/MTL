@@ -25,7 +25,7 @@ helpstring("Example Type Library"),
   [
   uuid(a03d1424-b1ec-11d0-8c3a-00c04fc31d2f),
   helpstring("Breakfast Component Class")
-  ] coclass Test
+  ] coclass MyLongCollection
     {
     [default]interface ITestLongCollection;
     }; //end coclass def

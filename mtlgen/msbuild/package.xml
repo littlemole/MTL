@@ -21,7 +21,8 @@
 
    
   <Target Name="Configure">
-    
+
+    <Message Text="Manufacturer: $(manufacturer)" />
     <PropertyGroup Label="DynamicConfiguration">
 
       <!-- Configuration -->
@@ -29,7 +30,7 @@
       <mtlgen>$(MSBuildThisFileDirectory)\..\..\..\bin\mtlgen.exe</mtlgen>
 
       <projectName Condition="$(projectName)==''">$([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)'))</projectName>
-      <manufacturer Condition="$(manufacturer)=='$(projectName)'"></manufacturer>
+      <manufacturer Condition="$(manufacturer)==''">$(projectName)</manufacturer>
 
       <version>$([System.DateTime]::Now.ToString("yy.MM.dd.HH"))</version>
 
@@ -143,7 +144,7 @@
 
     <Message Text="XXX: $([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)'))" />
     
-    <Message Text="Manufacturer: $(Manufacturer)" />
+    <Message Text="Manufacturer: $(manufacturer)" />
 
     <Message Text="BENDOR: $(vendorUuid)" />
     <Message Text="UPGRADECODE: $(upgradeUuid)" />

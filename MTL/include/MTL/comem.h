@@ -80,26 +80,3 @@ private:
 	size_t size_;
 };
 
-inline int run_message_loop()
-{
-	MSG msg;
-
-	while (true)
-	{
-		DWORD r = ::MsgWaitForMultipleObjectsEx(0, 0, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE | MWMO_ALERTABLE);
-		if (r == WAIT_IO_COMPLETION)
-		{
-			continue;
-		}
-
-		if (!::GetMessage(&msg, 0, 0, 0))
-		{
-			break;
-		}
-
-		::TranslateMessage(&msg);
-		::DispatchMessage(&msg);
-	}
-
-	return (int)msg.wParam;
-}

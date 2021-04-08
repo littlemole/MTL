@@ -12,11 +12,11 @@ namespace MTL {
 	// IDispatch invocation helper
 	//////////////////////////////////////////////////////////////////////////////
 
-	class disp : public DISPPARAMS
+	class automation : public DISPPARAMS
 	{
 	public:
 
-		disp(IDispatch* disp)
+		automation(IDispatch* disp)
 			: disp_(disp), id_(DISPID_VALUE)
 		{
 			this->cArgs = 0;
@@ -25,7 +25,7 @@ namespace MTL {
 			this->rgvarg = 0;
 		}
 
-		disp(IDispatch* disp, DISPID id)
+		automation(IDispatch* disp, DISPID id)
 			: disp_(disp), id_(id)
 		{
 			this->cArgs = 0;
@@ -34,7 +34,7 @@ namespace MTL {
 			this->rgvarg = 0;
 		}
 
-		disp(IDispatch* disp, const std::wstring& member)
+		automation(IDispatch* disp, const std::wstring& member)
 			: disp_(disp), id_(0)
 		{
 			this->cArgs = 0;
@@ -46,13 +46,13 @@ namespace MTL {
 			HR hr = disp_->GetIDsOfNames(IID_NULL, (LPOLESTR*)&names, 1, LOCALE_USER_DEFAULT, &id_);
 		}
 
-		disp& member(DISPID id)
+		automation& member(DISPID id)
 		{
 			id_ = id;
 			return *this;
 		}
 
-		disp& member(const std::wstring& member)
+		automation& member(const std::wstring& member)
 		{
 			const wchar_t* names = member.c_str();
 			HR hr = disp_->GetIDsOfNames(IID_NULL, (LPOLESTR*)&names, 1, LOCALE_USER_DEFAULT, &id_);

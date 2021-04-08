@@ -25,7 +25,7 @@ namespace MTL {
 		implements()
 		{
 			std::wstring selfPath = pathToSelf();
-			HRESULT hr = ::LoadTypeLib(selfPath.c_str(), &typeLib_);
+			HRESULT hr = ::LoadTypeLibEx(selfPath.c_str(), REGKIND_NONE, &typeLib_);
 			if (hr != S_OK)
 			{
 				exit(1);
@@ -78,8 +78,10 @@ namespace MTL {
 
 		virtual HRESULT __stdcall GetClassInfo(ITypeInfo** ppTI)
 		{
-			if (typeInfo_)
-				return typeInfo_->QueryInterface(IID_ITypeInfo,(void**)ppTI);
+			if (typeLib_)
+			{
+				return typeLib_->GetTypeInfoOfGuid(__uuidof(T), ppTI);
+			}
 			return E_FAIL;
 		}
 

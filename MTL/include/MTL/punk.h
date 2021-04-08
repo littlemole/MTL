@@ -269,6 +269,14 @@ namespace MTL {
             return interface_->QueryInterface(__uuidof(T), (void**)Unknown);
         }
 
+        template<class T>
+        punk<T> as() const
+        {
+            punk<T> result;
+            HR hr = interface_->QueryInterface(__uuidof(T), (void**)&result);
+            return result;
+        }
+
         HRESULT createObject(CLSID classId, int clsctx = CLSCTX_ALL)
         {
             return ::CoCreateInstance(classId, NULL, clsctx, __uuidof(I), (void**)&interface_);
