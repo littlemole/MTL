@@ -19,12 +19,15 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --build .
 endif()
 
 
-add_subdirectory(MTL)
-add_subdirectory(mtlgen)
-
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
 
+add_subdirectory(MTL)
+add_subdirectory(mtlgen)
+
+
+
 install(FILES LICENSE Readme.md TYPE DOC  )
+
+
