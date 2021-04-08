@@ -43,3 +43,17 @@ include_directories(include)
 
 
 install(DIRECTORY include/MTL TYPE INCLUDE)
+
+
+add_custom_command(
+     OUTPUT "${CMAKE_BINARY_DIR}/_CPack_Packages"
+     COMMENT "Run cpack -G NuGet" 
+     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+     COMMAND ${CMAKE_CPACK_COMMAND} -G NuGet 
+)
+
+add_custom_target(autopack ALL DEPENDS "${CMAKE_BINARY_DIR}/_CPack_Packages")
+
+add_library(MTL INTERFACE)
+target_include_directories(MTL INTERFACE include/) 
+add_dependencies(MTL autopack)
