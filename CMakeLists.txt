@@ -30,4 +30,15 @@ add_subdirectory(mtlgen)
 
 install(FILES LICENSE Readme.md TYPE DOC  )
 
+file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/_CPack_Packages )
 
+add_custom_command(
+     OUTPUT "${CMAKE_BINARY_DIR}/_CPack_Packages.txt"
+     COMMENT "Run cpack -G NuGet" 
+     POST_BUILD 
+     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+     COMMAND ${CMAKE_CPACK_COMMAND} -G NuGet 
+)
+
+add_custom_target(autopack ALL DEPENDS "${CMAKE_BINARY_DIR}/_CPack_Packages.txt")
+add_dependencies(autopack MTL mtlgen)

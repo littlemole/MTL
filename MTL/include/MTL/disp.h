@@ -8,6 +8,52 @@
 namespace MTL {
 
 
+	inline std::wstring guid_to_string(const GUID& guid)
+	{
+std::cout << "<<<<<<<guid<<<<<<<<<<<<" << std::endl;
+
+		wchar_t guidStr[39];
+		swprintf_s(
+			guidStr,
+			L"{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+			guid.Data1, guid.Data2, guid.Data3,
+			guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+			guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+
+		std::wstring s(guidStr);
+		return s;
+	}
+
+	inline GUID string_to_guid(const std::wstring& str)
+	{
+		GUID guid;
+		wscanf_s(str.c_str(),
+			L"{%8x-%4hx-%4hx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx}",
+			&guid.Data1, &guid.Data2, &guid.Data3,
+			&guid.Data4[0], &guid.Data4[1], &guid.Data4[2], &guid.Data4[3],
+			&guid.Data4[4], &guid.Data4[5], &guid.Data4[6], &guid.Data4[7] );
+
+		return guid;
+	}
+
+	inline BOOL Is64BitWindows()
+	{
+#if defined(_WIN64)
+		return TRUE;  // 64-bit programs run only on Win64
+#elif defined(_WIN32)
+		// 32-bit programs run on both 32-bit and 64-bit Windows
+		// so must sniff
+		BOOL f64 = FALSE;
+		return IsWow64Process(GetCurrentProcess(), &f64) && f64;
+#else
+		return FALSE; // Win64 does not support Win16
+#endif
+	}
+
+
+
+
+
 	//////////////////////////////////////////////////////////////////////////////
 	// specialization with support for IDispatch
 	//
@@ -26,16 +72,27 @@ namespace MTL {
 		{
 			std::wstring selfPath = pathToSelf();
 			HRESULT hr = ::LoadTypeLib(selfPath.c_str(), &typeLib_);
+			if (hr == S_OK)
+			{
+				hr = typeLib_->GetTypeInfoOfGuid(__uuidof(I), &typeInfo_);
+			}
 			if (hr != S_OK)
 			{
 				exit(1);
 			}
+		}
 
-			hr = typeLib_->GetTypeInfoOfGuid(__uuidof(I), &typeInfo_);
+		implements(const CLSID& libid, int major = 1, int minor = 0)
+		{
+			HRESULT hr = ::LoadRegTypeLib(libid,major,minor,LOCALE_SYSTEM_DEFAULT,&typeLib_);
+			if (hr == S_OK)
+			{
+				hr = typeLib_->GetTypeInfoOfGuid(__uuidof(I), &typeInfo_);
+			}
 			if (hr != S_OK)
 			{
 				exit(1);
-			}
+			}						
 		}
 
 		~implements()
@@ -100,14 +157,26 @@ namespace MTL {
 
 	template<class T, class I, class ... Args>
 	class dispatch < T(I, Args...)> : public implements<dispatch_object<T>(I, Args...)>
-	{};
+	{
+	public:
+		dispatch() {}
+		dispatch(const CLSID& libid, int major = 1, int minor = 0)
+			: implements<dispatch_object<T>(I, Args...)>(libid,major,minor)
+		{}
+	};
 
 	template<class T>
 	class stack_disp;
 
 	template<class T, class I, class ... Args>
 	class stack_disp<T(I,Args...)> : public implements<dispatch_object<stack_object<T>>(I, Args...)>
-	{};
+	{
+	public:
+		stack_disp() {}
+		stack_disp(const CLSID& libid, int major = 1, int minor = 0)
+			: implements<dispatch_object<stack_object<T>>(I, Args...)>(libid,major,minor)
+		{}
+	};
 
 
 

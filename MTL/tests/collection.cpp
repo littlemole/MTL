@@ -1,3 +1,4 @@
+#define ISOLATION_AWARE_ENABLED 1
 #include "gtest/gtest.h"
 #include "MTL/uni.h"
 #include "MTL/bstr.h"
@@ -75,9 +76,22 @@ class MtlCollection : public dispatch<T(I)>
 {
 public:
 
+    MtlCollection()
+    {}
+
+    MtlCollection(const GUID& libid, int major = 1, int minor = 0)
+        : dispatch<T(I)>(libid,major,minor)
+    {}
+
+
     static punk<T> create()
     {
        return punk<T>(new T());
+    }
+
+    static punk<T> create(const GUID& libid, int major = 1, int minor = 0)
+    {
+       return punk<T>(new T(libid,major,minor));
     }
 
     virtual  HRESULT __stdcall get_Count(long* cnt)
@@ -116,8 +130,6 @@ public:
 
 protected:
 
-    MtlCollection() {};
-
     std::vector<C> data_;
 };
 
@@ -125,6 +137,12 @@ template<class T, class I>
 class LongCollection : public MtlCollection<T,I,long>
 {
 public:
+
+    LongCollection() {}
+
+    LongCollection(const GUID& libid, int major = 1, int minor = 0)
+        : MtlCollection<T,I,long>(libid,major,minor)
+    {}
 
     virtual HRESULT __stdcall Value(long index, long* value)
     {
@@ -164,6 +182,12 @@ class BstrCollection : public MtlCollection<T,I,bstr>
 {
 public:
 
+    BstrCollection() {}
+
+    BstrCollection(const GUID& libid, int major = 1, int minor = 0)
+        : MtlCollection<T,I,bstr>(libid,major,minor)
+    {}
+
     virtual HRESULT __stdcall Value(long index, BSTR* value)
     {
         if (!value)
@@ -197,9 +221,15 @@ public:
 };
 
 template<class T, class I>
-class VriantCollection : public MtlCollection<T,I,variant>
+class VariantCollection : public MtlCollection<T,I,variant>
 {
 public:
+
+    VariantCollection() {}
+
+    VariantCollection(const GUID& libid, int major = 1, int minor = 0)
+        : MtlCollection<T,I,variant>(libid,major,minor)
+    {}
 
     virtual HRESULT __stdcall Value(long index, VARIANT* value)
     {
@@ -237,6 +267,12 @@ template<class T, class I>
 class DispCollection : public MtlCollection<T,I,punk<IDispatch>>
 {
 public:
+
+    DispCollection() {}
+
+    DispCollection(const GUID& libid, int major = 1, int minor = 0)
+        : MtlCollection<T,I,punk<IDispatch>>(libid,major,minor)
+    {}
 
     virtual HRESULT __stdcall Value(long index, IDispatch** value)
     {
@@ -290,6 +326,12 @@ public:
         std::cout << "MyLongCollection()" << std::endl;
     }
 
+    MyLongCollection(const GUID& libid, int major = 1, int minor = 0)
+        : LongCollection< MyLongCollection, ITestLongCollection>(libid,major,minor)
+    {
+        std::cout << "MyLongCollection()" << std::endl;
+    }
+
     ~MyLongCollection()
     {
         std::cout << "~MyLongCollection()" << std::endl;
@@ -298,6 +340,25 @@ public:
 
 };
 
+TEST_F(CollectionTest, testDispTypeLibLoading) {
+
+    try 
+    {
+        punk<ITypeLib> tl;
+        HR hr = ::LoadRegTypeLib(LIBID_ExampleLib,1,0,LOCALE_SYSTEM_DEFAULT,&tl);
+        EXPECT_EQ(S_OK,*hr);
+    }
+    catch (HRESULT hr)
+    {
+        EXPECT_EQ(S_OK,hr);
+        if (hr == DISP_E_MEMBERNOTFOUND)
+        {
+            std::cout << "        DISP_E_MEMBERNOTFOUND" << std::endl;
+        }
+        std::wstring errMsg = HR::msg(hr);
+        std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
+    }
+}
 
 TEST_F(CollectionTest, testcollection) {
 
@@ -373,3 +434,53 @@ TEST_F(CollectionTest, testDisp) {
         std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
     }
 }
+
+TEST_F(CollectionTest, testDispExplicitTypelib) {
+
+    try {
+        using namespace MTL;
+
+        punk<MyLongCollection> collection = MyLongCollection::create(LIBID_ExampleLib,1,0);
+        collection->Add(1);
+        collection->Add(2);
+        collection->Add(3);
+
+        punk<IDispatch> col(collection);
+        DISPPARAMS disp{ 0,0,0,0 };
+
+        long cnt = 0;
+        variant vResult;
+        //    HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        cnt = vResult.value_of<long>();
+        std::cout << cnt << std::endl;
+
+        EXPECT_EQ(3, cnt);
+
+        for (long i = 0; i < cnt; i++)
+        {
+            long val = 0;
+            variant v;
+            variant index(i);
+            DISPPARAMS disp{ 0,0,0,0 };
+            disp.cArgs = 1;
+            disp.rgvarg = &index;
+
+//            HR hr = col->Invoke(2, IID_NULL, 0, DISPATCH_METHOD, &disp, &v, 0, 0);
+            HR hr = col->Invoke(2, IID_NULL, 0, DISPATCH_METHOD, &disp, &v, 0, 0);
+            val = v.value_of<long>();
+            std::cout << val << std::endl;
+            EXPECT_EQ(i + 1, val);
+        }
+    }
+    catch (HRESULT hr)
+    {
+        if (hr == DISP_E_MEMBERNOTFOUND)
+        {
+            std::cout << "        DISP_E_MEMBERNOTFOUND" << std::endl;
+        }
+        std::wstring errMsg = HR::msg(hr);
+        std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
+    }
+}
+

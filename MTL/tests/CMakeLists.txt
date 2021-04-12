@@ -4,12 +4,26 @@
 cmake_minimum_required (VERSION 3.8)
 
 
+message("-----------------------------")
+message("${CMAKE_CURRENT_BINARY_DIR}/..")
+message("${PROJECT_BINARY_DIR}/..")
+message("-----------------------------")
 
 link_directories(${PROJECT_SOURCE_DIR}/lib/lib/)
 # Add source to this project's executable.
-add_executable (tests 
-	"test.cpp" 
- "variant.cpp" "collection.cpp" "test.rc")
+add_executable (tests )
+target_sources(tests PRIVATE "test.cpp" "variant.cpp" "collection.cpp" "test.rc" "test.manifest" "${CMAKE_CURRENT_BINARY_DIR}/GUIDS.c")
+
+ add_dependencies(tests
+ midl-cmplr
+ )
+
+
+target_link_libraries(tests gtestd )#gtest_maind)
+gtest_add_tests(TARGET      tests
+                TEST_SUFFIX .noArgs
+                TEST_LIST   noArgsTests
+)
 
 set(MIDL_OUTPUT
     ${CMAKE_CURRENT_BINARY_DIR}/IFace.h
@@ -30,9 +44,6 @@ add_custom_command(
 add_custom_target(midl-cmplr
     DEPENDS ${MIDL_OUTPUT}
     )
-add_dependencies(tests
-    midl-cmplr
-    )
 set_source_files_properties(
     ${MIDL_OUTPUT}
         PROPERTIES
@@ -41,16 +52,10 @@ set_source_files_properties(
 
 
 
-
-target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/lib/include")
-target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/MTL/include")
-target_include_directories(tests PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-
-target_link_libraries(tests gtestd )#gtest_maind)
-gtest_add_tests(TARGET      tests
-                TEST_SUFFIX .noArgs
-                TEST_LIST   noArgsTests
-)
+            target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/lib/include")
+            target_include_directories(tests PRIVATE "${PROJECT_SOURCE_DIR}/MTL/include")
+            target_include_directories(tests PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+            
 
 # TODO: Add tests and install targets if needed.
 
