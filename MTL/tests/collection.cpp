@@ -511,7 +511,7 @@ TEST_F(CollectionTest, testDispLookup) {
         long cnt = 0;
         variant vResult;
         //    HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
-        HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
         cnt = vResult.value_of<long>();
         std::cout << cnt << std::endl;
 
@@ -618,7 +618,7 @@ TEST_F(CollectionTest, testDispExplicitTypelib) {
         long cnt = 0;
         variant vResult;
         //    HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
-        HR hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
+        hr = col->Invoke(1, IID_NULL, 0, DISPATCH_PROPERTYGET, &disp, &vResult, 0, 0);
         cnt = vResult.value_of<long>();
         std::cout << cnt << std::endl;
 
@@ -698,7 +698,7 @@ public:
         ti->ReleaseTypeAttr(att);
     }
 
-    const Entry& operator[](const std::string& key) const
+    const Entry& operator[](const std::string& key)
     {
         return typeCache_[key];
     }
