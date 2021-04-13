@@ -373,3 +373,224 @@ TEST_F(CollectionTest, testDisp) {
         std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
     }
 }
+
+TEST_F(CollectionTest, testDispLookup) {
+
+    try 
+    {
+        punk<MyLongCollection> collection = MyLongCollection::create();
+        collection->Add(1);
+        collection->Add(2);
+        collection->Add(3);
+
+        punk<IDispatch> col(collection);
+
+        DISPID did_Count;
+        DISPID did_Item;
+        wchar_t* count = L"Count";
+        wchar_t* item = L"Item";
+        col->GetIDsOfNames(IID_NULL, &count, 1, LOCALE_SYSTEM_DEFAULT, &did_Count);
+        col->GetIDsOfNames(IID_NULL, &item, 1, LOCALE_SYSTEM_DEFAULT, &did_Item);
+
+        EXPECT_EQ(1, did_Count);
+        EXPECT_EQ(2, did_Item);
+
+        punk<ITypeInfo> ti;
+        HR hr = col->GetTypeInfo(1, LOCALE_SYSTEM_DEFAULT, &ti);
+
+        TYPEATTR* att = 0;
+        hr = ti->GetTypeAttr(&att);
+
+        std::cout << att->cVars << " " << att->cFuncs << std::endl;
+
+        EXPECT_EQ(0, att->cVars);
+
+        for (int i = 0; i < att->cVars; i++)
+        {
+           
+            VARDESC* vdesc = 0;
+            ti->GetVarDesc(i, &vdesc);
+
+            EXPECT_EQ(did_Count, vdesc->memid);
+
+            EXPECT_EQ(VT_I4,vdesc->elemdescVar.tdesc.vt);
+
+            ti->ReleaseVarDesc(vdesc);
+        }
+
+        EXPECT_EQ(9, att->cFuncs);
+        for (int i = 8; i < att->cFuncs; i++)
+        {
+            FUNCDESC* fdesc = 0;
+            ti->GetFuncDesc(i, &fdesc);
+
+            if (i == 7)
+            {
+                EXPECT_EQ(1, fdesc->memid);
+                EXPECT_EQ(VT_I4, fdesc->elemdescFunc.tdesc.vt);
+                EXPECT_EQ(INVOKE_PROPERTYGET, fdesc->invkind);
+            }
+            if (i == 8)
+            {
+                EXPECT_EQ(2, fdesc->memid);
+                EXPECT_EQ(VT_I4, fdesc->elemdescFunc.tdesc.vt);
+                EXPECT_EQ(INVOKE_FUNC, fdesc->invkind);
+            }
+            ti->ReleaseFuncDesc(fdesc);
+        }
+
+        ti->ReleaseTypeAttr(att);
+    }
+    catch (HRESULT hr)
+    {
+        if (hr == DISP_E_MEMBERNOTFOUND)
+        {
+            std::cout << "        DISP_E_MEMBERNOTFOUND" << std::endl;
+        }
+        std::wstring errMsg = HR::msg(hr);
+        std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
+    }
+}
+
+class TypeCache
+{
+public:
+    TypeCache()
+    {}
+
+    TypeCache(IDispatch* disp)
+    {
+        build(disp);
+    }
+
+    struct Entry
+    {
+        int memberId;
+        VARTYPE vt;
+        int inokeKind;
+    };
+
+    void build(IDispatch* disp)
+    {
+        punk<ITypeInfo> ti;
+        HR hr = disp->GetTypeInfo(1, LOCALE_SYSTEM_DEFAULT, &ti);
+
+        TYPEATTR* att = 0;
+        hr = ti->GetTypeAttr(&att);
+
+        for (int i = 7; i < att->cFuncs; i++)
+        {
+            FUNCDESC* fdesc = 0;
+            ti->GetFuncDesc(i, &fdesc);
+
+            bstr name;
+            ti->GetDocumentation(fdesc->memid, &name, 0, 0, 0);
+
+            typeCache_[name.to_string()] = Entry{
+                fdesc->memid,
+                fdesc->elemdescFunc.tdesc.vt,
+                fdesc->invkind
+            };
+
+            ti->ReleaseFuncDesc(fdesc);
+        }
+
+        ti->ReleaseTypeAttr(att);
+    }
+
+    const Entry& operator[](const std::string& key) const
+    {
+        return typeCache_[key];
+    }
+
+private:
+    std::map<std::string, Entry> typeCache_;
+};
+
+TEST_F(CollectionTest, walkDisp) {
+
+    try
+    {
+        punk<MyLongCollection> collection = MyLongCollection::create();
+        collection->Add(1);
+        collection->Add(2);
+        collection->Add(3);
+
+        punk<IDispatch> col(collection);
+
+        DISPID did_Count = 1;
+        DISPID did_Item = 2;
+
+        punk<ITypeInfo> ti;
+        HR hr = col->GetTypeInfo(1, LOCALE_SYSTEM_DEFAULT, &ti);
+
+        TYPEATTR* att = 0;
+        hr = ti->GetTypeAttr(&att);
+
+        std::cout << att->cVars << " " << att->cFuncs << std::endl;
+
+        EXPECT_EQ(0, att->cVars);
+
+        for (int i = 0; i < att->cVars; i++)
+        {
+
+            VARDESC* vdesc = 0;
+            ti->GetVarDesc(i, &vdesc);
+
+            EXPECT_EQ(did_Count, vdesc->memid);
+
+            EXPECT_EQ(VT_I4, vdesc->elemdescVar.tdesc.vt);
+
+            bstr name;
+            ti->GetDocumentation(vdesc->memid, &name, 0, 0, 0);
+
+            std::cout << "prop " << name.to_string() 
+                << " " << vdesc->elemdescVar.tdesc.vt 
+                << std::endl;
+
+            ti->ReleaseVarDesc(vdesc);
+        }
+
+        EXPECT_EQ(9, att->cFuncs);
+        for (int i = 7; i < att->cFuncs; i++)
+        {
+            FUNCDESC* fdesc = 0;
+            ti->GetFuncDesc(i, &fdesc);
+
+            if (i == 7)
+            {
+                EXPECT_EQ(1, fdesc->memid);
+                EXPECT_EQ(VT_I4, fdesc->elemdescFunc.tdesc.vt);
+                EXPECT_EQ(INVOKE_PROPERTYGET, fdesc->invkind);
+            }
+            if (i == 8)
+            {
+                EXPECT_EQ(2, fdesc->memid);
+                EXPECT_EQ(VT_I4, fdesc->elemdescFunc.tdesc.vt);
+                EXPECT_EQ(INVOKE_FUNC, fdesc->invkind);
+            }
+
+            bstr name;
+            ti->GetDocumentation(fdesc->memid, &name, 0, 0, 0);
+
+            std::cout << "func " << name.to_string() 
+                << " " << fdesc->elemdescFunc.tdesc.vt 
+                << " " << fdesc->invkind
+                << std::endl;
+
+
+            ti->ReleaseFuncDesc(fdesc);
+        }
+
+        ti->ReleaseTypeAttr(att);
+    }
+    catch (HRESULT hr)
+    {
+        if (hr == DISP_E_MEMBERNOTFOUND)
+        {
+            std::cout << "        DISP_E_MEMBERNOTFOUND" << std::endl;
+        }
+        std::wstring errMsg = HR::msg(hr);
+        std::cout << "HR: " << hr << " " << to_string(errMsg) << std::endl;
+    }
+}

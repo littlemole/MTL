@@ -171,6 +171,56 @@ TEST_F(BstrTest, assign_some_bstrs) {
     EXPECT_EQ(0, x);
 }
 
+/*
+template<class I>
+class strong_ptr;
+
+template<class I>
+class weak_ptr
+{
+    friend class strong_ptr<I>;
+public:
+    weak_ptr(const std::shared_ptr<MTL::punk<I>>& ptr)
+        : weak_(ptr)
+    {}
+
+    MTL::punk<I> lock()
+    {
+        auto sp = weak_.lock();
+        if (!sp) return MTL::punk<I>;
+        return (*sp);
+    }
+
+private:
+    std::weak_ptr<MTL::punk<I>> weak_;
+};
+
+template<class I>
+class strong_ptr
+{
+public:
+
+    strong_ptr(MTL::punk<I>& p)
+        : unknown( new MTL::punk<I>(p) )
+    {
+    }
+
+    ~strong_ptr()
+    {
+        //punk<I>& pun = (punk<I>&) * unknown;
+        //pun.release();
+    }
+
+    weak_ptr weak()
+    {
+        return weak_ptr(unknown);
+    }
+
+    std::shared_ptr<MTL::punk<I>> unknown;
+
+private:
+};
+*/
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
