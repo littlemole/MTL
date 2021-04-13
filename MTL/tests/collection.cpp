@@ -685,7 +685,7 @@ public:
 
             bstr name;
             ti->GetDocumentation(fdesc->memid, &name, 0, 0, 0);
-
+             
             typeCache_[name.to_string()] = Entry{
                 fdesc->memid,
                 fdesc->elemdescFunc.tdesc.vt,
