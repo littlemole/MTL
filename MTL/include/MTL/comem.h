@@ -75,7 +75,7 @@ public:
 		return size_;
 	}
 
-private:
+private: 
 
 	co_mem<T>& operator(const co_mem<T>& rhs) = delete;
 	co_mem<T>& operator(co_mem<T>&& rhs) = delete;

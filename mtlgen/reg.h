@@ -147,6 +147,7 @@ public:
                 std::cout << "@=\"{" << oleaut << "}\"" << std::endl;
                 std::cout << "[HKEY_CLASSES_ROOT\\Interface\\{" << iface.uuid << "}\\TypeLib]" << std::endl;
                 std::cout << "@=\"{" << lib.uuid << "}\"" << std::endl;
+                std::cout << "Version=\"{" << lib.version << "}\"" << std::endl;
             }
 
             std::cout << std::endl;

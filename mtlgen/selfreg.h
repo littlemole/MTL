@@ -185,6 +185,18 @@ public:
                     });
             }
 
+            if(iface.typelib)
+            {
+                entries.push_back({
+                    string_format("Interface\\{%s}\\TypeLib", iface.uuid.c_str()),
+                    "",  string_format("{%s}", lib.uuid.c_str() )
+                    });
+                entries.push_back({
+                    string_format("Interface\\{%s}\\TypeLib", iface.uuid.c_str()),
+                    "Version",  string_format("%s", lib.version.c_str() )
+                    });
+            }
+
             std::cout << std::endl;
         }
 
