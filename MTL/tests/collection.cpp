@@ -804,7 +804,8 @@ TEST_F(CollectionTest, testMsgBoxWin32)
         {
             DWORD id = ::GetCurrentThreadId();
             std::cout << "quit from " << tid << " on " << id << std::endl;
-            ::PostThreadMessage(mainThreadId,WM_QUIT,0,0);
+            //::PostThreadMessage(mainThreadId,WM_QUIT,0,0);
+            ::PostQuitMessage(0);
         });
     };
 

@@ -9,7 +9,7 @@ class BstrTest : public ::testing::Test {
 protected:
     // You can remove any or all of the following functions if their bodies would
     // be empty.
-
+ 
     BstrTest() {
         // You can do set-up work for each test here.
     }
