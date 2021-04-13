@@ -41,4 +41,4 @@ add_custom_command(
 )
 
 add_custom_target(autopack ALL DEPENDS "${CMAKE_BINARY_DIR}/_CPack_Packages.txt")
-add_dependencies(autopack MTL mtlgen)
+add_dependencies(autopack MTL mtlgen tests)
