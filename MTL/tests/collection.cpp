@@ -13,6 +13,7 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <ShlObj.h>
 
 using namespace MTL;
 
@@ -1331,4 +1332,31 @@ TEST_F(CollectionTest, testBindings)
     TestClass t;
     t.bind();
     t.sync();
+}
+
+
+
+TEST_F(CollectionTest, testBrowseFolder)
+{
+    WCHAR szDir[MAX_PATH];
+    //HWND hWnd;
+    BROWSEINFO bInfo;
+    bInfo.hwndOwner = NULL;
+    bInfo.pidlRoot = NULL; 
+    bInfo.pszDisplayName = szDir; // Address of a buffer to receive the display name of the folder selected by the user
+    bInfo.lpszTitle = L"Please, select a folder"; // Title of the dialog
+    bInfo.ulFlags = BIF_RETURNONLYFSDIRS|BIF_NEWDIALOGSTYLE   ;
+    bInfo.lpfn = NULL;
+    bInfo.lParam = 0;
+    bInfo.iImage = -1;
+/*
+    LPITEMIDLIST lpItem = ::SHBrowseForFolder( &bInfo);
+    if( lpItem != NULL )
+    {
+        ::SHGetPathFromIDList(lpItem, szDir );
+        ::CoTaskMemFree(lpItem);
+
+        std::wcout << szDir << std::endl;
+    }
+    */
 }
