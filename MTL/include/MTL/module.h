@@ -104,6 +104,7 @@ namespace MTL {
 		return com;
 	}
 
+	/*
 	inline int run_message_loop()
 	{
 		MSG msg;
@@ -127,5 +128,6 @@ namespace MTL {
 
 		return (int)msg.wParam;
 	}
+	*/
 } // end namespace MTL
 

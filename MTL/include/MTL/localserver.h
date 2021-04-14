@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MTL/obj.h"
+#include "MTL/box.h"
 #include <iostream>
 
 namespace MTL {
@@ -88,7 +89,7 @@ namespace MTL {
 
 		int run()
 		{
-			return run_message_loop();
+			return ui_thread().run();
 		}
 
 	private:

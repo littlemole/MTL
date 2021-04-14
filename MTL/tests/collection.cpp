@@ -6,6 +6,7 @@
 #include "MTL/variant.h"
 #include "MTL/sf_array.h"
 #include "MTL/punk.h"
+#include "MTL/box.h"
 #include <string>
 #include <sstream>
 #include <deque>
@@ -672,6 +673,8 @@ public:
 
     void build(IDispatch* disp)
     {
+        typeCache_.clear();
+
         punk<ITypeInfo> ti;
         HR hr = disp->GetTypeInfo(1, LOCALE_SYSTEM_DEFAULT, &ti);
 
@@ -942,152 +945,7 @@ TEST_F(CollectionTest, testMsgBox) {
 
 }
 
-class MsgBoxWin32
-{
-public:
-
-    MsgBoxWin32() 
-    {
-        event_ = ::CreateEvent(NULL,FALSE,FALSE,NULL);
-    }
-
-    ~MsgBoxWin32() 
-    {
-        ::CloseHandle(event_);
-    }
-
-    using task_t = std::function<void()>;
-
-    void submit(const task_t& t)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        queue_.push_back(t);
-        ::SetEvent(event_);
-    }
-
-    void operator()(const task_t& t)
-    {
-        submit(t);
-    }
-
-    bool empty() const
-    {
-        const std::lock_guard<std::mutex> lock(mutex_);
-        return queue_.empty();
-    }
-
-    bool wait(int ms = INFINITE)
-    {
-        HANDLE handles = event_;
-        while (true)
-        {
-            DWORD r = ::WaitForMultipleObjectsEx(1,&handles,FALSE,ms,TRUE);
-            if (r == WAIT_IO_COMPLETION)
-            {
-                continue;
-            }
-            if( r == WAIT_OBJECT_0 )
-            {
-                return true;
-            }
-            if(r == WAIT_TIMEOUT || r == WAIT_FAILED)
-            {
-                break;
-            }
-        }
-        return false;
-    }
-
-    int run()
-    {
-        MSG msg;
-        while (true)
-        {
-            HANDLE handles = event_;
-            DWORD r = ::MsgWaitForMultipleObjectsEx(1, &handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE | MWMO_ALERTABLE);
-            if (r == WAIT_IO_COMPLETION)
-            {
-                continue;
-            }
-
-            if( r == WAIT_OBJECT_0 )
-            {
-                pull();
-                continue;
-            }
-
-            if (!::GetMessage(&msg, 0, 0, 0))
-            {
-                break;
-            }
-
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
-        }       
-
-        return (int)msg.wParam;
-    }
-
-private:
-
-    bool pull()
-    {
-        if(empty())
-        {
-            return false;
-        }
-
-        try 
-        {
-            task_t t = pop();    
-            t();
-        }   
-        catch(...)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    task_t pop()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if(queue_.empty()) throw "queue is empty";
-        
-        task_t result = queue_.front();
-        queue_.pop_front();
-        return result;
-    }
-
-    mutable std::mutex mutex_;
-    std::deque<task_t> queue_;
-    HANDLE event_;
-};
-
-inline void sleep(int ms = 20) 
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));        
-}
-
-
-inline MsgBoxWin32& ui_thread()
-{
-    static MsgBoxWin32 uithread;
-    return uithread;
-}
-
-inline void ui_thread( const std::function<void()>& fun)
-{
-    ui_thread().submit(fun);
-}
-
-inline void task( const std::function<void()>& fun)
-{
-    std::thread t(fun);
-    t.detach();
-}
-
+/*
 TEST_F(CollectionTest, testMsgBoxWin32) 
 {
     DWORD mainThreadId = ::GetCurrentThreadId();
@@ -1111,8 +969,8 @@ TEST_F(CollectionTest, testMsgBoxWin32)
         {
             DWORD id = ::GetCurrentThreadId();
             std::cout << "quit from " << tid << " on " << id << std::endl;
-            //::PostThreadMessage(mainThreadId,WM_QUIT,0,0);
-            ::PostQuitMessage(0);
+            ::PostThreadMessage(mainThreadId,WM_QUIT,0,0);
+            //::PostQuitMessage(0);
         });
     };
 
@@ -1121,7 +979,7 @@ TEST_F(CollectionTest, testMsgBoxWin32)
 
     int r = ui_thread().run();
 }
-
+*/
 
 TEST_F(CollectionTest, testMsgBoxWin32NoLoop) 
 {
@@ -1155,3 +1013,45 @@ TEST_F(CollectionTest, testMsgBoxWin32NoLoop)
 
     int r = ui_thread().wait(1000);
 }
+
+
+TEST_F(CollectionTest, testMsgBoxWin32StopThreadBox)
+{
+    DWORD mainThreadId = ::GetCurrentThreadId();
+
+    auto worker = [mainThreadId]()
+    {
+        DWORD tid = ::GetCurrentThreadId();
+
+        while (!ui_thread().stopped())
+        {
+            std::cout << "sleep " << tid  << std::endl;
+            ui_thread([tid]()
+            {
+                DWORD id = ::GetCurrentThreadId();
+                std::cout << "from " << tid << " on " << id << std::endl;
+            });
+            sleep(30);
+        }
+        std::cout << "stop thread " << tid << std::endl;
+    };
+
+    auto timer = [mainThreadId]()
+    {
+        DWORD tid = ::GetCurrentThreadId();
+
+        std::cout << "start timer " << tid << std::endl;
+        sleep(200);
+        std::cout << "awake timer " << tid << std::endl;
+        ui_thread().stop();
+        std::cout << "stop timer thread " << tid << std::endl;
+    };
+
+    task(worker);
+    task(worker);
+    task(timer);
+
+    int r = ui_thread().run();
+    std::cout << "loop ended" << std::endl;
+}
+
