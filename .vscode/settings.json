@@ -67,7 +67,15 @@
         "mutex": "cpp",
         "chrono": "cpp",
         "ratio": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "any": "cpp",
+        "array": "cpp",
+        "locale": "cpp",
+        "optional": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp",
+        "xlocbuf": "cpp",
+        "xlocmes": "cpp"
     }
 
 }

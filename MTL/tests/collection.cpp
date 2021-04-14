@@ -1055,3 +1055,280 @@ TEST_F(CollectionTest, testMsgBoxWin32StopThreadBox)
     std::cout << "loop ended" << std::endl;
 }
 
+class Dlg;
+
+
+template<int ID, class T>
+class Bind
+{
+public:
+    int id = ID;
+    T val_;
+    Dlg* dlg = nullptr;
+
+    Bind()
+    {}
+
+    Bind(const T& t)
+        : val_(t)
+    {}
+
+    void value(const T& t);
+    T& value();
+
+    T& operator*()
+    {
+        return value();
+    }
+
+    Bind& operator=(const T& rhs)
+    {
+        value(rhs);
+        return *this;
+    }
+};
+
+template<int ID>
+void dlg_bind( Bind<ID,bool>& b)
+{
+    if(!b.dlg) return;
+    bool x = b.val_;
+    std::cout << "bind(bool) x = " << x << std::endl;
+}
+
+template<int ID>
+void dlg_bind( Bind<ID,int>& b)
+{
+    if(!b.dlg) return;
+    int y = b.val_;
+    std::cout << "bind(int) y = " << y << std::endl;
+}
+
+template<int ID>
+void dlg_bind( Bind<ID,std::wstring>& b)
+{
+    if(!b.dlg) return;
+    std::wstring z = b.val_;
+    std::wcout << L"bind(str) z = " << z << std::endl;
+}
+
+template<int ID>
+void dlg_bind( Bind<ID,std::vector<std::wstring>>& b)
+{
+    if(!b.dlg) return;
+    auto v = b.val_;
+    std::wcout << L"bind(vector<str>) v = ";
+    for( auto& i : v) std::wcout << i << L" ";
+    std::wcout << std::endl;
+}
+
+/*
+inline void dlg_bind( ) {}
+
+template<class T, class ... Args>
+void dlg_bind(  T t, Args ... args)
+{
+    dlg_bind(t);
+    dlg_bind(args...);
+}
+*/
+template<int ID>
+void dlg_sync( Bind<ID,bool>& b)
+{
+    if(!b.dlg) return;
+    b.val_ = false;
+    std::cout << "dlg_sync(bool) x = " << b.val_ << std::endl;
+}
+
+template<int ID>
+void dlg_sync(  Bind<ID,int>& b)
+{
+    if(!b.dlg) return;
+    b.val_ = 23;
+    std::cout << "dlg_sync(int) y = " << b.val_ << std::endl;
+}
+
+template<int ID>
+void dlg_sync(  Bind<ID,std::wstring>& b)
+{
+    if(!b.dlg) return;
+    b.val_ = L"changed string";
+    std::wcout << L"dlg_sync(str) z = " << b.val_ << std::endl;
+}
+
+template<int ID>
+void dlg_sync(  Bind<ID,std::vector<std::wstring>>& b)
+{
+    if(!b.dlg) return;
+    b.val_ = { L"1", L"2", L"3" };
+    std::wcout << L"dlg_sync(vector<str>) v = ";
+    for( auto& i : b.val_) std::wcout << i << L" ";
+    std::wcout << std::endl;
+}
+
+template<int I, class T>
+void Bind<I,T>::value(const T& t)
+{
+    val_ = t;
+    if(!dlg) return;
+    dlg_bind(*this);
+}
+
+template<int I, class T>
+T& Bind<I,T>::value()
+{
+    if(!dlg) return val_;
+    dlg_sync(*this);
+    return val_;
+}
+
+class Binding
+{
+public:
+    virtual ~Binding() {}
+
+    virtual void bind(Dlg& dlg) = 0;
+    virtual void sync() = 0;
+};
+
+template<class ... Args>
+class Bindings : public Binding
+{
+public:
+
+    std::tuple<Args&...> bound;
+
+    template<class ... Args>
+    Bindings(Args& ... args)
+        : bound( args ... )
+    {}
+
+    void bind(Dlg& dlg) override
+    {
+        bind(dlg,bound);
+    }
+
+    void sync() override
+    {
+        sync(bound);
+    }
+
+private:
+
+    template<std::size_t I = 0, typename... Tp>
+    typename std::enable_if<I == sizeof...(Tp), void>::type bind(Dlg& dlg, std::tuple<Tp...>& t)
+    {}
+
+    template<std::size_t I = 0, typename... Tp>
+    typename std::enable_if<I < sizeof...(Tp), void>::type bind(Dlg& dlg, std::tuple<Tp...>& t)
+    {
+        auto& b = std::get<I>(t);
+        b.dlg = &dlg;
+        dlg_bind(b);
+
+        bind<I + 1, Tp...>(dlg,t);
+    }
+
+    template<std::size_t I = 0, typename... Tp>
+    typename std::enable_if<I == sizeof...(Tp), void>::type sync(std::tuple<Tp...>& t)
+    {}
+
+    template<std::size_t I = 0, typename... Tp>
+    typename std::enable_if<I < sizeof...(Tp), void>::type sync( std::tuple<Tp...>& t)
+    {
+        auto& b = std::get<I>(t);
+        dlg_sync(b);
+
+        sync<I + 1, Tp...>(t);
+    }
+
+};
+
+class Binder
+{
+public:
+
+    Binder(Dlg* dlg)
+        : dlg_(*dlg)//, binding_( new Bindings<Args...>(args...) )
+    {}
+
+/*    template<class ... Args>
+    Binder(Args& ... args)
+        : binding_( new Bindings<Args...>(args...) )
+    {}
+*/
+
+    template<class ... Args>
+    Binder& operator()(Args&... args)
+    {        
+        binding_ = std::unique_ptr<Binding>(new Bindings<Args...>(args...));
+        return *this;
+    }
+
+    void bind()
+    {
+        binding_->bind(dlg_);
+    }
+
+    void sync()
+    {
+        binding_->sync();
+    }
+
+private:
+    Binder(const Binder& rhs) = delete;
+    Binder& operator=(const Binder& rhs) = delete;
+
+    Dlg&                     dlg_;
+    std::unique_ptr<Binding> binding_;
+};
+
+class Dlg
+{
+public:    
+protected:
+
+    Binder binding;
+
+    Dlg()
+        : binding(this)
+    {}
+};
+
+class TestClass : public Dlg
+{
+public:
+
+    Bind<1,int> intVal = 23;
+    Bind<2,bool> boolVal = true;
+    Bind<3,std::wstring> strVal = L"a wstring";
+    Bind<4,std::vector<std::wstring>> vecVal = {{ L"One", L"Two", L"Three"}};
+
+    //Binder binder;
+
+    TestClass()
+    //    : intVal(42), boolVal(true), strVal(L"a string"), vecVal({ L"One", L"Two", L"Three"})
+      //    binder(this)
+//        binder(intVal,boolVal,strVal)
+    {
+        intVal = 42;
+        binding(intVal,boolVal,strVal,vecVal );
+    }
+
+    void bind()
+    {
+        binding.bind();
+    }
+
+    void sync()
+    {
+        binding.sync();
+    }
+};
+
+TEST_F(CollectionTest, testBindings)
+{
+    TestClass t;
+    t.bind();
+    t.sync();
+}
