@@ -566,7 +566,7 @@ namespace MTL {
 		{
 			::VariantInit(this);
 			vt = VT_BSTR;
-			bstrVal = ::SysAllocString(MTL::to_wstring(c, cp).c_str());
+			bstrVal = ::SysAllocString(MTL::to_wstring(c,(int)strlen(c), cp).c_str());
 		}
 
 		template<size_t N>

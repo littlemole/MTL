@@ -31,7 +31,7 @@ namespace MTL {
 					__uuidof(T),
 					(IUnknown*)&classObject,
 					CLSCTX_LOCAL_SERVER,
-					REGCLS_MULTIPLEUSE,
+					REGCLS_MULTIPLEUSE | REGCLS_SUSPENDED,
 					&cookie
 				);
 
@@ -61,8 +61,6 @@ namespace MTL {
 	public:
 		local_server()
 		{
-			::CoInitialize(0);
-
 			DWORD mainThreadId = ::GetCurrentThreadId();
 
 			comModule().onUnLoad = [mainThreadId]() {
@@ -83,8 +81,6 @@ namespace MTL {
 				HRESULT hr = ::CoRevokeClassObject(cookie);
 				if (hr != S_OK) exit(1);
 			}
-
-			::CoUninitialize();
 		}
 
 		int run()
@@ -114,7 +110,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,				\
 {															\
 	UNREFERENCED_PARAMETER(hPrevInstance);					\
 	UNREFERENCED_PARAMETER(lpCmdLine);						\
-															\
+	STA enter;												\
 	MTL::local_server<__VA_ARGS__> server;					\
 	int r = server.run();									\
 															\
@@ -134,6 +130,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,				\
 {															\
 	UNREFERENCED_PARAMETER(hPrevInstance);					\
 	UNREFERENCED_PARAMETER(lpCmdLine);						\
+	STA enter;												\
 															\
 	std::wstring cli(lpCmdLine);							\
 	if( cli.find(L"/RegServer") != std::string::npos ||		\

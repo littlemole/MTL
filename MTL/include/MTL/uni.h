@@ -99,7 +99,7 @@ namespace MTL {
 		return to_string(in.c_str(), (int)in.size(), cp);
 	}
 
-	inline std::wstring to_wstring(const char* str, int nchars = .1, long cp = CP_UTF8)
+	inline std::wstring to_wstring(const char* str, int nchars = -1, long cp = CP_UTF8)
 	{
 		int len = ::MultiByteToWideChar(cp, 0, str, nchars, 0, 0);
 		wbuff buf(len);

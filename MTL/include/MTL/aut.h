@@ -60,7 +60,7 @@ namespace MTL {
 		}
 		
 		template<class ...Args>
-		variant invoke(Args ... args)
+		variant invoke(Args&& ... args)
 		{
 			std::vector<variant> params_{ variant(args)... };
 
@@ -88,6 +88,8 @@ namespace MTL {
 		variant put(variant v)
 		{
 			DISPPARAMS dp{ 0, 0,0,0 };
+			DISPID dPutID = DISPID_PROPERTYPUT;
+			dp.rgdispidNamedArgs = &dPutID;
 			dp.cArgs = 1;
 			dp.rgvarg = &v;
 

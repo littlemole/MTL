@@ -83,11 +83,14 @@ class MtlCollection : public dispatch<T(I)>
 public:
 
     MtlCollection()
-    {}
+    {
+        load_typelib();
+    }
 
     MtlCollection(const GUID& libid, int major = 1, int minor = 0)
-        : dispatch<T(I)>(libid,major,minor)
-    {}
+    {
+        load_typelib(libid, major, minor);
+    }
 
 
     static punk<T> create()
@@ -993,7 +996,7 @@ TEST_F(CollectionTest, testMsgBoxWin32NoLoop)
         for( int i = 0; i < 10; i++)
         {
             sleep(30);
-            ui_thread( [tid]()
+            on_ui_thread( [tid]()
             {
                 DWORD id = ::GetCurrentThreadId();
                 std::cout << "from " << tid << " on " << id << std::endl;
@@ -1001,7 +1004,7 @@ TEST_F(CollectionTest, testMsgBoxWin32NoLoop)
         }
 
         sleep(30);
-        ui_thread( [tid,mainThreadId]()
+        on_ui_thread( [tid,mainThreadId]()
         {
             DWORD id = ::GetCurrentThreadId();
             std::cout << "quit from " << tid << " on " << id << std::endl;
@@ -1027,7 +1030,7 @@ TEST_F(CollectionTest, testMsgBoxWin32StopThreadBox)
         while (!ui_thread().stopped())
         {
             std::cout << "sleep " << tid  << std::endl;
-            ui_thread([tid]()
+            on_ui_thread([tid]()
             {
                 DWORD id = ::GetCurrentThreadId();
                 std::cout << "from " << tid << " on " << id << std::endl;
@@ -1359,4 +1362,11 @@ TEST_F(CollectionTest, testBrowseFolder)
         std::wcout << szDir << std::endl;
     }
     */
+}
+
+
+
+TEST_F(CollectionTest, testWith)
+{
+
 }

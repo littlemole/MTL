@@ -215,13 +215,12 @@ namespace MTL {
                 if (S_OK != hr)
                 {
                     interface_ = 0;
-                    throw hr;
                 }
             }
         }
 
         template<class T>
-        explicit punk(const punk<T>& rhs)
+         punk(const punk<T>& rhs)
         {
             interface_ = 0;
             if (rhs.interface_)
@@ -230,13 +229,12 @@ namespace MTL {
                 if (S_OK != hr)
                 {
                     interface_ = 0;
-                    throw hr;
                 }
             }
         }
 
         template<class T>
-        explicit punk(punk<T>&& rhs)
+         punk(punk<T>&& rhs)
         {
             if (rhs.interface_)
             {
@@ -245,7 +243,7 @@ namespace MTL {
                 if (S_OK != hr)
                 {
                     interface_ = 0;
-                    throw hr;
+                    return;
                 }
                 rhs.interface_->Release;
                 rhs.interface_ = 0;
@@ -305,6 +303,10 @@ namespace MTL {
         I** operator&()                                      { return &interface_; }
         operator bool() const                                { return (interface_ != 0); }
         bool operator!() const                               { return (interface_ == 0); }
+        punk<I>* addressOf()
+        {
+            return this;
+        }
 
         punk& operator=(I* p)
         {

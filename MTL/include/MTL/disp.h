@@ -48,9 +48,122 @@ namespace MTL {
 #endif
 	}
 
+	template<class T>
+	class Dispatch;
 
+	template<class T, class I>
+	class Dispatch<T(I)> : public I
+	{
+	public:
+		void load_typelib()
+		{
+			std::wstring selfPath = pathToSelf();
+			HRESULT hr = ::LoadTypeLibEx(selfPath.c_str(), REGKIND_NONE, &typeLib_);
+			if (hr == S_OK)
+			{
+				hr = typeLib_->GetTypeInfoOfGuid(__uuidof(I), &typeInfo_);
+			}
+			if (hr != S_OK)
+			{
+				exit(1);
+			}
+		}
 
+		void load_typelib(const CLSID& libid, int major = 1, int minor = 0)
+		{
+			HRESULT hr = ::LoadRegTypeLib(libid, major, minor, LOCALE_SYSTEM_DEFAULT, &typeLib_);
+			if (hr == S_OK)
+			{
+				hr = typeLib_->GetTypeInfoOfGuid(__uuidof(I), &typeInfo_);
+			}
+			if (hr != S_OK)
+			{
+				exit(1);
+			}
+		}
 
+		~Dispatch()
+		{
+			if (typeInfo_)
+			{
+				typeInfo_->Release();
+			}
+			if (typeLib_)
+			{
+				typeLib_->Release();
+			}
+		}
+
+		virtual HRESULT __stdcall GetTypeInfoCount(UINT* pctinfo) override
+		{
+			if (!pctinfo)
+				return E_INVALIDARG;
+			*pctinfo = 1;
+			return S_OK;
+		}
+		virtual HRESULT __stdcall GetTypeInfo(UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo) override
+		{
+			if (!ppTInfo)
+				return E_INVALIDARG;
+
+			*ppTInfo = 0;
+
+			return typeInfo_->QueryInterface(IID_ITypeInfo, (void**)ppTInfo);
+		}
+		virtual HRESULT __stdcall GetIDsOfNames(REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId) override
+		{
+			return ::DispGetIDsOfNames(typeInfo_, rgszNames, cNames, rgDispId);
+		}
+		virtual HRESULT __stdcall Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr) override
+		{
+			HRESULT hr = ::DispInvoke(this, typeInfo_, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+			return hr;
+		}
+
+		virtual HRESULT __stdcall GetClassInfo(ITypeInfo** ppTI)
+		{
+			if (typeLib_)
+			{
+				return typeLib_->GetTypeInfoOfGuid(__uuidof(T), ppTI);
+			}
+			return E_FAIL;
+		}
+
+	protected:
+		std::atomic<long> refCnt_;
+
+		ITypeLib* typeLib_ = nullptr;
+		ITypeInfo* typeInfo_ = nullptr;
+
+	};
+
+	namespace details
+	{
+		template<class T, class I, class ... Args>
+		class interfaces<T(Dispatch<T(I)>, Args...)>
+		{
+		public:
+
+			static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
+			{
+				if (::IsEqualGUID(riid, IID_IDispatch))
+				{
+					*ppvObject = (IDispatch*)(I*)(that);
+					that->AddRef();
+					return S_OK;
+				}
+
+				if (::IsEqualGUID(riid, __uuidof(I)))
+				{
+					*ppvObject = (I*)(that);
+					that->AddRef();
+					return S_OK;
+				}
+
+				return interfaces<T(Args...)>::QueryInterface(that, riid, ppvObject);
+			}
+		};
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// specialization with support for IDispatch
@@ -59,6 +172,7 @@ namespace MTL {
 	// .rc file
 	//////////////////////////////////////////////////////////////////////////////
 
+	/*
 	template<class T, class I, class ... Args>
 	class implements<dispatch_object<T>(I, Args...)> : public implements<T(of<I,IDispatch>,I, IProvideClassInfo,Args...)> // public details::derives<void(I, Args...)>
 	{
@@ -147,7 +261,7 @@ namespace MTL {
 		ITypeInfo* typeInfo_ = nullptr;
 	};
 
-
+	*/
 	//////////////////////////////////////////////////////////////////////////////
 	// syntactic sugar to avoid typing
 	//////////////////////////////////////////////////////////////////////////////
@@ -155,6 +269,34 @@ namespace MTL {
 	template<class T>
 	class dispatch;
 
+	template<class T, class I, class ... Args>
+	class dispatch < T(I, Args...)> : public implements<T(Dispatch<T(I)>, Args...)>
+	{
+	public:
+		dispatch() {}
+		/*
+		dispatch(const CLSID& libid, int major = 1, int minor = 0)
+			: implements<T(Dispatch<T(I)>, Args...)>(libid, major, minor)
+		{}
+		*/
+	};
+
+	template<class T>
+	class stack_disp;
+
+	template<class T, class I, class ... Args>
+	class stack_disp<T(I, Args...)> : public implements<stack_object<T>(Dispatch<T(I)>, Args...)>
+	{
+	public:
+		stack_disp() {}
+		/*
+		stack_disp(const CLSID& libid, int major = 1, int minor = 0)
+			: implements<dispatch_object<stack_object<T>>(I, Args...)>(libid, major, minor)
+		{}
+		*/
+	};
+
+	/*
 	template<class T, class I, class ... Args>
 	class dispatch < T(I, Args...)> : public implements<dispatch_object<T>(I, Args...)>
 	{
@@ -177,7 +319,7 @@ namespace MTL {
 			: implements<dispatch_object<stack_object<T>>(I, Args...)>(libid,major,minor)
 		{}
 	};
-
+	*/
 
 
 } // end namespace MTL
