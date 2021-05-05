@@ -7,6 +7,7 @@
 #include "MTL/sf_array.h"
 #include "MTL/punk.h"
 #include "MTL/box.h"
+#include "MTL/path.h"
 #include <string>
 #include <sstream>
 #include <deque>
@@ -1359,4 +1360,14 @@ TEST_F(CollectionTest, testBrowseFolder)
         std::wcout << szDir << std::endl;
     }
     */
+}
+
+TEST_F(CollectionTest, testPath)
+{
+    Path path(L"C:\\temp\test.txt");
+    EXPECT_STREQ( L".txt", path.ext().c_str());
+
+    path = Path(L"C://temp/test.txt");
+    EXPECT_STREQ( L".txt", path.ext().c_str());
+
 }

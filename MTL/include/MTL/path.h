@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <string>
+#include <sstream>
 #include "MTL/uni.h"
  
 namespace MTL {
@@ -11,13 +12,30 @@ class Path
 {
 public:
 
-    Path();
+    Path() {};
     Path(const std::wstring& p):path_(p) {}
-    ~Path();
+    ~Path() {};
 
     Path(const Path& rhs)
-        : path_(rhs.path_)
+        : path_(canonicalize(rhs.path_))
     {}
+
+    static std::wstring canonicalize(const std::wstring& p)
+    {
+        std::wostringstream oss;
+        for(auto& i : p)
+        {
+            if(i == L'/')
+            {
+                oss << L'\\';
+            }
+            else
+            {
+                oss << i;
+            }
+        }
+        return oss.str();
+    }
 
     const Path operator=(const Path& rhs) const
     {
@@ -136,8 +154,8 @@ public:
     {
         std::wstring p(path_);
         if ( p.size() > 0 )
-            if ( p[p.size()-1] != _T('\\') )
-                p += _T("\\");
+            if ( p[p.size()-1] != L'\\' )
+                p += L"\\";
         return p;        
     }
     
