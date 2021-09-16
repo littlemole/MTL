@@ -35,3 +35,11 @@ build/
 *.exe
 *.out
 *.app
+
+*.user
+*.filters
+
+Debug/
+Release/
+x64/
+

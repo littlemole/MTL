@@ -1,0 +1,102 @@
+//
+// Example.idl 
+//
+import "oaidl.idl"; 
+[
+object, dual, oleautomation,
+uuid(a03d1420-b1ec-11d0-8c3a-00c04fc31d2f),
+] interface ITestLongCollection : IDispatch
+{
+    [id(1),propget]
+    HRESULT Count([out,retval] long* cnt);
+
+    [id(2)]
+    HRESULT Item([in] long index, [out,retval] long* cnt);
+
+    [id(DISPID_NEWENUM)]
+    HRESULT _Enum([out, retval] IEnumVARIANT** enumerator);
+
+};
+
+[
+object, dual, oleautomation,
+uuid(B555296F-D09B-4A4E-A148-E0715394A525),
+] interface ISubObject : IDispatch
+{
+    [id(1), propget]
+    HRESULT Name([out, retval] BSTR* cnt);
+    [id(1), propput]
+    HRESULT Name([in] BSTR cnt);
+
+    [id(2), propget]
+    HRESULT Value([out, retval] VARIANT* cnt);
+    [id(2), propput]
+    HRESULT Value([in] VARIANT cnt);
+
+};
+
+[
+object, dual, oleautomation,
+uuid(FE795DAE-119A-4141-96D3-F1DEDB5B2259),
+] interface ITestObject : IDispatch
+{
+    [id(1), propget]
+    HRESULT Value([out, retval] long* cnt);
+    [id(1), propput]
+    HRESULT Value([in] long cnt);
+
+    [id(2), propget]
+    HRESULT Desc([out, retval] BSTR* cnt);
+    [id(2), propput]
+    HRESULT Desc([in] BSTR cnt);
+
+    [id(3), propget]
+    HRESULT Type([out, retval] VARIANT* cnt);
+    [id(3), propput]
+    HRESULT Type([in] VARIANT cnt);
+
+    [id(4), propget]
+    HRESULT Object([out, retval] IDispatch** cnt);
+    [id(4), propput]
+    HRESULT Object([in] IDispatch* cnt);
+
+};
+ 
+[
+uuid(a03d1423-b1ec-11d0-8c3a-00c04fc31d2f),
+version(1.0),
+helpstring("Example Type Library"),
+] library ExampleLib
+{
+
+    importlib("stdole32.tlb");
+
+    [
+     uuid(a03d1424-b1ec-11d0-8c3a-00c04fc31d2f),
+     helpstring("Breakfast Component Class")
+    ] 
+    coclass MyLongCollection
+    {
+        [default]interface ITestLongCollection;
+    }; 
+
+    [
+        uuid(BA446D99-6A2F-4DE2-B644-101033A0250E),
+        helpstring("other Breakfast Component Class")
+    ]
+    coclass TestObject
+    {
+        [default] interface ITestObject;
+    };
+
+    [
+        uuid(C40BFA01-0FE0-4E55-8399-DE862BE9F4CB),
+        helpstring("other subobject Breakfast Component Class")
+    ]
+    coclass SubObject
+    {
+        [default] interface ISubObject;
+    };
+
+}; 
+//end library def

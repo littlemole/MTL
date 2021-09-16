@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="amd64" publicKeyToken="6595b64144ccf1df" language="*"/>
+    </dependentAssembly>
+  </dependency>
+<file name="mtl.exe">
+     <typelib
+        tlbid="{a03d1423-b1ec-11d0-8c3a-00c04fc31d2f}"
+        version="1.0"
+        helpdir=""/>
+ </file>
+<!--
+ <comInterfaceExternalProxyStub 
+  name="ITestLongCollection" 
+    iid="{a03d1420-b1ec-11d0-8c3a-00c04fc31d2f}" 
+    tlbid="{a03d1423-b1ec-11d0-8c3a-00c04fc31d2f}"
+  />
+-->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>
