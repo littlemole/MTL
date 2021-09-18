@@ -1,17 +1,17 @@
 #pragma once
 
-#include <MTL/win/wind.h>
+#include <mtl/win/wind.h>
 
 
-namespace MTL {
+namespace mtl {
 
-    class Icon
+    class icon
     {
     public:
-        Icon()
+        icon()
         {}
 
-        ~Icon()
+        ~icon()
         {
             if (hIcon)
             {
@@ -19,20 +19,20 @@ namespace MTL {
             }
         }
 
-        Icon(HICON icon)
+        icon(HICON icon)
             : hIcon(icon)
         {}
 
-        Icon(const Icon& rhs) = delete;
-        Icon& operator=(const Icon& rhs) = delete;
+        icon(const icon& rhs) = delete;
+        icon& operator=(const icon& rhs) = delete;
 
-        Icon(Icon&& rhs)
+        icon(icon&& rhs)
             : hIcon(rhs.hIcon)
         {
             rhs.hIcon = nullptr;
         }
 
-        Icon& operator=(Icon&& rhs)
+        icon& operator=(icon&& rhs)
         {
             if (hIcon == rhs.hIcon) return *this;
             if (hIcon)
@@ -44,7 +44,7 @@ namespace MTL {
             return *this;
         }
 
-        Icon& operator=(HICON icon)
+        icon& operator=(HICON icon)
         {
             if (hIcon == icon) return *this;
             if (hIcon)
@@ -65,29 +65,29 @@ namespace MTL {
         HICON hIcon = nullptr;
     };
 
-    class Brush
+    class brush
     {
     public:
-        Brush()
+        brush()
         {
             hbr_ = ::CreateSolidBrush(RGB(0,0,0));
         }
 
-        Brush(COLORREF col)
+        brush(COLORREF col)
         {
             hbr_ = ::CreateSolidBrush(col);
         }
 
-        Brush(const Brush& rhs) = delete;
-        Brush(Brush&& rhs)
+        brush(const brush& rhs) = delete;
+        brush(brush&& rhs)
             : hbr_(rhs.hbr_)
         {
             rhs.hbr_ = nullptr;
         }
 
-        Brush& operator=(const Brush& rhs) = delete;
+        brush& operator=(const brush& rhs) = delete;
 
-        Brush& operator=(Brush&& rhs)
+        brush& operator=(brush&& rhs)
         {
             if (hbr_ == rhs.hbr_)
             {
@@ -98,7 +98,7 @@ namespace MTL {
             return *this;
         }
 
-        ~Brush()
+        ~brush()
         {
             ::DeleteObject(hbr_);
         }
@@ -128,32 +128,32 @@ namespace MTL {
             obList_.clear();
         }
 
-        int setBkMode(int i)                       { return ::SetBkMode(hdc_, i); }
-        int fillRect(const RECT& r, HBRUSH hbr)     { return ::FillRect(hdc_, &r, hbr); }
-        int frameRect(const RECT& r, HBRUSH hbr)    { return ::FrameRect(hdc_, &r, hbr); }
-        COLORREF setBkColor(COLORREF crColor)       { return ::SetBkColor(hdc_, crColor); }
-        COLORREF setTextColor(COLORREF crColor)     { return ::SetTextColor(hdc_, crColor); }
-        BOOL textOut(int x, int y, std::wstring t)  { return ::TextOut(hdc_, x, y, t.c_str(), (int)t.size()); }
-        BOOL extTextOut(int x, int y, std::wstring t, RECT& r, UINT options = ETO_CLIPPED | ETO_OPAQUE)
+        int set_bk_mode(int i)                       { return ::SetBkMode(hdc_, i); }
+        int fill_rect(const RECT& r, HBRUSH hbr)     { return ::FillRect(hdc_, &r, hbr); }
+        int frame_rect(const RECT& r, HBRUSH hbr)    { return ::FrameRect(hdc_, &r, hbr); }
+        COLORREF set_bk_color(COLORREF crColor)       { return ::SetBkColor(hdc_, crColor); }
+        COLORREF set_text_color(COLORREF crColor)     { return ::SetTextColor(hdc_, crColor); }
+        BOOL text_oOu(int x, int y, std::wstring t)  { return ::TextOut(hdc_, x, y, t.c_str(), (int)t.size()); }
+        BOOL ext_text_out(int x, int y, std::wstring t, RECT& r, UINT options = ETO_CLIPPED | ETO_OPAQUE)
         {
             return ::ExtTextOut(hdc_, x, y, options, &r, t.c_str(), (UINT)t.size(), 0);
         }
 
         void save()                                 { ::SaveDC(hdc_); }
-        void setWindowOrgEx(int x = 0, int y = 0)   { ::SetWindowOrgEx(hdc_, x, y, NULL); }
-        void setWindowExtEx(int x = 0, int y = 0)   { ::SetWindowExtEx(hdc_, x, y, NULL); }
+        void set_window_org(int x = 0, int y = 0)   { ::SetWindowOrgEx(hdc_, x, y, NULL); }
+        void set_window_ext(int x = 0, int y = 0)   { ::SetWindowExtEx(hdc_, x, y, NULL); }
 
         void restore(int i = -1)                    { ::RestoreDC(hdc_, i); }
 
-        void drawText( const wchar_t* txt, RECT& r, int flags = DT_LEFT)
+        void draw_text( const wchar_t* txt, RECT& r, int flags = DT_LEFT)
         {
             ::DrawText(hdc_, txt, -1, &r, flags);
         }
 
-        void bitBlit(HBITMAP bitmap, int x, int y, int flags = SRCCOPY);
-        void stretchBlit(HBITMAP bitmap, int x, int y, int w, int h, int flags = SRCCOPY);
-        void transparentBlit(HBITMAP bmp, int x, int y, int w, int h, COLORREF transparent = RGB(0, 0, 0));
-        void alphaBlend(HBITMAP bmp, int x, int y, int w, int h, int alpha = 0xff );
+        void bit_blit(HBITMAP bitmap, int x, int y, int flags = SRCCOPY);
+        void stretch_blit(HBITMAP bitmap, int x, int y, int w, int h, int flags = SRCCOPY);
+        void transparent_blit(HBITMAP bmp, int x, int y, int w, int h, COLORREF transparent = RGB(0, 0, 0));
+        void alpha_blend(HBITMAP bmp, int x, int y, int w, int h, int alpha = 0xff );
 
 
         HGDIOBJ select(HGDIOBJ obj)
@@ -173,16 +173,16 @@ namespace MTL {
     };
 
 
-    class PaintDC 
+    class paint_dc 
     {
     public:
-        PaintDC(HWND hwnd)
+        paint_dc(HWND hwnd)
             : hWnd_(hwnd)
         {
             hdc_ = ::BeginPaint(hWnd_, &ps_);
         }
 
-        ~PaintDC()
+        ~paint_dc()
         {
             ::EndPaint(hWnd_, &ps_);
         }
@@ -199,20 +199,20 @@ namespace MTL {
     };
 
 
-    class DC 
+    class dc 
     {
     public:
-        DC() : hWnd_(::GetDesktopWindow()) 
+        dc() : hWnd_(::GetDesktopWindow())
         { 
             hdc_ = ::GetDC(hWnd_); 
         }
 
-        DC(HWND hwnd) :hWnd_(hwnd) 
+        dc(HWND hwnd) :hWnd_(hwnd)
         { 
             hdc_ = ::GetDC(hWnd_); 
         }
 
-        ~DC() 
+        ~dc()
         {  
             ::ReleaseDC(hWnd_, hdc_); 
         }
@@ -227,11 +227,11 @@ namespace MTL {
         HDC             hdc_;
     };
 
-    class CompatibleDC
+    class compatible_dc
     {
     public:
 
-        CompatibleDC(HDC hdc = nullptr) 
+        compatible_dc(HDC hdc = nullptr)
         { 
             if (hdc)
             {
@@ -239,12 +239,12 @@ namespace MTL {
             }
             else
             {
-                DC desktopDC;
+                dc desktopDC;
                 hdc_ = ::CreateCompatibleDC(*desktopDC);
             }
         }
 
-        ~CompatibleDC() 
+        ~compatible_dc()
         { 
             ::DeleteDC(hdc_); 
         }
@@ -258,10 +258,10 @@ namespace MTL {
         HDC             hdc_;
     };
 
-    class MetaDC
+    class meta_dc
     {
     public:
-        MetaDC() 
+        meta_dc()
         { 
             create();
         }
@@ -291,10 +291,10 @@ namespace MTL {
         HDC             hdc_ = nullptr;
     };
 
-    inline void dc_view::bitBlit(HBITMAP bitmap, int x, int y, int flags )
+    inline void dc_view::bit_blit(HBITMAP bitmap, int x, int y, int flags )
     {
-        MTL::CompatibleDC cdc;
-        MTL::dc_view dcv(*cdc);
+        compatible_dc cdc;
+        dc_view dcv(*cdc);
         dcv.select(bitmap);
 
         BITMAP bm;
@@ -302,10 +302,10 @@ namespace MTL {
         ::BitBlt(hdc_, x, y, bm.bmWidth, bm.bmHeight, *cdc, 0, 0, flags);
     }
 
-    inline void dc_view::stretchBlit(HBITMAP bitmap, int x, int y, int w, int h, int flags)
+    inline void dc_view::stretch_blit(HBITMAP bitmap, int x, int y, int w, int h, int flags)
     {
-        MTL::CompatibleDC cdc;
-        MTL::dc_view dcv(*cdc);
+        compatible_dc cdc;
+        dc_view dcv(*cdc);
         dcv.select(bitmap);
 
         BITMAP bm;
@@ -313,11 +313,11 @@ namespace MTL {
         ::StretchBlt(hdc_, x, y, w, h, *cdc, 0, 0, bm.bmWidth, bm.bmHeight, flags);
     }
 
-    inline void dc_view::transparentBlit(HBITMAP bitmap, int x, int y, int w, int h, COLORREF transparent)
+    inline void dc_view::transparent_blit(HBITMAP bitmap, int x, int y, int w, int h, COLORREF transparent)
     {
-        MTL::CompatibleDC cdc;
-        MTL::dc_view dcv(*cdc);
-        dcv.setBkMode(TRANSPARENT);
+        compatible_dc cdc;
+        dc_view dcv(*cdc);
+        dcv.set_bk_mode(TRANSPARENT);
         dcv.select(bitmap);
 
         BITMAP bm;
@@ -326,7 +326,7 @@ namespace MTL {
         ::TransparentBlt( hdc_, x, y, w, h, *cdc, 0, 0, bm.bmWidth, bm.bmHeight, transparent);
     }
 
-    inline void dc_view::alphaBlend(HBITMAP bmp, int x, int y, int w, int h, int alpha)
+    inline void dc_view::alpha_blend(HBITMAP bmp, int x, int y, int w, int h, int alpha)
     {
         BLENDFUNCTION bf;
         bf.BlendOp = AC_SRC_OVER;
@@ -337,56 +337,56 @@ namespace MTL {
         BITMAP bm;
         ::GetObject(bmp, sizeof(bm), &bm);
 
-        DC desktopDC;
-        CompatibleDC cdcs(*desktopDC);
-        MTL::dc_view dcvs(*cdcs);
+        dc desktopDC;
+        compatible_dc cdcs(*desktopDC);
+        dc_view dcvs(*cdcs);
         dcvs.select(bmp);
 
         ::AlphaBlend(hdc_, x, y, w, h, *dcvs, 0, 0, bm.bmWidth, bm.bmHeight, bf);
     }
 
-    class FontDesc
+    class font_desc
     {
     public:
 
-        FontDesc()
+        font_desc()
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
         }
 
-        FontDesc(const std::wstring& font, int size)
+        font_desc(const std::wstring& font, int size)
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
             wcsncpy_s(logfont_.lfFaceName, font.c_str(), font.size()+1);
             logfont_.lfHeight = size;
         }
 
-        FontDesc(HFONT hfont)
+        font_desc(HFONT hfont)
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
             ::GetObject(hfont, sizeof(LOGFONT), (void*)&logfont_);
         }
 
-        FontDesc(LOGFONT* font)
+        font_desc(LOGFONT* font)
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
             memcpy(&logfont_, font, sizeof(LOGFONT));
         }
 
-        FontDesc(const FontDesc& rhs)
+        font_desc(const font_desc& rhs)
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
             memcpy(&logfont_, &rhs.logfont_, sizeof(LOGFONT));
         }
 
-        FontDesc(FontDesc&& rhs)
+        font_desc(font_desc&& rhs)
         {
             ::ZeroMemory((void*)&logfont_, sizeof(LOGFONT));
             memcpy(&logfont_, &rhs.logfont_, sizeof(LOGFONT));
             ::ZeroMemory((void*)&rhs.logfont_, sizeof(LOGFONT));
         }
 
-        FontDesc& operator=(const FontDesc& rhs)
+        font_desc& operator=(const font_desc& rhs)
         {
             if (this == &rhs)
             {
@@ -399,7 +399,7 @@ namespace MTL {
             return *this;
         }
 
-        FontDesc& operator=(FontDesc&& rhs)
+        font_desc& operator=(font_desc&& rhs)
         {
             if (this == &rhs)
             {
@@ -461,9 +461,9 @@ namespace MTL {
             return ::CreateFontIndirect(font());
         }
 
-        MTL::FontDesc scale(int iDpi)
+        font_desc scale(int iDpi)
         {
-            MTL::FontDesc fd(*this);
+            font_desc fd(*this);
             fd.font()->lfHeight = -::MulDiv(logfont_.lfHeight, iDpi, 96);
             return fd;
         }
@@ -473,17 +473,17 @@ namespace MTL {
     };
 
 
-    class Font
+    class font
     {
     public:
-        Font()
+        font()
         {}
 
-        Font(HFONT font)
+        font(HFONT font)
             : font_(font)
         {}
 
-        ~Font()
+        ~font()
         {
             if (font_)
             {
@@ -491,13 +491,13 @@ namespace MTL {
             }
         }
 
-        Font(Font&& rhs)
+        font(font&& rhs)
             : font_(rhs.font_)
         {
             rhs.font_ = nullptr;
         }
 
-        Font& operator=(Font&& rhs)
+        font& operator=(font&& rhs)
         {
             if (font_ == rhs.font_)
             {
@@ -517,7 +517,7 @@ namespace MTL {
             return font_;
         }
 
-        Font& operator=(HFONT rhs)
+        font& operator=(HFONT rhs)
         {
             if (font_)
             {
@@ -529,13 +529,13 @@ namespace MTL {
 
     private:
 
-        Font(const Font& rhs) = delete;
-        Font& operator=(const Font& rhs) = delete;
+        font(const font& rhs) = delete;
+        font& operator=(const font& rhs) = delete;
 
         HFONT font_ = nullptr;
     };
 
-class MenuItem : public OwnerDrawn
+class menu_item : public owner_drawn
 {
 public:
     int id = -1;
@@ -544,17 +544,17 @@ public:
     bool checked = false;
     HMENU subMenu = nullptr;
     HBITMAP bitmap = nullptr;
-    std::shared_ptr<ColorTheme> theme;
+    std::shared_ptr<color_theme> theme;
     HMENU parent = nullptr;
 
-    MenuItem() {}
+    menu_item() {}
 
-    MenuItem( int i, const std::wstring& l, bool e, bool c, HMENU m, HBITMAP b)
+    menu_item( int i, const std::wstring& l, bool e, bool c, HMENU m, HBITMAP b)
         : id(i), label(l), enabled(e), checked(c), subMenu(m), bitmap(b)
     {}
 
-    virtual LRESULT wmDrawItem(LPDRAWITEMSTRUCT dis) override;
-    virtual LRESULT wmMeasureItem(MEASUREITEMSTRUCT* mis) override;
+    virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) override;
+    virtual LRESULT wm_measure_item(MEASUREITEMSTRUCT* mis) override;
 
     void check(bool status)
     {
@@ -611,27 +611,27 @@ public:
     }
 };
 
-    class Menu
+    class menu
     {
-    friend class MenuBuilder;
+    friend class menu_builder;
     public:
 
-        std::vector<std::shared_ptr<MenuItem>> items;
-        std::map<int, Menu> subMenus;
+        std::vector<std::shared_ptr<menu_item>> items;
+        std::map<int, menu> subMenus;
 
-        Menu()
+        menu()
         {}
 
-        Menu(HMENU hmenu, bool attached = false)
+        menu(HMENU hmenu, bool attached = false)
             : hMenu_(hmenu), attached_(attached)
         {}
 
-        Menu(int id)
+        menu(int id)
         { 
-            hMenu_ = ::LoadMenu(MTL::module_instance(), MAKEINTRESOURCE(id));
+            hMenu_ = ::LoadMenu(mtl::module_instance(), MAKEINTRESOURCE(id));
         }
 
-        Menu(const Menu& rhs)
+        menu(const menu& rhs)
             : attached_(false), 
               hMenu_(rhs.hMenu_),
               colorTheme_(rhs.colorTheme_),
@@ -639,7 +639,7 @@ public:
               subMenus(rhs.subMenus)
         {}
 
-        Menu(Menu&& rhs)
+        menu(menu&& rhs)
             : attached_(rhs.attached_), 
               hMenu_(rhs.hMenu_),
               colorTheme_(rhs.colorTheme_),
@@ -659,7 +659,7 @@ public:
             hMenu_ = ::CreateMenu();
         }
 
-        void createPopUp()
+        void create_popup()
         {
             if (hMenu_ && attached_)
             {
@@ -669,21 +669,21 @@ public:
             hMenu_ = ::CreatePopupMenu();
         }
 
-        void hookColorTheme(std::shared_ptr<ColorTheme>& ct)
+        void hook_color_theme(std::shared_ptr<color_theme>& ct)
         {
             colorTheme_.reset();
             colorThemeToken_ = ct->onUpdate([this]() { this->update(); });
         }
 
-        Menu submenu(int pos)
+        menu submenu(int pos)
         {
             HMENU m = ::GetSubMenu(hMenu_, pos);
-            return Menu(m, false);
+            return menu(m, false);
         }
 
-        MenuItem& item(int id)
+        menu_item& item(int id)
         {
-            static MenuItem empty;
+            static menu_item empty;
 
             for (auto& it : items)
             {
@@ -699,14 +699,14 @@ public:
                 {
                     return empty;
                 }
-                MenuItem& mi = sm.second.item(id);
+                menu_item& mi = sm.second.item(id);
                 if (mi.id != -1) return mi;
             }
 
             return empty;
         }
 
-        void forEach(std::function<void(MenuItem&)> visitor)
+        void forEach(std::function<void(menu_item&)> visitor)
         {
             for (auto& it : items)
             {
@@ -714,28 +714,28 @@ public:
             }
         }
 
-        void update(MenuItem& item)
+        void update(menu_item& item)
         {
             if (item.subMenu)
             {
-                Menu subMenu = subMenus[item.id];
+                menu subMenu = subMenus[item.id];
 
-                Menu menu;
-                menu.subMenus = subMenu.subMenus;
-                menu.items = subMenu.items;
-                menu.createPopUp();
-                menu.colorTheme_ = subMenu.colorTheme_;
+                menu men;
+                men.subMenus = subMenu.subMenus;
+                men.items = subMenu.items;
+                men.create_popup();
+                men.colorTheme_ = subMenu.colorTheme_;
 
                 for (auto& smItem : subMenu.items)
                 {
-                    menu.update(*smItem);
+                    men.update(*smItem);
                 }
 
-                item.subMenu = *menu;
-                menu.detach();
-                subMenus[item.id] = std::move(menu);
+                item.subMenu = *men;
+                men.detach();
+                subMenus[item.id] = std::move(men);
             }
-            auto smi = std::make_shared<MenuItem>(item.id, item.label, item.enabled, item.checked, item.subMenu, item.bitmap);
+            auto smi = std::make_shared<menu_item>(item.id, item.label, item.enabled, item.checked, item.subMenu, item.bitmap);
             add(smi);
         }
 
@@ -753,19 +753,19 @@ public:
             }
         }
 
-        std::shared_ptr<ColorTheme> colorTheme()
+        std::shared_ptr<color_theme> theme()
         {
             return colorTheme_;
         }
 
-        Menu subMenu(int id)
+        menu sub_menu(int id)
         {
             MENUITEMINFO mii;
             ::ZeroMemory(&mii, sizeof(mii));
             mii.cbSize = sizeof(mii);
             mii.fMask = MIIM_SUBMENU;
             ::GetMenuItemInfo(hMenu_, id, FALSE, &mii);
-            return Menu(mii.hSubMenu, false);
+            return menu(mii.hSubMenu, false);
         }
 
         int id(int pos)
@@ -773,7 +773,7 @@ public:
             return ::GetMenuItemID(hMenu_, pos);
         }
 
-        void add(std::shared_ptr<MenuItem> item)
+        void add(std::shared_ptr<menu_item> item)
         {
             int cnt = ::GetMenuItemCount(hMenu_);
 
@@ -797,7 +797,7 @@ public:
             mii.cbSize = sizeof(mii);
             mii.wID = item->id;
             mii.fState = MFS_ENABLED;
-            std::shared_ptr<MenuItem> it = items[cnt];
+            std::shared_ptr<menu_item> it = items[cnt];
             mii.dwItemData = (ULONG_PTR) it.get();
 
             if (colorTheme_ && colorTheme_->enabled())
@@ -840,7 +840,7 @@ public:
             }
         }
 
-        void addBitmap(int pos, HBITMAP bmp)
+        void add_bitmap(int pos, HBITMAP bmp)
         {
             MENUITEMINFO mii;
             ::ZeroMemory(&mii, sizeof(mii));
@@ -858,7 +858,7 @@ public:
             // return ::GetMenuItemCount(hMenu_);
         }
 
-        ~Menu()
+        ~menu()
         {
             if (hMenu_ && attached_)
             {
@@ -876,7 +876,7 @@ public:
             }
         }
 
-        int trackPopUp(HWND wnd, int flags = TPM_LEFTALIGN | TPM_RETURNCMD)
+        int track_popup(HWND wnd, int flags = TPM_LEFTALIGN | TPM_RETURNCMD)
         {
             flags |= TPM_RETURNCMD;
             POINT pt;
@@ -885,7 +885,7 @@ public:
             return cmd;
         }
 
-        void popUp(HWND wnd, int flags = TPM_LEFTALIGN)
+        void popup(HWND wnd, int flags = TPM_LEFTALIGN)
         {
             POINT pt;
             ::GetCursorPos(&pt);
@@ -908,7 +908,7 @@ public:
         }
 
 
-        Menu& operator=(const Menu& rhs)
+        menu& operator=(const menu& rhs)
         {
             if (this == &rhs)
             {
@@ -928,7 +928,7 @@ public:
             return *this;
         }
 
-        Menu& operator=(Menu&& rhs)
+        menu& operator=(menu&& rhs)
         {
             if (this == &rhs)
             {
@@ -950,42 +950,42 @@ public:
         }
 
     private:
-        std::shared_ptr<ColorTheme> colorTheme_;
+        std::shared_ptr<color_theme> colorTheme_;
         HMENU hMenu_ = nullptr;
         bool attached_ = true;
         std::wstring colorThemeToken_;
     };
 
-    inline LRESULT MenuItem::wmDrawItem(LPDRAWITEMSTRUCT dis)
+    inline LRESULT menu_item::wm_draw_item(LPDRAWITEMSTRUCT dis)
     {
-        MTL::dc_view dcv(dis->hDC);
+        dc_view dcv(dis->hDC);
         dcv.select(theme->font());
 
-        MTL::MenuItem* item = (MTL::MenuItem*)(dis->itemData);
+        menu_item* item = (menu_item*)(dis->itemData);
         auto theme = item->theme;
 
         if ((dis->itemAction & ODA_SELECT) && (dis->itemState & ODS_SELECTED))
         {
-            dcv.fillRect(dis->rcItem, theme->selectedBkgBrush());
+            dcv.fill_rect(dis->rcItem, theme->selected_bkg_brush());
         }
         else
         {
-            dcv.fillRect(dis->rcItem, theme->bkgBrush());
+            dcv.fill_rect(dis->rcItem, theme->bkg_brush());
         }
 
         int x = dis->rcItem.left + theme->padding();
         int y = dis->rcItem.top + theme->padding();
 
-        COLORREF bkg = theme->bkgColor();
-        COLORREF txt = theme->textColor();
+        COLORREF bkg = theme->bkg_color();
+        COLORREF txt = theme->text_color();
         if ((dis->itemAction & ODA_SELECT) && (dis->itemState & ODS_SELECTED))
         {
-            bkg = theme->selectedBkgColor();
-            txt = theme->selectedTextColor();
+            bkg = theme->selected_bkg_color();
+            txt = theme->selected_text_color();
         }
 
-        COLORREF oldBkg = dcv.setBkColor(bkg);
-        COLORREF oldTxt = dcv.setTextColor(txt);
+        COLORREF oldBkg = dcv.set_bk_color(bkg);
+        COLORREF oldTxt = dcv.set_text_color(txt);
 
         int bmw = 0;
         int bmh = 0;
@@ -995,8 +995,8 @@ public:
             ::GetObject(item->bitmap, sizeof(bmp), &bmp);
             bmw = bmp.bmWidth;
             bmh = bmp.bmHeight;
-            dcv.setBkMode(TRANSPARENT);
-            dcv.alphaBlend(item->bitmap, x, y, bmp.bmWidth, bmp.bmHeight, 0xff);
+            dcv.set_bk_mode(TRANSPARENT);
+            dcv.alpha_blend(item->bitmap, x, y, bmp.bmWidth, bmp.bmHeight, 0xff);
             x += bmp.bmWidth;
         }
 
@@ -1009,7 +1009,7 @@ public:
         r.left += x;
 
         y = r.top + (((r.bottom - r.top) - size.cy) / 2);
-        dcv.extTextOut(x, y, item->label.c_str(), r, ETO_OPAQUE);
+        dcv.ext_text_out(x, y, item->label.c_str(), r, ETO_OPAQUE);
 
         if (item->checked)
         {
@@ -1018,23 +1018,23 @@ public:
             r.top += item->theme->padding();
             r.right = r.left + bmw +2;
             r.bottom = r.top + bmh +2;
-            dcv.frameRect(r, item->theme->selectedBkgBrush());
+            dcv.frame_rect(r, item->theme->selected_bkg_brush());
         }
 
-        dcv.setBkColor(oldBkg);
-        dcv.setTextColor(oldTxt);
+        dcv.set_bk_color(oldBkg);
+        dcv.set_text_color(oldTxt);
 
         return TRUE;
     }
 
-    inline LRESULT MenuItem::wmMeasureItem(MEASUREITEMSTRUCT* mis)
+    inline LRESULT menu_item::wm_measure_item(MEASUREITEMSTRUCT* mis)
     {
-        MTL::DC dc(::GetDesktopWindow());
-        MTL::dc_view dcv(*dc);
+        mtl::dc dc(::GetDesktopWindow());
+        dc_view dcv(*dc);
 
         dcv.select(theme->font());
 
-        MTL::MenuItem* item = (MTL::MenuItem*)(mis->itemData);
+        menu_item* item = (menu_item*)(mis->itemData);
         auto theme = item->theme;
 
         SIZE size = { 0,0 };

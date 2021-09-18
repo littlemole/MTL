@@ -1,13 +1,13 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
+#include <mtl/punk.h>
+#include <mtl/win32/uni.h>
+#include <mtl/win32/module.h>
 #include <objbase.h>
 #include <string>
-#include <MTL/punk.h>
-#include <MTL/win32/uni.h>
-#include <MTL/win32/module.h>
 
-namespace MTL {
+namespace mtl {
 
     template<class T>
     inline HRESULT CoRunLocalServer(const std::wstring& server, const CLSID& clsid, T** t, int clsctx = CLSCTX_ALL)
@@ -27,7 +27,7 @@ namespace MTL {
         PROCESS_INFORMATION pi;
         ::ZeroMemory(&pi, sizeof(pi));
 
-        std::wstring dir = pathToSelfDirectory();
+        std::wstring dir = path_to_self_directory();
         std::wstring self = dir;
         self += L"\\";
         self += server;
@@ -51,10 +51,10 @@ namespace MTL {
                 cnt += 20;
 
                 punk<T> pun;
-                HRESULT hr = pun.createObject(clsid, clsctx);
+                HRESULT hr = pun.create_object(clsid, clsctx);
                 if (hr == S_OK)
                 {
-                    return pun.queryInterface(t);
+                    return pun.query_interface(t);
                 }
             }
             return E_FAIL;

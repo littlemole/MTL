@@ -1,28 +1,30 @@
 #pragma once
 
-#include "MTL/sdk.h"
-#include "MTL/punk.h"
-#include "MTL/win32/uni.h"
+#include "mtl/sdk.h"
+#include "mtl/punk.h"
+#include "mtl/win32/uni.h"
+
+#include <pathcch.h>
+
 #include <sstream>
 #include <iostream>
-#include <pathcch.h>
  
-namespace MTL {
+namespace mtl {
 
  
-class Path
+class path
 {
 public:
 
-    Path() {};
-    Path(const std::wstring& p):path_(canonicalize(p)) {}
-    ~Path() {};
+    path() {};
+    path(const std::wstring& p):path_(canonicalize(p)) {}
+    ~path() {};
 
-    Path(const Path& rhs)
+    path(const path& rhs)
         : path_(canonicalize(rhs.path_))
     {}
 
-    Path absolute()
+    path absolute()
     {
         DWORD retval = 0;
         wbuff buf(MAX_PATH);
@@ -33,22 +35,22 @@ public:
         }
         else
         {
-            return Path(buf.toString());
+            return path(buf.toString());
         }
     }
 
-    bool isAbsolute()
+    bool is_absolute()
     {
         if (path_.empty())
             return false;
 
-        if (isUNC())
+        if (is_unc())
             return true;
 
-        if (isNetDrive())
+        if (is_net_drive())
             return true;
 
-        if (hasRoot())
+        if (has_root())
             return true;
 
         return false;
@@ -76,7 +78,7 @@ public:
             wbuff buf(MAX_PATH);
             DWORD len = ::GetCurrentDirectoryW(MAX_PATH, buf);
             std::wstring cwd = std::wstring(buf, len);
-            p = Path(cwd).parentDir().str() + std::wstring(L"\\") + p.substr(1);
+            p = path(cwd).parent_dir().str() + std::wstring(L"\\") + p.substr(1);
         }
 
         std::wostringstream oss;
@@ -133,7 +135,7 @@ public:
 
 	std::wstring ext() const
     {
-        std::wstring p = *removeBackSlash();
+        std::wstring p = *remove_backslash();
 	    size_t pos = p.find_last_of( L".");
 	    if ( (pos != std::wstring::npos) && (pos < p.size()-1) )
 		    return p.substr(pos);
@@ -142,7 +144,7 @@ public:
 
     std::wstring filename() const
     {
-        std::wstring p = *removeBackSlash();
+        std::wstring p = *remove_backslash();
         size_t pos = p.find_last_of(L"/\\");
         if ( (pos != std::wstring::npos) && (pos < p.size()-2) )
             p = p.substr(pos+1);
@@ -153,16 +155,16 @@ public:
         return p;        
     }
 
-	const Path path() const
+	const path get_path() const
     {
-        std::wstring p = *removeBackSlash();
+        std::wstring p = *remove_backslash();
         size_t pos = p.find_last_of(L"/\\");
         if ( (pos != std::wstring::npos) && (pos < p.size()-2) )
             return p.substr(0,pos);
         return p;        
     }
 
-	const Path stripRoot() const
+	const path strip_root() const
     {
         size_t pos = path_.find_first_of(L"/\\");
         std::wstring path = path_;
@@ -176,7 +178,7 @@ public:
         return path;	
     }
 
-    const Path stripToRoot() const
+    const path strip_to_root() const
     {
         std::wstring path = path_;
         size_t pos = path.find(L":\\\\");
@@ -224,7 +226,7 @@ public:
         return path;
     }
 
-    const Path addBackSlash() const
+    const path add_backslash() const
     {
         std::wstring p(path_);
         if ( p.size() > 0 )
@@ -233,7 +235,7 @@ public:
         return p;        
     }
     
-    const Path removeBackSlash() const
+    const path remove_backslash() const
     {
         std::wstring p(path_);
         if ( p.size() > 0 )
@@ -242,7 +244,7 @@ public:
         return p;        
     }
 
-    const Path addExtension(const std::wstring& extension) const
+    const path add_extension(const std::wstring& extension) const
     {
         std::wstring p(path_);
         if ( ext() == L"" )
@@ -250,7 +252,7 @@ public:
         return p; 
     }
 
-    const Path renameExtension(const std::wstring& extension) const
+    const path rename_extension(const std::wstring& extension) const
     {
         std::wstring p(path_);
         if ( ext() == L"" )
@@ -261,9 +263,9 @@ public:
         return p;
     }
 
-    const Path append(const std::wstring& ap) const
+    const path append(const std::wstring& ap) const
     {
-        std::wstring ret = *addBackSlash();
+        std::wstring ret = *add_backslash();
         std::wstring a(ap);
         if ( a[0] == L'\\' )
             a = a.substr(1);
@@ -281,12 +283,12 @@ public:
         return (attributes != INVALID_FILE_ATTRIBUTES);
     }
 
-	bool isDir() const
+	bool is_dir() const
     {
         if ( path_.empty() )
             return false;
 
-        if ( isUNC() ) 
+        if ( is_unc() ) 
         {
             std::wstring tmp = path_.substr(2);
             size_t p = tmp.find_first_of( L"/\\" );
@@ -308,25 +310,25 @@ public:
         return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
-    bool hasRoot() const
+    bool has_root() const
     {
-        std::wstring p = *stripToRoot();
+        std::wstring p = *strip_to_root();
         if ( p == path_ )
             return true;
         return false;
     }
 	
-    bool isUNC() const
+    bool is_unc() const
     {
         return path_.substr(0,2) == L"\\\\";
     }
 
-	bool isNetDrive() const 
+	bool is_net_drive() const 
     {
         return DRIVE_REMOTE == ::GetDriveTypeW(path_.c_str());
     }
 
-	const Path parentDir() const 
+	const path parent_dir() const
     {
         std::wstring ret = path_;
 
@@ -346,17 +348,17 @@ public:
         return ret;
     }
 
-	std::wstring serviceName() const
+	std::wstring service_name() const
     {
-        if ( isUNC() )
+        if ( is_unc() )
         {
             return path_.substr(0,path_.find( L'/',3));
         }
 
         std::wstring remotename;
-        Path p = stripToRoot().removeBackSlash();
+        path p = strip_to_root().remove_backslash();
 
-        if ( p.isNetDrive() )
+        if ( p.is_net_drive() )
         {	
             DWORD len = 0;
             ::WNetGetConnectionW(p.str().c_str(), 0, &len);
@@ -376,7 +378,7 @@ public:
     {
         std::wstring ws;
 
-        if ( isUNC() )
+        if ( is_unc() )
             ws = L"\\\\?\\UNC\\" + path_.substr(2);
         else
             ws = L"\\\\?\\" + path_;

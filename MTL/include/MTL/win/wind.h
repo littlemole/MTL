@@ -1,12 +1,14 @@
 #pragma once
 
-#include "MTL/win/wc.h"
-#include "MTL/win32/uni.h"
-#include <set>
+#include "mtl/win/wc.h"
+#include "mtl/win32/uni.h"
+
 #include <commdlg.h>
 #include <commctrl.h>
 
-namespace MTL {
+#include <set>
+
+namespace mtl {
 
     inline UINT WmLayout()
     {
@@ -14,7 +16,7 @@ namespace MTL {
         return wmLayout;
     }
 
-#define WM_LAYOUT ::MTL::WmLayout()
+#define WM_LAYOUT ::mtl::WmLayout()
 
     inline UINT WmReflect()
     {
@@ -22,7 +24,7 @@ namespace MTL {
         return wmReflect;
     }
 
-#define WM_REFLECT ::MTL::WmReflect()
+#define WM_REFLECT ::mtl::WmReflect()
 
     inline UINT WmSearch()
     {
@@ -30,9 +32,9 @@ namespace MTL {
         return wmSearch;
     }
 
-#define WM_SEARCH  ::MTL::WmSearch()
+#define WM_SEARCH  ::mtl::WmSearch()
 
-    class ColorTheme
+    class color_theme
     {
     protected:
 
@@ -46,9 +48,9 @@ namespace MTL {
 
     public:
 
-        MTL::Event<void()> onUpdate;
+        event<void()> onUpdate;
 
-        ColorTheme(HFONT hFont, COLORREF text, COLORREF bkg, COLORREF selText, COLORREF selBkg)
+        color_theme(HFONT hFont, COLORREF text, COLORREF bkg, COLORREF selText, COLORREF selBkg)
             : font_(hFont),
             textColor_(text),
             bkgColor_(bkg),
@@ -63,25 +65,25 @@ namespace MTL {
 
         bool enabled() { return enabled_; }
         HFONT font() { return font_; }
-        COLORREF textColor() { return textColor_; }
-        COLORREF bkgColor() { return bkgColor_; }
-        COLORREF selectedTextColor() { return selectedTextColor_; }
-        COLORREF selectedBkgColor() { return selectedBkgColor_; }
+        COLORREF text_color() { return textColor_; }
+        COLORREF bkg_color() { return bkgColor_; }
+        COLORREF selected_text_color() { return selectedTextColor_; }
+        COLORREF selected_bkg_color() { return selectedBkgColor_; }
         int padding() { return padding_; }
 
-        ColorTheme& enabled(bool e)
+        color_theme& enabled(bool e)
         {
             enabled_ = e;
             return *this;
         }
 
-        ColorTheme& font(HFONT f)
+        color_theme& font(HFONT f)
         {
             font_ = f;
             return *this;
         }
 
-        ColorTheme& textColor(COLORREF c)
+        color_theme& text_color(COLORREF c)
         {
             textColor_ = c;
             ::DeleteObject(textBrush_);
@@ -89,7 +91,7 @@ namespace MTL {
             return *this;
         }
 
-        ColorTheme& bkgColor( COLORREF c)
+        color_theme& bkg_color( COLORREF c)
         {
             bkgColor_ = c;
             ::DeleteObject(bkgBrush_);
@@ -97,7 +99,7 @@ namespace MTL {
             return *this;
         }
 
-        ColorTheme& selectedTextColor(COLORREF c)
+        color_theme& selected_text_color(COLORREF c)
         {
             selectedTextColor_ = c;
             ::DeleteObject(selectedTextBrush_);
@@ -105,7 +107,7 @@ namespace MTL {
             return *this;
         }
 
-        ColorTheme& selectedBkgColor(COLORREF c)
+        color_theme& selected_bkg_color(COLORREF c)
         {
             selectedBkgColor_ = c;
             ::DeleteObject(selectedBkgBrush_);
@@ -113,13 +115,13 @@ namespace MTL {
             return *this;
         }
 
-        ColorTheme& padding(int p)
+        color_theme& padding(int p)
         {
             padding_ = p;
             return *this;
         }
 
-        ~ColorTheme()
+        ~color_theme()
         {
             free();
         }
@@ -129,10 +131,10 @@ namespace MTL {
             onUpdate.fire();
         }
 
-        HBRUSH textBrush() { return textBrush_; }
-        HBRUSH bkgBrush() { return bkgBrush_; }
-        HBRUSH selectedTextBrush() { return selectedTextBrush_; }
-        HBRUSH selectedBkgBrush() { return selectedBkgBrush_; }
+        HBRUSH text_brush() { return textBrush_; }
+        HBRUSH bkg_brush() { return bkgBrush_; }
+        HBRUSH selected_text_brush() { return selectedTextBrush_; }
+        HBRUSH selected_bkg_brush() { return selectedBkgBrush_; }
 
     private:
 
@@ -150,7 +152,7 @@ namespace MTL {
         }
     };
 
-    class ModelessDialogs
+    class modeless_dialogs
     {
     public:
 
@@ -164,7 +166,7 @@ namespace MTL {
             dialogs_.erase(hWnd);
         }
 
-        BOOL isDialogMessage(MSG& msg)
+        BOOL is_dialog_message(MSG& msg)
         {
             for (HWND hWnd : dialogs_)
             {
@@ -180,19 +182,19 @@ namespace MTL {
         std::set<HWND> dialogs_;
     };
 
-    inline ModelessDialogs& modelessDialogs()
+    inline modeless_dialogs& modeless_dlg()
     {
-        static ModelessDialogs md;
+        static modeless_dialogs md;
         return md;
     }
 
-    class Wnd
+    class wnd
     {
     public:
 
         HWND handle = nullptr;
 
-        virtual ~Wnd()
+        virtual ~wnd()
         {
             if (handle && ::IsWindow(handle))
             {
@@ -205,7 +207,7 @@ namespace MTL {
             }
         }
 
-        void setColorTheme(std::shared_ptr<ColorTheme>& ct)
+        void set_color_theme(std::shared_ptr<color_theme>& ct)
         {
             if (ct && (ct.get() != colorTheme.get()))
             {
@@ -214,17 +216,17 @@ namespace MTL {
                     colorTheme->onUpdate.unregister(colorThemeToken_);
                     colorThemeToken_ = L"";
                 }
-                colorThemeToken_ = ct->onUpdate([this]() { this->onColorThemeChanged(); });
+                colorThemeToken_ = ct->onUpdate([this]() { this->on_color_theme_changed(); });
             }
 
             colorTheme = ct;
-            onColorThemeChanged();
+            on_color_theme_changed();
         }
 
-        void noColorTheme()
+        void no_color_theme()
         {
             colorTheme.reset();
-            onColorThemeChanged();
+            on_color_theme_changed();
         }
 
         HWND operator *() const
@@ -232,66 +234,66 @@ namespace MTL {
             return handle;
         }
 
-        RECT getClientRect() const
+        RECT client_rect() const
         {
             RECT r;
             ::GetClientRect(handle, &r);
             return r;
         }
 
-        RECT getWindowRect() const
+        RECT window_rect() const
         {
             RECT r;
             ::GetWindowRect(handle, &r);
             return r;
         }
 
-        virtual Wnd& update() 
+        virtual wnd& update() 
         {
             ::UpdateWindow(handle);
 
-            RECT wr = getWindowRect();
+            RECT wr = window_rect();
             wr.left += 1;
             move(wr);
             wr.left -= 1;
             move(wr);
 
-            sendMsg(WM_LAYOUT, 0, 0);
+            send_msg(WM_LAYOUT, 0, 0);
 
             return *this;
         }
 
-        virtual Wnd& invalidate(RECT* r = 0, bool redraw = false) 
+        virtual wnd& invalidate(RECT* r = 0, bool redraw = false) 
         {
             ::InvalidateRect(handle, r, redraw);
             return *this;
         }
 
-        virtual Wnd& show(UINT how = SW_SHOW) 
+        virtual wnd& show(UINT how = SW_SHOW) 
         {
             ::ShowWindow(handle, how);
             return *this;
         }
 
-        virtual HWND getParent() const
+        virtual HWND parent() const
         {
             return ::GetParent(handle);
         }
 
-        virtual Wnd& setMenu(HMENU menu) 
+        virtual wnd& set_menu(HMENU menu) 
         {
             ::SetMenu(handle,menu);
             return *this;
         }
 
-        virtual HMENU getMenu() const
+        virtual HMENU get_menu() const
         {
             return ::GetMenu(handle);
         }
 
-        virtual Wnd& setFont(HFONT font, bool repaint = false)
+        virtual wnd& set_font(HFONT font, bool repaint = false)
         {
-            sendMsg(WM_SETFONT, (WPARAM)font, MAKELPARAM(repaint, 0));
+            send_msg(WM_SETFONT, (WPARAM)font, MAKELPARAM(repaint, 0));
             return *this;
         }
 
@@ -300,52 +302,52 @@ namespace MTL {
             return ::GetWindowLong(handle, GWL_STYLE);
         }
 
-        virtual LONG exStyle() const
+        virtual LONG ex_style() const
         {
             return ::GetWindowLong(handle, GWL_EXSTYLE);
         }
 
-        virtual Wnd& relayout()
+        virtual wnd& relayout()
         {
-            sendMsg(WM_LAYOUT, 0, 0);
+            send_msg(WM_LAYOUT, 0, 0);
             return *this;
         }
 
-        Wnd& move(int x, int y)
+        wnd& move(int x, int y)
         {
             ::SetWindowPos(handle, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
             return *this;
         }
 
-        Wnd& move(int x, int y, int w, int h)
+        wnd& move(int x, int y, int w, int h)
         {
             ::SetWindowPos(handle, NULL, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
             return *this;
         }
 
-        Wnd& move(const RECT& dest)
+        wnd& move(const RECT& dest)
         {
             ::SetWindowPos(handle, NULL, dest.left, dest.top, dest.right - dest.left, dest.bottom - dest.top, SWP_NOZORDER | SWP_NOACTIVATE);
             return *this;
         }
 
-        LRESULT sendMsg(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
+        LRESULT send_msg(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
         {
             return ::SendMessage(handle, msg, wParam, lParam);
         }
 
-        LRESULT postMsg(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
+        LRESULT post_msg(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0)
         {
             return ::PostMessage(handle, msg, wParam, lParam);
         }
 
-        Wnd& setText(const std::wstring& title)
+        wnd& set_text(const std::wstring& title)
         {
             ::SetWindowText(handle, title.c_str());
             return *this;
         }
 
-        std::wstring getText()
+        std::wstring get_text()
         {
             int n = GetWindowTextLength(handle);
             wchar_t* buf = new wchar_t[n];
@@ -356,27 +358,27 @@ namespace MTL {
             return result;
         }
 
-        HICON getIcon(int type = 0)
+        HICON get_icon(int type = 0)
         {
-            return (HICON)sendMsg(WM_GETICON, type, 96);
+            return (HICON)send_msg(WM_GETICON, type, 96);
         }
 
-        HICON setIcon(HICON icon, int type = 0)
+        HICON set_icon(HICON icon, int type = 0)
         {
-            return (HICON)sendMsg(WM_SETICON, type, (LPARAM)icon);
+            return (HICON)send_msg(WM_SETICON, type, (LPARAM)icon);
         }
 
-        HWND dialogItem(int id)
+        HWND dialog_item(int id)
         {
             return ::GetDlgItem(handle, id);
         }
 
-        int dialogItemInt(int id, BOOL signedInt = true)
+        int dialog_item_int(int id, BOOL signedInt = true)
         {
             return ::GetDlgItemInt(handle, id, NULL, signedInt);
         }
 
-        std::wstring dialogItemText(int id)
+        std::wstring dialog_item_text(int id)
         {
             wchar_t buf[2048];
             UINT n = ::GetDlgItemText(handle, id, buf, 2048);
@@ -386,17 +388,17 @@ namespace MTL {
         virtual HWND create(const wchar_t* title, int style = WS_OVERLAPPEDWINDOW, int exStyle = 0, HMENU menu = nullptr, HWND parent = nullptr)
         {
             RECT r = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
-            return createWindow(title, parent, r, style, exStyle, menu);
+            return create_window(title, parent, r, style, exStyle, menu);
         }
 
         virtual HWND create(size_t id, HWND parent, RECT& r, int style = WS_CHILD | WS_VISIBLE  | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, int exStyle = 0)
         {
-            return createWindow(L"", parent, r, style, exStyle, (HMENU)id);
+            return create_window(L"", parent, r, style, exStyle, (HMENU)id);
         }
 
         virtual HWND create(size_t id, const wchar_t* title, HWND parent, RECT& r, int style = WS_CHILD | WS_VISIBLE  | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, int exStyle = 0)
         {
-            return createWindow(title, parent, r, style, exStyle, (HMENU)id);
+            return create_window(title, parent, r, style, exStyle, (HMENU)id);
         }
 
         virtual void destroy()
@@ -414,7 +416,7 @@ namespace MTL {
             {
             case WM_DESTROY:
             {
-                LRESULT r = wmDestroy();
+                LRESULT r = wm_destroy();
                 if (!colorThemeToken_.empty() && colorTheme)
                 {
                     colorTheme->onUpdate.unregister(colorThemeToken_);
@@ -432,7 +434,7 @@ namespace MTL {
             {
                 if (colorTheme && colorTheme->enabled())
                 {
-                    return wmCtlColor((HDC)wParam, (HWND)lParam);
+                    return wm_ctl_color((HDC)wParam, (HWND)lParam);
                 }
                 return ::DefWindowProc(hWnd, message, wParam, lParam);
                 break;
@@ -447,65 +449,65 @@ namespace MTL {
 
     protected:
 
-        virtual void onColorThemeChanged()
+        virtual void on_color_theme_changed()
         {
             if (colorTheme && colorTheme->enabled() && colorTheme->font())
             {
-                setFont(colorTheme->font());
+                set_font(colorTheme->font());
             }
         }
 
-        virtual LRESULT wmCreate()
+        virtual LRESULT wm_create()
         {
             return 0;
         }
 
-        virtual LRESULT wmDestroy()
+        virtual LRESULT wm_destroy()
         {
             return 0;
         }
 
-        virtual LRESULT wmNcDestroy()
+        virtual LRESULT wm_nc_destroy()
         {
             return 0;
         }
 
-        virtual LRESULT wmSize(RECT& clientRect)
+        virtual LRESULT wm_size(RECT& clientRect)
         {
             return 0;
         }
 
 
-        virtual LRESULT wmCtlColor(HDC hdc, HWND ctrl) 
+        virtual LRESULT wm_ctl_color(HDC hdc, HWND ctrl) 
         {
-            ::SetBkColor(hdc,colorTheme->bkgColor());
-            ::SetTextColor(hdc, colorTheme->textColor());
+            ::SetBkColor(hdc,colorTheme->bkg_color());
+            ::SetTextColor(hdc, colorTheme->text_color());
             //if (colorTheme->font) ::SelectObject(hdc, colorTheme->font);
-            return (LRESULT)colorTheme->bkgBrush();
+            return (LRESULT)colorTheme->bkg_brush();
         }
 
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) = 0;
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) = 0;
 
-        std::shared_ptr<ColorTheme> colorTheme;
+        std::shared_ptr<color_theme> colorTheme;
         std::wstring colorThemeToken_;
     };
 
 
 
-    class OwnerDrawn
+    class owner_drawn
     {
     public:
 
-        virtual ~OwnerDrawn() {}
+        virtual ~owner_drawn() {}
 
-        virtual LRESULT wmDrawItem(LPDRAWITEMSTRUCT dis) = 0;
-        virtual LRESULT wmMeasureItem(MEASUREITEMSTRUCT * mis) = 0;
+        virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) = 0;
+        virtual LRESULT wm_measure_item(MEASUREITEMSTRUCT * mis) = 0;
     };
 
 
     template<class W>
-    class Window : public Wnd
+    class window : public wnd
     {
     public:
 
@@ -514,22 +516,22 @@ namespace MTL {
             return handle;
         }
 
-        Window()
+        window()
         {}
 
         virtual LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if(message == WM_LAYOUT)
             {
-                RECT r = this->getClientRect();
-                this->wmLayout(r);
+                RECT r = this->client_rect();
+                this->wm_layout(r);
                 return 0;
             }
 
             if (message == WM_SEARCH)
             {
                 FINDREPLACE* fp = (FINDREPLACE*)lParam;
-                this->wmSearch(fp);
+                this->wm_search(fp);
                 return 0;
             }
 
@@ -537,7 +539,7 @@ namespace MTL {
             {
             case WM_CREATE:
             {
-                 this->wmCreate();
+                 this->wm_create();
                  break;
             }
             case WM_COMMAND:
@@ -547,15 +549,15 @@ namespace MTL {
                 LRESULT r = 0;
                 if (code == 0 && lParam == 0)
                 {
-                    r = this->wmCommand(wmId);
+                    r = this->wm_command(wmId);
                 }
                 else if (code == 1)
                 {
-                    r = this->wmAccellerator(wmId);
+                    r = this->wm_accellerator(wmId);
                 }
                 else
                 {
-                    r = this->wmControl(message, wParam, lParam);
+                    r = this->wm_control(message, wParam, lParam);
                 }
 
                 if (r == 0) return 0;
@@ -590,8 +592,8 @@ namespace MTL {
                 
                 if ((wParam == 0) && (lpDIS->CtlType == ODT_MENU)) // menu
                 {
-                    OwnerDrawn* ownerDrawn = (OwnerDrawn*)(lpDIS->itemData);
-                    return ownerDrawn->wmDrawItem(lpDIS);
+                    owner_drawn* ownerDrawn = (owner_drawn*)(lpDIS->itemData);
+                    return ownerDrawn->wm_draw_item(lpDIS);
                 }
                 
                 MSG msg;
@@ -607,16 +609,16 @@ namespace MTL {
 
                 if ((wParam == 0) && (mis->CtlType == ODT_MENU)) // menu
                 {
-                    OwnerDrawn* ownerDrawn = (OwnerDrawn*)(mis->itemData);
-                    return ownerDrawn->wmMeasureItem(mis);
+                    owner_drawn* ownerDrawn = (owner_drawn*)(mis->itemData);
+                    return ownerDrawn->wm_measure_item(mis);
                 }
-                return Wnd::wndProc(hWnd, message, wParam, lParam);
+                return wnd::wndProc(hWnd, message, wParam, lParam);
                 break;
             }
             case WM_ACTIVATE :
             {
-                RECT bounds = this->getClientRect();
-                this->wmSize(bounds);
+                RECT bounds = this->client_rect();
+                this->wm_size(bounds);
                 return 0;
             }
             case WM_SIZE:
@@ -624,32 +626,32 @@ namespace MTL {
                 UINT width = LOWORD(lParam);
                 UINT height = HIWORD(lParam);
 
-                RECT bounds = this->getClientRect();
-                return this->wmSize(bounds);
+                RECT bounds = this->client_rect();
+                return this->wm_size(bounds);
                 break;
             }
             case WM_PAINT:
             {
-                return this->wmPaint();
+                return this->wm_paint();
                 break;
             }
             case WM_ERASEBKGND:
             {
-                return this->wmEraseBackground(wParam);
+                return this->wm_erase_background(wParam);
             }
             case WM_CLOSE:
             {
-                this->wmClose();
+                this->wm_close();
                 return 0;
             }
             case WM_DESTROY:
             {
-                return this->wmDestroy();
+                return this->wm_destroy();
                 break;
             }
             case WM_NCDESTROY:
             {
-                return this->wmNcDestroy();
+                return this->wm_nc_destroy();
                 break;
             }
             case WM_DPICHANGED:
@@ -659,7 +661,7 @@ namespace MTL {
                 {
                     ::SetWindowPos(this->handle, NULL, r->left, r->top, r->right - r->left, r->bottom - r->top, 0);
                 }
-                LRESULT result = this->wmDpiChanged(r);
+                LRESULT result = this->wm_dpi_changed(r);
                 ::InvalidateRect(this->handle, 0, TRUE);
                 ::UpdateWindow(this->handle);
                 return result;
@@ -667,7 +669,7 @@ namespace MTL {
             }
             case WM_DPICHANGED_BEFOREPARENT:
             {
-                LRESULT result = this->wmDpiChanged(0);
+                LRESULT result = this->wm_dpi_changed(0);
                 ::InvalidateRect(this->handle, 0, TRUE);
                 ::UpdateWindow(this->handle);
                 return result;
@@ -676,7 +678,7 @@ namespace MTL {
 
             default:
             {
-                return Wnd::wndProc(hWnd, message, wParam, lParam);
+                return wnd::wndProc(hWnd, message, wParam, lParam);
             }
             }
             return 0;
@@ -684,9 +686,9 @@ namespace MTL {
 
     protected:
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = windowClass<W>();
+            auto& wc = windowclass<W>();
 
             handle = ::CreateWindowEx(
                 exStyle,
@@ -702,17 +704,17 @@ namespace MTL {
             return handle;
         }
 
-        virtual LRESULT wmCommand(int id)
+        virtual LRESULT wm_command(int id)
         {
             return -1;
         }
 
-        virtual LRESULT wmAccellerator(int id)
+        virtual LRESULT wm_accellerator(int id)
         {
-            return wmCommand(id);
+            return wm_command(id);
         }
 
-        virtual LRESULT wmControl(UINT message, WPARAM wParam, LPARAM lParam)
+        virtual LRESULT wm_control(UINT message, WPARAM wParam, LPARAM lParam)
         {
             MSG msg;
             msg.hwnd = (HWND)lParam;
@@ -722,12 +724,12 @@ namespace MTL {
             return ::SendMessage((HWND)lParam, WM_REFLECT, (WPARAM)&msg, 0);
         }
 
-        virtual LRESULT wmSize(RECT& clientRect)
+        virtual LRESULT wm_size(RECT& clientRect)
         {
             return 0;
         }
 
-        virtual LRESULT wmPaint()
+        virtual LRESULT wm_paint()
         {
             PAINTSTRUCT ps;
             HDC hdc = ::BeginPaint(handle, &ps);
@@ -740,7 +742,7 @@ namespace MTL {
 
             HBRUSH br = (HBRUSH)::GetStockObject(WHITE_BRUSH);
             ::FillRect(hdcMem, &r, br);
-            LRESULT res = wmDraw(hdcMem, r);
+            LRESULT res = wm_draw(hdcMem, r);
 
             ::BitBlt(hdc, 0, 0, r.right - r.left, r.bottom - r.top, hdcMem, 0, 0, SRCCOPY);
 
@@ -752,49 +754,49 @@ namespace MTL {
             return S_OK;
         }
 
-        virtual LRESULT wmDraw(HDC hdc, RECT& bounds)
+        virtual LRESULT wm_draw(HDC hdc, RECT& bounds)
         {
             return 0;
         }
 
-        virtual LRESULT wmClose()
+        virtual LRESULT wm_close()
         {
             destroy();
             return 0;
         }
 
-        virtual LRESULT wmCreate() override
+        virtual LRESULT wm_create() override
         {
             return 0;
         }
 
 
-        virtual LRESULT wmDestroy() override
+        virtual LRESULT wm_destroy() override
         {
             return 0;
         }
 
-        virtual LRESULT wmNcDestroy() override
+        virtual LRESULT wm_nc_destroy() override
         {
             return 0;
         }
 
-        virtual LRESULT wmLayout(RECT& r)
+        virtual LRESULT wm_layout(RECT& r)
         {
-            return wmSize(r);
+            return wm_size(r);
         }
 
-        virtual LRESULT wmEraseBackground(WPARAM wParam)
+        virtual LRESULT wm_erase_background(WPARAM wParam)
         {
             return ::DefWindowProc(handle, WM_ERASEBKGND, wParam, NULL);
         }
 
-        virtual LRESULT wmDpiChanged(RECT* r)
+        virtual LRESULT wm_dpi_changed(RECT* r)
         {
             return 0;
         }
 
-        virtual LRESULT wmSearch(FINDREPLACE* fr)
+        virtual LRESULT wm_search(FINDREPLACE* fr)
         {
             return 0;
         }
@@ -803,11 +805,11 @@ namespace MTL {
     };
 
     template<class T>
-    class ScrollWnd : public Window<T>
+    class scroll_wnd : public window<T>
     {
     public:
 
-        ScrollWnd()
+        scroll_wnd()
         {
             ::ZeroMemory(&horizontalScrollInfo_, sizeof(SCROLLINFO));
             horizontalScrollInfo_.cbSize = sizeof(horizontalScrollInfo_);
@@ -818,26 +820,26 @@ namespace MTL {
             verticalScrollInfo_.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
         }
 
-        void setVScroll(int rowHeight, unsigned int nRows)
+        void set_v_scroll(int rowHeight, unsigned int nRows)
         {
             scrollRowHeight_ = rowHeight;
             scrollRows_ = nRows;
 
-            RECT r = this->getClientRect();
-            scrollV(r.bottom);
+            RECT r = this->client_rect();
+            scroll_v(r.bottom);
         }
 
-        void setHScroll(int colWidth, unsigned int nCols)
+        void set_h_scroll(int colWidth, unsigned int nCols)
         {
             scrollColWidth_ = colWidth;
             scrollCols_ = nCols;
 
-            RECT r = this->getClientRect();
+            RECT r = this->client_rect();
 
-            scrollH(r.right);
+            scroll_h(r.right);
         }
 
-        unsigned int  getScrollPos(int sb = SB_VERT)
+        unsigned int  get_scroll_pos(int sb = SB_VERT)
         {
             if (sb == SB_HORZ)
             {
@@ -849,7 +851,7 @@ namespace MTL {
             return verticalScrollInfo_.nPos;
         }
 
-        unsigned int  getScrollMax(int sb = SB_VERT)
+        unsigned int  get_scroll_max(int sb = SB_VERT)
         {
             if (sb == SB_HORZ)
             {
@@ -861,13 +863,13 @@ namespace MTL {
             return verticalScrollInfo_.nMax;
         }
 
-        void setScrollPos(unsigned int p, int sb = SB_VERT)
+        void set_scroll_pos(unsigned int p, int sb = SB_VERT)
         {
-            RECT r = this->getClientRect();
+            RECT r = this->client_rect();
 
             if (sb == SB_HORZ)
             {
-                int xPos = getScrollPos(SB_HORZ);
+                int xPos = get_scroll_pos(SB_HORZ);
                 if (xPos == p)
                     return;
 
@@ -880,7 +882,7 @@ namespace MTL {
             }
             else
             {
-                int yPos = getScrollPos();
+                int yPos = get_scroll_pos();
                 if (yPos == p)
                     return;
 
@@ -906,7 +908,7 @@ namespace MTL {
             case WM_VSCROLL:
             {
                 // Save the posi_tion for comparison later on
-                int yPos = getScrollPos(SB_VERT);
+                int yPos = get_scroll_pos(SB_VERT);
                 switch (LOWORD(wParam))
                 {
                     // user clicked the HOME keyboard key
@@ -961,7 +963,7 @@ namespace MTL {
                 // If the position has changed, scroll window and update it
                 if (verticalScrollInfo_.nPos != yPos)
                 {
-                    RECT r = this->getClientRect();
+                    RECT r = this->client_rect();
                     int height = r.bottom / verticalScrollInfo_.nPage;
 
                     ::ScrollWindow(this->handle, 0, height * (yPos - verticalScrollInfo_.nPos), NULL, NULL);
@@ -972,7 +974,7 @@ namespace MTL {
             }
             case WM_HSCROLL:
             {
-                int xPos = getScrollPos(SB_HORZ);
+                int xPos = get_scroll_pos(SB_HORZ);
                 switch (LOWORD(wParam))
                 {
                     // user clicked the HOME keyboard key
@@ -1023,7 +1025,7 @@ namespace MTL {
                 // If the position has changed, scroll window and update it
                 if (horizontalScrollInfo_.nPos != xPos)
                 {
-                    RECT r = this->getClientRect();
+                    RECT r = this->client_rect();
                     int width = r.right / horizontalScrollInfo_.nPage;
 
                     ::ScrollWindow(this->handle, width * (xPos - horizontalScrollInfo_.nPos), 0, NULL, NULL);
@@ -1049,24 +1051,24 @@ namespace MTL {
 
                     wheelDelta_ = wheelDelta_ % WHEEL_DELTA;
 
-                    setScrollPos(getScrollPos() + cLineScroll);
+                    set_scroll_pos(get_scroll_pos() + cLineScroll);
                     //invalidateRect(0,TRUE);
                 }
                 break;
             }
             case WM_SIZE:
             {
-                scrollV(HIWORD(lParam));
-                scrollH(LOWORD(lParam));
+                scroll_v(HIWORD(lParam));
+                scroll_h(LOWORD(lParam));
                 ::InvalidateRect(this->handle,0, FALSE);
-                return Window<T>::wndProc(hWnd, message, wParam, lParam);
+                return window<T>::wndProc(hWnd, message, wParam, lParam);
             }
             } // end switch
-            return Window<T>::wndProc(hWnd, message, wParam, lParam);
+            return window<T>::wndProc(hWnd, message, wParam, lParam);
         }
 
-        void virtual wmVScroll(unsigned int pos) {};
-        void virtual wmHScroll(unsigned int pos) {};
+        void virtual wm_v_scroll(unsigned int pos) {};
+        void virtual wm_h_scroll(unsigned int pos) {};
 
     protected:
 
@@ -1078,7 +1080,7 @@ namespace MTL {
         unsigned int scrollCols_;
         short wheelDelta_;
 
-        void scrollV(unsigned int h)
+        void scroll_v(unsigned int h)
         {
             verticalScrollInfo_.nMax = scrollRows_;//max
             verticalScrollInfo_.nMin = 0;
@@ -1091,7 +1093,7 @@ namespace MTL {
             ::GetScrollInfo(this->handle, SB_VERT, &verticalScrollInfo_);
         }
 
-        void scrollH(unsigned int w)
+        void scroll_h(unsigned int w)
         {
             horizontalScrollInfo_.nMax = scrollCols_;//max
             horizontalScrollInfo_.nMin = 0;
@@ -1115,30 +1117,30 @@ namespace MTL {
         return reinterpret_cast<W*>(l);
     }
 
-    class Timer
+    class timer
     {
     public:
 
         UINT_PTR id = 0;
 
-        Timer()
+        timer()
         {}
 
-        ~Timer()
+        ~timer()
         {
             cancel();
         }
 
-        Timer(const Timer& rhs) = delete;
-        Timer& operator=(const Timer& rhs) = delete;
+        timer(const timer& rhs) = delete;
+        timer& operator=(const timer& rhs) = delete;
 
-        Timer(Timer&& rhs) noexcept
+        timer(timer&& rhs) noexcept
             : id(rhs.id)
         {
             rhs.id = 0;
         }
 
-        Timer& operator = (Timer&& rhs) noexcept
+        timer& operator = (timer&& rhs) noexcept
         {
             if (id == rhs.id)
             {
@@ -1149,7 +1151,7 @@ namespace MTL {
             return *this;
         }
 
-        Timer(int milisecs, std::function<void()> cb)
+        timer(int milisecs, std::function<void()> cb)
         {
             timeout(milisecs, cb);
         }
@@ -1157,7 +1159,7 @@ namespace MTL {
         UINT_PTR timeout(int milisecs, std::function<void()> cb)
         {
             cancel();
-            id = ::SetTimer(nullptr, 0, milisecs, &Timer::timerProc);
+            id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
             timers()[id] = cb;
             return id;
         }
@@ -1184,7 +1186,6 @@ namespace MTL {
             DWORD
         )
         {
-            ::OutputDebugString(L"TIMER\r\n");
             ::KillTimer(nullptr, id);
             if (timers().count(id) == 0)
             {
@@ -1202,9 +1203,7 @@ namespace MTL {
         }
     };
 
-    // Chrome_WidgetWin_0
-    // typedef BOOL (CALLBACK* WNDENUMPROC)(HWND, LPARAM);
-    inline HWND findChild(HWND parent, const std::wstring& s)
+    inline HWND find_child(HWND parent, const std::wstring& s)
     {
         struct Enumerator 
         {
@@ -1214,7 +1213,7 @@ namespace MTL {
             static BOOL __stdcall proc(HWND hWnd, LPARAM lParam)
             {
                 Enumerator* enumerator = (Enumerator*)lParam;
-                MTL::wbuff buf(1024);
+                mtl::wbuff buf(1024);
                 ::GetClassName(hWnd, buf, (int) buf.size());
                 if (enumerator->className == buf.toString())
                 {
@@ -1231,12 +1230,12 @@ namespace MTL {
     }
 
 
-    inline RECT workArea(HWND wnd)
+    inline RECT work_area(HWND wnd)
     {
         HMONITOR monitor = ::MonitorFromWindow(wnd, 0);
         MONITORINFO moni;
         moni.cbSize = sizeof(moni);
-        GetMonitorInfo(monitor, &moni);
+        ::GetMonitorInfo(monitor, &moni);
         return moni.rcWork;
     }
 }

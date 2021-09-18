@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MTL/sdk.h"
-#include "MTL/win32/mem.h"
+#include "mtl/sdk.h"
+#include "mtl/win32/mem.h"
 
-namespace MTL
+namespace mtl
 {
     namespace detail {
 
@@ -18,7 +18,7 @@ namespace MTL
                 this->hEvent = handle;
                 fsize = size;
 
-                buf.reset(new MTL::cbuff(fsize));
+                buf.reset(new cbuff(fsize));
             }
 
             std::string str(int size)
@@ -27,7 +27,7 @@ namespace MTL
             }
 
             unsigned long long fsize = 0;
-            std::unique_ptr<MTL::cbuff> buf;
+            std::unique_ptr<cbuff> buf;
 
             std::function<void(DWORD e, std::string)> onRead;
 
@@ -143,11 +143,11 @@ namespace MTL
         };
     }
 
-    class File
+    class file
     {
     public:
 
-        File(
+        file(
             DWORD access = GENERIC_READ,
             DWORD share = FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
             DWORD flags = FILE_ATTRIBUTE_NORMAL
@@ -187,7 +187,7 @@ namespace MTL
         }
 
 
-        File(const File& rhs)
+        file(const file& rhs)
         {
             if (rhs.handle != INVALID_HANDLE_VALUE)
             {
@@ -201,13 +201,13 @@ namespace MTL
             }
         }
 
-        File(File&& rhs)
+        file(file&& rhs)
             : handle(rhs.handle)
         {
             rhs.handle = INVALID_HANDLE_VALUE;
         }
 
-        File& operator=(const File& rhs)
+        file& operator=(const file& rhs)
         {
             if (this == &rhs)
             {
@@ -229,7 +229,7 @@ namespace MTL
             return *this;
         }
 
-        File& operator=(File&& rhs)
+        file& operator=(file&& rhs)
         {
             if (this == &rhs)
             {
@@ -278,12 +278,12 @@ namespace MTL
                 return L"";
             }
 
-            MTL::wbuff buf(2048);
+            wbuff buf(2048);
             ::GetFinalPathNameByHandle(handle, buf, (DWORD)buf.size(), 0);
             return buf.toString();
         }
 
-        ~File()
+        ~file()
         {
             close();
         }
@@ -334,7 +334,7 @@ namespace MTL
 
         std::string content()
         {
-            MTL::cbuff buf(fsize);
+            cbuff buf(fsize);
 
             DWORD nRead = 0;
             BOOL r = ::ReadFile(
@@ -447,25 +447,25 @@ namespace MTL
         DWORD share = FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
         DWORD flags = FILE_ATTRIBUTE_NORMAL)
     {
-        File file(access, share, flags);
+        file f(access, share, flags);
 
-        if (file.open(file_name) != ERROR_SUCCESS)
+        if (f.open(file_name) != ERROR_SUCCESS)
         {
             return "";
         }
 
-        return file.content();
+        return f.content();
     }
 
 
     bool spit(const std::wstring& file_name, const std::string data)
     {
-        File file(GENERIC_WRITE);
-        if (file.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)
+        file f(GENERIC_WRITE);
+        if (f.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)
         {
             return false;
         }
-        if (!file.content(data))
+        if (!f.content(data))
         {
             return false;
         }
@@ -479,24 +479,24 @@ namespace MTL
         DWORD share = FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
         DWORD flags = FILE_FLAG_OVERLAPPED)
     {
-        File file(access, share, flags);
-        if (file.open(file_name) != ERROR_SUCCESS)
+        file f(access, share, flags);
+        if (f.open(file_name) != ERROR_SUCCESS)
         {
             return false;
         }
 
-        return file.async_content(cb) == ERROR_SUCCESS;
+        return f.async_content(cb) == ERROR_SUCCESS;
     }
 
 
     bool spit(const std::wstring& file_name, const std::string data, std::function<void(DWORD)> cb)
     {
-        File file(GENERIC_WRITE);
-        if (file.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)
+        file f(GENERIC_WRITE);
+        if (f.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)
         {
             return false;
         }
-        if (file.async_content(data, cb) != ERROR_SUCCESS)
+        if (f.async_content(data, cb) != ERROR_SUCCESS)
         {
             return false;
         }

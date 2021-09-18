@@ -2,26 +2,21 @@
 
 #define NOMINMAX
 #include <SDKDDKVer.h>
-//#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-// Windows Header Files
 #include <WinSock2.h>
-//#define NOMINMAX  1
 #include <windows.h>
 #include <wchar.h>
 #include <objbase.h>
 
-// C RunTime Header Files
-
-#include <string>
-#include <memory>
 #include <functional>
+#include <algorithm>
+#include <atomic>
+#include <memory>
+#include <string>
 #include <vector>
 #include <map>
-#include <atomic>
-#include <algorithm>
 #include <set>
 
-namespace MTL {
+namespace mtl {
 
 
     inline std::wstring guid_to_string(const GUID& guid)
@@ -33,19 +28,6 @@ namespace MTL {
             return L"";
         }
         return std::wstring(buf,len - 1);
-
-        /*
-        wchar_t guidStr[39];
-        swprintf_s(
-            guidStr,
-            L"{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
-            guid.Data1, guid.Data2, guid.Data3,
-            guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-            guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-        std::wstring s(guidStr);
-        return s;
-        */
     }
 
     inline GUID string_to_guid(const std::wstring& str)
@@ -53,17 +35,6 @@ namespace MTL {
         GUID guid;
         ::CLSIDFromString(str.c_str(), &guid);
         return guid;
-
-        /*
-    GUID guid;
-    swscanf_s(str.c_str(),
-        L"{%8x-%4hx-%4hx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx}",
-        &guid.Data1, &guid.Data2, &guid.Data3,
-        &guid.Data4[0], &guid.Data4[1], &guid.Data4[2], &guid.Data4[3],
-        &guid.Data4[4], &guid.Data4[5], &guid.Data4[6], &guid.Data4[7] );
-
-    return guid;
-    */
     }
 
     inline std::wstring new_guid()
@@ -73,7 +44,7 @@ namespace MTL {
         return guid_to_string(guid);
     }
 
-    inline BOOL Is64BitWindows()
+    inline BOOL is_64bit_windows()
     {
 #if defined(_WIN64)
         return TRUE;  // 64-bit programs run only on Win64
@@ -87,21 +58,21 @@ namespace MTL {
 #endif
     }
 
-	class Library
+	class library
 	{
 	public:
-		virtual ~Library() {}
+		virtual ~library() {}
 	};
 
 	template<class T>
-	class LibraryImpl : public Library
+	class library_impl : public library
 	{
 	public:
-		LibraryImpl(T&& t)
+        library_impl(T&& t)
 			: lib(std::move(t))
 		{}
 
-		~LibraryImpl()
+		~library_impl()
 		{
 			int x = 1;
 		}
@@ -110,12 +81,12 @@ namespace MTL {
 	};
 
 
-	class Uses
+	class uses
 	{
 	public:
 
 		template<class ... Args>
-		Uses(Args&& ... args)
+		uses(Args&& ... args)
 		{
 			init(std::forward<Args>(args)...);
 		}
@@ -125,7 +96,7 @@ namespace MTL {
 		template<class T, class ... Args>
 		void init(T&& t, Args&& ... args)
 		{
-			std::unique_ptr<Library> impl(new LibraryImpl(std::forward<T>(t)));
+			std::unique_ptr<library> impl(new library_impl(std::forward<T>(t)));
 			libs_.push_back(std::move(impl));
 			init(std::forward<Args>(args)...);
 		}
@@ -133,21 +104,21 @@ namespace MTL {
 		template<class T>
 		void init(T&& t)
 		{
-			std::unique_ptr<Library> impl(new LibraryImpl(std::forward<T>(t)));
+			std::unique_ptr<library> impl(new library_impl(std::forward<T>(t)));
 			libs_.push_back(std::move(impl));
 			//libs_.emplace_back( impl );
 		}
 
-		std::vector<std::unique_ptr<Library>> libs_;
+		std::vector<std::unique_ptr<library>> libs_;
 	};
 
 
     template<class T>
-    class Event;
+    class event;
 
 
     template<class T, class ... Args>
-    class Event<T(Args...)>
+    class event<T(Args...)>
     {
     public:
         using handler_t = std::function<void(Args...)>;
@@ -164,7 +135,7 @@ namespace MTL {
             }
         }
 
-        ~Event()
+        ~event()
         {
             for (auto& h : handlers_)
             {
@@ -187,7 +158,7 @@ namespace MTL {
         {
             if (map().count(id))
             {
-                Event<T(Args...)>* e = map()[id];
+                event<T(Args...)>* e = map()[id];
                 if (e->handlers_.count(id))
                 {
                     e->handlers_.erase(id);
@@ -200,14 +171,14 @@ namespace MTL {
 
         inline static auto& map()
         {
-            static std::map<std::wstring, Event<T(Args...)>*> theMap;
+            static std::map<std::wstring, event<T(Args...)>*> theMap;
             return theMap;
         }
         handlers_t handlers_;
     };
 
     template<class ... Args>
-    class Event<void(Args...)>
+    class event<void(Args...)>
     {
     public:
         using handler_t = std::function<void(Args...)>;
@@ -221,7 +192,7 @@ namespace MTL {
             }
         }
 
-        ~Event()
+        ~event()
         {
             for (auto& h : handlers_)
             {
@@ -244,7 +215,7 @@ namespace MTL {
         {
             if (map().count(id))
             {
-                Event<void(Args...)>* e = map()[id];
+                event<void(Args...)>* e = map()[id];
                 if (e->handlers_.count(id))
                 {
                     e->handlers_.erase(id);
@@ -258,7 +229,7 @@ namespace MTL {
 
         inline static auto& map()
         {
-            static std::map<std::wstring, Event<void(Args...)>*> theMap;
+            static std::map<std::wstring, event<void(Args...)>*> theMap;
             return theMap;
         }
     };
@@ -275,11 +246,11 @@ namespace MTL {
         {
             for (auto& id : ids_)
             {
-                Event<T(Args...)>::unregister(id);
+                event<T(Args...)>::unregister(id);
             }
         }
 
-        sink<T(Args...)>& operator()(Event<T(Args...)>& source)
+        sink<T(Args...)>& operator()(event<T(Args...)>& source)
         {
             source_ = &source;
             return *this;
@@ -299,7 +270,7 @@ namespace MTL {
         }
 
     private:
-        Event<T(Args...)>* source_;
+        event<T(Args...)>* source_;
         T code_;
         std::set<std::wstring> ids_;
     };
@@ -314,11 +285,11 @@ namespace MTL {
         {
             for (auto& id : ids_)
             {
-                Event<void(Args...)>::unregister(id);
+                event<void(Args...)>::unregister(id);
             }
         }
 
-        sink<void(Args...)>& operator()(Event<void(Args...)>& source)
+        sink<void(Args...)>& operator()(event<void(Args...)>& source)
         {
             source_ = &source;
             return *this;
@@ -332,7 +303,7 @@ namespace MTL {
         }
 
     private:
-        Event<void(Args...)>* source_;
+        event<void(Args...)>* source_;
         std::set<std::wstring> ids_;
     };
 

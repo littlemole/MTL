@@ -17,7 +17,7 @@
 //#include "metacpp/xml.h"
 #include "../test_h.h"
 
-using namespace MTL;
+using namespace mtl;
 
 class StreamTest : public ::testing::Test {
 protected:
@@ -167,7 +167,7 @@ public:
     HRESULT __stdcall get_Object(IDispatch** cnt) override
     {
         if (!cnt) return E_INVALIDARG;
-        return disp.queryInterface(cnt);
+        return disp.query_interface(cnt);
     }
 
     HRESULT __stdcall put_Object(IDispatch* cnt) override
@@ -277,22 +277,22 @@ TEST_F(StreamTest, testDispTypeLibLoading)
 TEST_F(StreamTest, testDispTypeLibLoadingStreamPersist)
 {
     MTA enter;
-    MTL::local_server<TestObject,SubObject> server;
+    mtl::local_server<TestObject,SubObject> server;
 
     punk<ITestObject> from;
-    from.createObject<TestObject>();
+    from.create_object<TestObject>();
 
     from->put_Value(42);
     from->put_Desc(*bstr(L"Helo"));
 
     punk<ISubObject> subFrom;
-    subFrom.createObject<SubObject>();
+    subFrom.create_object<SubObject>();
     subFrom->put_Name(*bstr(L"MyName"));
     subFrom->put_Value(variant(4711));
     from->put_Object(*subFrom);
     from->put_Type(variant(*subFrom));
 
-    Stream stream;
+    mtl::stream stream;
 
     punk<IPersistStream> psFrom(from);
     psFrom->Save(*stream,FALSE);
@@ -305,7 +305,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersist)
     stream.reset();
 
     punk<ITestObject> to;
-    to.createObject<TestObject>();
+    to.create_object<TestObject>();
 
     punk<IPersistStream> psTo(to);
 
@@ -343,22 +343,22 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersist)
 TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistFile)
 {
     MTA enter;
-    MTL::local_server<TestObject, SubObject> server;
+    mtl::local_server<TestObject, SubObject> server;
 
     punk<ITestObject> from;
-    from.createObject<TestObject>();
+    from.create_object<TestObject>();
 
     from->put_Value(42);
     from->put_Desc(*bstr(L"Helo"));
 
     punk<ISubObject> subFrom;
-    subFrom.createObject<SubObject>();
+    subFrom.create_object<SubObject>();
     subFrom->put_Name(*bstr(L"MyName"));
     subFrom->put_Value(variant(4711));
     from->put_Object(*subFrom);
     from->put_Type(variant(*subFrom));
 
-    Path p(L"test.xml");
+    mtl::path p(L"test.xml");
     std::wstring filename(p.absolute().str());
     std::wcout << filename << std::endl;
 
@@ -366,7 +366,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistFile)
     psFrom->Save(filename.c_str(), FALSE);
 
     punk<ITestObject> to;
-    to.createObject<TestObject>();
+    to.create_object<TestObject>();
 
     punk<IPersistFile> psTo(to);
 
@@ -404,7 +404,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistFile)
 TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorage)
 {
     MTA enter;
-    MTL::local_server<TestObject, SubObject> server;
+    mtl::local_server<TestObject, SubObject> server;
 
     punk<ITestObject> from = from_clsid(CLSID_TestObject);
 
@@ -419,7 +419,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorage)
 
     std::wstring filename(L"C:\\moe\\test.stg");
 
-    Storage storage;
+    mtl::storage storage;
     storage.create(filename);
 
     punk<IPersistStorage> psFrom(from);
@@ -464,7 +464,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorage)
 TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorageCLassInfo)
 {
     MTA enter;
-    MTL::local_server<TestObject, SubObject> server;
+    mtl::local_server<TestObject, SubObject> server;
 
     punk<ITestObject> from = from_clsid(CLSID_TestObject);
 
@@ -484,7 +484,7 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorageCLassInfo)
 TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorageErrorInfo)
 {
     MTA enter;
-    MTL::local_server<TestObject, SubObject> server;
+    mtl::local_server<TestObject, SubObject> server;
 
     punk<ITestObject> from = from_clsid(CLSID_TestObject);
 

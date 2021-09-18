@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
 
-namespace MTL {
+namespace mtl {
 
     class STA
     {
@@ -112,7 +112,7 @@ namespace MTL {
         HR(const HRESULT hr)
             : hr_(hr)
         {
-            if (isError())
+            if (is_error())
             {
                 throw hr_;
             }
@@ -121,7 +121,7 @@ namespace MTL {
         HR& operator=(const HRESULT rhs)
         {
             hr_ = rhs;
-            if (isError())
+            if (is_error())
             {
                 throw hr_;
             }
@@ -135,7 +135,7 @@ namespace MTL {
             return false;
         }
 
-        bool isError() const
+        bool is_error() const
         {
             if (hr_ != S_OK && hr_ != S_FALSE)
                 return true;
@@ -285,19 +285,19 @@ namespace MTL {
         punk(from_object<T>&& rhs)
             : interface_(0)
         {
-            HR hr = createObject<T>(rhs.clsctx);
+            HR hr = create_object<T>(rhs.clsctx);
         }
 
         punk(from_progid&& rhs)
             : interface_(0)
         {
-            HR hr = createObject(rhs.prog_id, rhs.clsctx);
+            HR hr = create_object(rhs.prog_id, rhs.clsctx);
         }
 
         punk(from_clsid&& rhs)
             : interface_(0)
         {
-            HR hr = createObject(rhs.clsid, rhs.clsctx);
+            HR hr = create_object(rhs.clsid, rhs.clsctx);
         }
          
         explicit punk(I* i)  // explicit for reason
@@ -345,7 +345,7 @@ namespace MTL {
         {
             if (rhs.interface_)
             {
-                HRESULT hr = rhs.queryInterface(&interface_);
+                HRESULT hr = rhs.query_interface(&interface_);
                 if (S_OK != hr)
                 {
                     interface_ = 0;
@@ -359,7 +359,7 @@ namespace MTL {
         {
             if (rhs.interface_)
             {
-                HRESULT hr = rhs.queryInterface(&interface_);
+                HRESULT hr = rhs.query_interface(&interface_);
                 if (S_OK != hr)
                 {
                     interface_ = 0;
@@ -374,13 +374,13 @@ namespace MTL {
             release();
         }
 
-        HRESULT queryInterface(REFIID iid, void** iUnknown) const
+        HRESULT query_interface(REFIID iid, void** iUnknown) const
         {
             return interface_->QueryInterface(iid, iUnknown);
         }
 
         template<class T>
-        HRESULT queryInterface(T** Unknown) const
+        HRESULT query_interface(T** Unknown) const
         {
             return interface_->QueryInterface(__uuidof(T), (void**)Unknown);
         }
@@ -393,24 +393,24 @@ namespace MTL {
             return result;
         }
 
-        HRESULT createObject(CLSID classId, int clsctx = CLSCTX_ALL)
+        HRESULT create_object(CLSID classId, int clsctx = CLSCTX_ALL)
         {
             return ::CoCreateInstance(classId, NULL, clsctx, __uuidof(I), (void**)&interface_);
         }
 
 
-        HRESULT createObject(const std::wstring& progid, int clsctx = CLSCTX_ALL)
+        HRESULT create_object(const std::wstring& progid, int clsctx = CLSCTX_ALL)
         {
             CLSID classId;
             HRESULT hr = ::CLSIDFromProgID(progid.c_str(), &classId);
             if (hr != S_OK)
                 return hr;
 
-            return createObject(classId, clsctx);
+            return create_object(classId, clsctx);
         }
 
         template<class T>
-        HRESULT createObject( int clsctx = CLSCTX_ALL)
+        HRESULT create_object( int clsctx = CLSCTX_ALL)
         {
             return ::CoCreateInstance( __uuidof(T), NULL, clsctx, __uuidof(I), (void**)&interface_);
         }
@@ -422,7 +422,7 @@ namespace MTL {
         operator bool() const                                { return (interface_ != 0); }
         bool operator!() const                               { return (interface_ == 0); }
 
-        punk<I>* addressOf()
+        punk<I>* address_of()
         {
             return this;
         }
@@ -474,7 +474,7 @@ namespace MTL {
         punk& operator=(const punk<T>& p)
         {
             I* tmp = nullptr;
-            p.queryInterface(__uuidof(I), (void**)&tmp);
+            p.query_interface(__uuidof(I), (void**)&tmp);
             release();
             interface_ = tmp;
             return *this;
@@ -511,21 +511,21 @@ namespace MTL {
         punk<I>& operator=( from_object<T>&& rhs)
         {
             release();
-            HR hr = createObject<T>(rhs.clsctx);
+            HR hr = create_object<T>(rhs.clsctx);
             return *this;
         }
 
         punk<I>& operator=(from_progid&& rhs)
         {
             release();
-            HR hr = createObject(rhs.prog_id, rhs.clsctx);
+            HR hr = create_object(rhs.prog_id, rhs.clsctx);
             return *this;
         }
 
         punk<I>& operator=(from_clsid&& rhs)
         {
             release();
-            HR hr = createObject(rhs.clsid, rhs.clsctx);
+            HR hr = create_object(rhs.clsid, rhs.clsctx);
             return *this;
         }
 

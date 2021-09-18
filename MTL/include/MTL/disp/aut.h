@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Windows.h>
-#include <OleAuto.h>
+#include "mtl/sdk.h"
+#include "mtl/punk.h"
+#include "mtl/disp/disp.h"
+#include "mtl/disp/variant.h"
 
+#include <OleAuto.h>
 #include <vector>
 #include <string>
-#include "MTL/punk.h"
-#include "MTL/disp/disp.h"
-#include "MTL/disp/variant.h"
 
-namespace MTL {
+namespace mtl {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// IDispatch invocation helper

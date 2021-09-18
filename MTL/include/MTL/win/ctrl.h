@@ -1,10 +1,11 @@
 #pragma once
 
-#include "MTL/win/wind.h"
+#include "mtl/win/wind.h"
+#include "mtl/ole/img.h"
+#include "mtl/ole/dataobj.h"
+
 #include <commctrl.h>
 #include <Uxtheme.h>
-#include "MTL/ole/img.h"
-#include "MTL/ole/dataobj.h"
 
 namespace MTL {
 

@@ -1,15 +1,17 @@
 #pragma once
 
-#include "MTL/win32/uni.h"
-#include "MTL/win32/mem.h"
-#include "MTL/punk.h"
-#include "MTL/util/path.h"
-#include <sstream>
+#include "mtl/punk.h"
+#include "mtl/win32/uni.h"
+#include "mtl/win32/mem.h"
+#include "mtl/util/path.h"
+
 #include <objidl.h>
 #include <ShlObj.h>
 #include <Shlwapi.h>
 
-namespace MTL {
+#include <sstream>
+
+namespace mtl {
 
     class stream_view
     {
@@ -86,16 +88,16 @@ namespace MTL {
     };
 
 
-    class Stream
+    class stream
     {
     public:
 
-        Stream()
+        stream()
         {
             ::CreateStreamOnHGlobal(0, TRUE, &stream_);
         }
 
-        Stream(const std::string& data)
+        stream(const std::string& data)
         {
             HGLOBAL hGlobal = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD, data.size());
             void* dest = ::GlobalLock(hGlobal);
@@ -104,13 +106,13 @@ namespace MTL {
             ::CreateStreamOnHGlobal(hGlobal, TRUE, &stream_);
         }
 
-        Stream(Path path, DWORD mode = STGM_READWRITE )
+        stream(mtl::path path, DWORD mode = STGM_READWRITE )
         {
             HR hr = ::SHCreateStreamOnFileW(path.str().c_str(), mode, &stream_);
 
         }
 
-        Stream(int id, const std::wstring& type)
+        stream(int id, const std::wstring& type)
         {
             HRSRC hrsrc = ::FindResource(NULL, MAKEINTRESOURCE(id), type.c_str());
             if (hrsrc == NULL)
@@ -121,17 +123,17 @@ namespace MTL {
             if (hglbImage == NULL)
                 throw E_FAIL;
 
-            Global::Lock<void*> srcLock(hglbImage);
+            global::lock<void*> srcLock(hglbImage);
 
-            Global global(*srcLock, dwResourceSize);
-            Global::Lock<void*> destLock(*global);
+            global glob(*srcLock, dwResourceSize);
+            global::lock<void*> destLock(*glob);
     
             ::CopyMemory(*destLock, *srcLock, dwResourceSize);
-            global.detach();
+            glob.detach();
             HR hr = ::CreateStreamOnHGlobal(*destLock, TRUE, &stream_);
         }
 
-        ~Stream()
+        ~stream()
         {
         }
 
@@ -141,7 +143,7 @@ namespace MTL {
         }
 
 
-        Stream* address_of()
+        stream* address_of()
         {
             return this;
         }
@@ -272,11 +274,11 @@ namespace MTL {
         IStorage* storage_;
     };
 
-    class Storage
+    class storage
     {
     public:
 
-        Storage()
+        storage()
         {}
 
         bool create(DWORD mode = STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE)
@@ -369,7 +371,7 @@ namespace MTL {
     };
 
 
-    class DummyStorage : public implements<stack_object<DummyStorage>(IStorage)>
+    class dummy_storage : public implements<stack_object<dummy_storage>(IStorage)>
     {
     public:
 

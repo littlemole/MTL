@@ -1,44 +1,45 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
+
 #include <wchar.h>
 #include <memory.h> 
 #include <type_traits>
 
-namespace MTL {
+namespace mtl {
 
 	template<class T>
-	class Buffer
+	class buffer
 	{
 	public:
 
-		Buffer()
+		buffer()
 		{}
 
-		Buffer(size_t n)
+		buffer(size_t n)
 			: buf(n + 1, 0)
 		{
 			buf[n] = 0;
 		}
 
-		Buffer(size_t n, int value)
+		buffer(size_t n, int value)
 			: buf(n + 1, 0)
 		{
 			::memset(&buf[0], value, (n) * sizeof(T));
 			buf[n] = 0;
 		}
 
-		Buffer(const Buffer& rhs)
+		buffer(const buffer& rhs)
 			: buf(rhs.buf)
 		{}
 
-		Buffer(Buffer&& rhs)
+		buffer(buffer&& rhs)
 			: buf(std::move(rhs.buf))
 		{
 			rhs.buf.clear();
 		}
 
-		Buffer& operator=(const Buffer& rhs)
+		buffer& operator=(const buffer& rhs)
 		{
 			if (&rhs == this)
 				return *this;
@@ -46,7 +47,7 @@ namespace MTL {
 			return *this;
 		}
 
-		Buffer& operator=(Buffer&& rhs)
+		buffer& operator=(buffer&& rhs)
 		{
 			if (&rhs == this)
 				return *this;
@@ -95,8 +96,8 @@ namespace MTL {
 		std::vector<T> buf;
 	};
 
-	typedef Buffer<char> cbuff;
-	typedef Buffer<wchar_t> wbuff;
+	typedef buffer<char> cbuff;
+	typedef buffer<wchar_t> wbuff;
 
 	inline std::string to_string(const wchar_t* str, int nchars = -1, long cp = CP_UTF8)
 	{

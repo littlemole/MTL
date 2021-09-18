@@ -1,24 +1,25 @@
 #pragma once
 
-#include "MTL/win/wind.h"
-#include "MTL/win/enc.h"
-#include <MTL/win32/uni.h>
-#include <MTL/punk.h>
-#include <MTL/util/path.h>
-#include <commdlg.h>
+#include <mtl/punk.h>
+#include "mtl/win/wind.h"
+#include "mtl/win/enc.h"
+#include <mtl/win32/uni.h>
+#include <mtl/win32/mem.h>
+#include <mtl/util/path.h>
 
+#include <commdlg.h>
 #include "Shobjidl.h"
 #include "KnownFolders.h"
 
 #define WM_SEARCH_MSG ::MTL::SearchDlg::getSearchMsg()
 
-namespace MTL {
+namespace mtl {
 
 
-    class SearchDlg 
+    class search_dlg 
     {
     public:
-        SearchDlg()
+        search_dlg()
         {
             what_.alloc(1024);
             with_.alloc(1024);
@@ -31,7 +32,7 @@ namespace MTL {
             WmSearch();
         }
 
-        HWND findText(HWND parent, DWORD flags = FR_DOWN, const wchar_t* what = 0)
+        HWND find(HWND parent, DWORD flags = FR_DOWN, const wchar_t* what = 0)
         {
             if (what)
             {
@@ -49,11 +50,11 @@ namespace MTL {
                 woss << L"e:" << err << std::endl;
                 ::OutputDebugString(woss.str().c_str());
             }
-            modelessDialogs().add(hWnd);
+            modeless_dlg().add(hWnd);
             return hWnd;
         }
 
-        HWND replaceText(HWND parent, DWORD flags = FR_DOWN, const wchar_t* what = 0, const wchar_t* with = 0)
+        HWND replace(HWND parent, DWORD flags = FR_DOWN, const wchar_t* what = 0, const wchar_t* with = 0)
         {
             if (what)
             {
@@ -66,7 +67,7 @@ namespace MTL {
             frp_.Flags = flags;
             frp_.hwndOwner = parent;
             HWND hWnd = ::ReplaceText(&frp_);
-            modelessDialogs().add(hWnd);
+            modeless_dlg().add(hWnd);
             return hWnd;
         }
 
@@ -76,7 +77,7 @@ namespace MTL {
         wbuff with_;
     };
 
-    class OpenDlg
+    class open_dlg
     {
     public:
 
@@ -87,7 +88,7 @@ namespace MTL {
         }
 
 
-        OpenDlg(HWND parent)
+        open_dlg(HWND parent)
         {
             ::ZeroMemory(&of_, sizeof(of_));
             of_.lStructSize = sizeof(OPENFILENAME);
@@ -96,12 +97,12 @@ namespace MTL {
             dlg_ = 0;
         }
 
-        void setFilter(const wchar_t* filter)
+        void set_filter(const wchar_t* filter)
         {
             of_.lpstrFilter = filter;
         }
 
-        const std::wstring fileName(int i = 0)
+        const std::wstring filename(int i = 0)
         {
             if (of_.Flags & OFN_ALLOWMULTISELECT)
             {
@@ -110,7 +111,7 @@ namespace MTL {
             return filename_;
         }
 
-        void  fileName(const std::wstring& s)
+        void  filename(const std::wstring& s)
         {
             filename_ = s;
         }
@@ -134,7 +135,7 @@ namespace MTL {
             of_.nFilterIndex = i;
         }
 
-        BOOL  dlgOpen(int flags = OFN_HIDEREADONLY)
+        BOOL open(int flags = OFN_HIDEREADONLY)
         {
             reset();
             wchar_t buf[1024];
@@ -196,8 +197,7 @@ namespace MTL {
             return ret;
         }
 
-
-        BOOL  dlgSave(int flags = OFN_HIDEREADONLY)
+        BOOL  save(int flags = OFN_HIDEREADONLY)
         {
             reset();
             wchar_t buf[1024];
@@ -231,7 +231,7 @@ namespace MTL {
         }
 
 
-        bool readOnly()
+        bool read_only()
         {
             return (of_.Flags & OFN_READONLY) != 0;
         }
@@ -255,11 +255,11 @@ namespace MTL {
         OPENFILENAME		    of_;
     };
 
-    class PickFont
+    class pick_font
     {
     public:
 
-        PickFont(DWORD styles = 0)
+        pick_font(DWORD styles = 0)
         {
             ::ZeroMemory(&lf_, sizeof(LOGFONT));
             
@@ -290,11 +290,11 @@ namespace MTL {
         CHOOSEFONT cf_;
     };
 
-    class PickFolder
+    class pick_folder
     {
     public:
 
-        PickFolder(
+        pick_folder(
             const GUID& startFolder = FOLDERID_Desktop, 
             DWORD options = FOS_ALLNONSTORAGEITEMS | FOS_NOVALIDATE /*| mol::v7::FOS_FORCEFILESYSTEM*/ | FOS_PICKFOLDERS | FOS_ALLOWMULTISELECT
         )
@@ -305,7 +305,7 @@ namespace MTL {
         {
             punk<IFileDialog> fd;
 
-            HR hr = fd.createObject(CLSID_FileOpenDialog);
+            HR hr = fd.create_object(CLSID_FileOpenDialog);
 
             DWORD dwOptions;
             hr = fd->GetOptions(&dwOptions);
@@ -345,10 +345,10 @@ namespace MTL {
 
 
     template<class T>
-    class FileDialog
+    class file_dialog
     {
     public:
-        FileDialog(int options = 0)
+        file_dialog(int options = 0)
             : options_(options)
         {}
 
@@ -450,18 +450,18 @@ namespace MTL {
 
 
 
-        MTL::punk<IFileDialog> fd_;
+        punk<IFileDialog> fd_;
         int options_ = 0;
         std::vector<std::wstring> paths_;
         std::vector<std::pair<std::wstring, std::wstring>> filter_;
     };
 
 
-    class FileOpenDialog : public FileDialog< FileOpenDialog>
+    class file_open_dialog : public file_dialog< file_open_dialog>
     {
     public:
-        FileOpenDialog(int options = 0)
-            : FileDialog<FileOpenDialog>(options)
+        file_open_dialog(int options = 0)
+            : file_dialog<file_open_dialog>(options)
         {
             HR hr = init(options_, CLSID_FileOpenDialog);
         }
@@ -485,11 +485,11 @@ namespace MTL {
             if (hr != S_OK)
                 return hr;
 
-            MTL::punk<IFileOpenDialog> fod(fd_);
+            punk<IFileOpenDialog> fod(fd_);
             if (!fod)
                 return hr;
 
-            MTL::punk<IShellItemArray> psiResult;
+            punk<IShellItemArray> psiResult;
             hr = fod->GetResults(&psiResult);
             if (hr != S_OK)
                 return hr;
@@ -498,12 +498,12 @@ namespace MTL {
             psiResult->GetCount(&numItems);
             for (DWORD i = 0; i < numItems; i++)
             {
-                MTL::punk<IShellItem> shit;
+                punk<IShellItem> shit;
                 hr = psiResult->GetItemAt(i, &shit);
                 if (hr != S_OK)
                     return hr;
 
-                MTL::co_str pszFilePath;
+                co_str pszFilePath;
                 hr = shit->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
                 if (hr == S_OK)
                 {
@@ -523,11 +523,11 @@ namespace MTL {
         }
     };
 
-    class FileSaveDialog : public FileDialog<FileSaveDialog>
+    class file_save_dialog : public file_dialog<file_save_dialog>
     {
     public:
-        FileSaveDialog(int options = 0)
-            : FileDialog<FileSaveDialog>(options)
+        file_save_dialog(int options = 0)
+            : file_dialog<FileSaveDialog>(options)
         {
             HR hr = init(options_, CLSID_FileSaveDialog);
         }
@@ -551,12 +551,12 @@ namespace MTL {
             if (hr != S_OK)
                 return hr;
 
-            MTL::punk<IShellItem> psiResult;
+            punk<IShellItem> psiResult;
             hr = fd_->GetResult(&psiResult);
             if (hr != S_OK)
                 return hr;
 
-            MTL::co_str pszFilePath;
+            co_str pszFilePath;
             hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
             paths_.push_back(std::wstring(*pszFilePath));
 

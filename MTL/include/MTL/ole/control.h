@@ -1,17 +1,17 @@
 #pragma once
 
-#include <MTL/obj/impl.h>
-#include <MTL/ole/dataobj.h>
-#include <MTL/punk.h>
-#include <MTL/win/wind.h>
-#include <MTL/win/gdi.h>
+#include <mtl/punk.h>
+#include <mtl/win/gdi.h>
+#include <mtl/win/wind.h>
+#include <mtl/obj/impl.h>
+#include <mtl/ole/dataobj.h>
 
 #include <ocidl.h>
 #include <objbase.h>
 #include <ole2.h>
 #include <OleCtl.h>
 
-namespace MTL {
+namespace mtl {
 
 
 //#define HIMETRIC_PER_INCH   2540
@@ -30,22 +30,22 @@ namespace MTL {
 		return ::MulDiv((ppli), (x), HIMETRIC_PER_INCH);
 	}
 
-	inline void PixeltoHIMETRIC(SIZE* size)
+	inline void pixel_to_himetric(SIZE* size)
 	{
 		int nPixelsPerInchX;
 		int nPixelsPerInchY;
 
-		HDC hDCScreen = GetDC(NULL);
-		nPixelsPerInchX = GetDeviceCaps(hDCScreen, LOGPIXELSX);
-		nPixelsPerInchY = GetDeviceCaps(hDCScreen, LOGPIXELSY);
-		ReleaseDC(NULL, hDCScreen);
+		HDC hDCScreen = ::GetDC(NULL);
+		nPixelsPerInchX = ::GetDeviceCaps(hDCScreen, LOGPIXELSX);
+		nPixelsPerInchY = ::GetDeviceCaps(hDCScreen, LOGPIXELSY);
+		::ReleaseDC(NULL, hDCScreen);
 
 		size->cx = MAP_PIX_TO_LOGHIM(size->cx, nPixelsPerInchX);
 		size->cy = MAP_PIX_TO_LOGHIM(size->cy, nPixelsPerInchY);
 	}
 	/////////////////////////////////////////////////////////////////////////////////
 
-	inline void HIMETRICtoPixel(SIZE* sz)//, HDC hdc)
+	inline void himetric_to_pixel(SIZE* sz)//, HDC hdc)
 	{
 		HDC hdc = ::GetWindowDC(NULL);
 		int nMapMode;
@@ -82,11 +82,11 @@ namespace MTL {
 
 
 	template<class T>
-	class Control : public IOleObject, public IOleControl, public IOleInPlaceObject,public DataObject, public IViewObject2, public Window<T>
+	class control : public IOleObject, public IOleControl, public IOleInPlaceObject,public data_object, public IViewObject2, public window<T>
 	{
 	public:
 
-		Control()
+		control()
 		{
 			posRect_ = { 0,0,200,200 };
 			sizel_ = { 200,200 };
@@ -94,10 +94,10 @@ namespace MTL {
 			::CreateOleAdviseHolder(&adviseHolder_);
 			::CreateDataAdviseHolder(&dataAdviseHolder_);
 
-			active_ = punk<OleInPlaceActiveObj>(new OleInPlaceActiveObj(this));
+			active_ = punk<ole_inplace_active_obj>(new ole_inplace_active_obj(this));
 		}
 
-		~Control()
+		~control()
 		{
 			/*
 			if (::IsWindow(this->handle))
@@ -107,7 +107,7 @@ namespace MTL {
 			*/
 		}
 
-		virtual LRESULT wmDestroy() override
+		virtual LRESULT wm_destroy() override
 		{
 			T* that = (T*)this;
 			that->Release();
@@ -135,17 +135,17 @@ namespace MTL {
 			this->GetExtent(pformatetcIn->dwAspect, &sizeMetric);
 
 			SIZE s = { sizeMetric.cx,sizeMetric.cy };
-			::HIMETRICtoPixel(&s);
+			himetric_to_pixel(&s);
 			RECTL rectl = { 0 ,0, s.cx, s.cy };
 			RECT r = { 0 ,0, s.cx, s.cy };
 
 			// draw to meta DC
-			MetaDC mdc;
+			meta_dc mdc;
 			dc_view dcv(*mdc);
 			dcv.save();
-			dcv.setWindowOrgEx(0, 0);
-			dcv.setWindowExtEx(rectl.right, rectl.bottom);
-			this->wmDraw(*mdc,r);// , & rectl, & rectl);
+			dcv.set_window_org(0, 0);
+			dcv.set_window_ext(rectl.right, rectl.bottom);
+			this->wm_draw(*mdc,r);// , & rectl, & rectl);
 			dcv.restore(-1);
 
 			HMETAFILE metafile = mdc.close();
@@ -159,7 +159,7 @@ namespace MTL {
 			mfp.xExt = sizeMetric.cx;
 			mfp.yExt = sizeMetric.cy;
 
-			Global glob(&mfp, sizeof(METAFILEPICT), GMEM_SHARE | GMEM_MOVEABLE);
+			global glob(&mfp, sizeof(METAFILEPICT), GMEM_SHARE | GMEM_MOVEABLE);
 
 			// set results
 			pmedium->tymed = TYMED_MFPICT;
@@ -183,7 +183,7 @@ namespace MTL {
 		virtual HRESULT __stdcall GetClientSite(IOleClientSite** ppClientSite) override
 		{
 			if (!ppClientSite) return E_INVALIDARG;
-			return clientSite_.queryInterface(ppClientSite);
+			return clientSite_.query_interface(ppClientSite);
 		}
 
 		virtual HRESULT __stdcall SetHostNames(LPCOLESTR szContainerApp, LPCOLESTR szContainerObj) override
@@ -507,7 +507,7 @@ namespace MTL {
 				lprcBounds->bottom
 			};
 //			::GetClientRect(this->handle,&r);
-			t->T::wmDraw(hdcDraw,r);// , lprcBounds, lprcWBounds);
+			t->T::wm_draw(hdcDraw,r);// , lprcBounds, lprcWBounds);
 			return S_OK;
 		}
 
@@ -552,7 +552,7 @@ namespace MTL {
 			if (pAdvf)
 				*pAdvf = adviseAdvf_;
 
-			return adviseSink_.queryInterface(IID_IAdviseSink, (void**)ppAdvSink);
+			return adviseSink_.query_interface(IID_IAdviseSink, (void**)ppAdvSink);
 		}
 
 		virtual HRESULT __stdcall GetExtent(DWORD dwDrawAspect, LONG lindex, DVTARGETDEVICE* ptd, LPSIZEL lpsizel) override
@@ -595,7 +595,7 @@ namespace MTL {
 			if (site_)
 			{
 				punk<IOleControlSite> iocs;
-				if (S_OK == site_.queryInterface(&iocs))
+				if (S_OK == site_.query_interface(&iocs))
 				{
 					if (iocs)
 					{
@@ -653,7 +653,7 @@ namespace MTL {
 			if (!site_)
 			{
 				//HRESULT hr = clientSite_.queryInterface(IID_IOleInPlaceSite,(void**)&site_);
-				HRESULT hr = clientSite_.queryInterface(&site_);
+				HRESULT hr = clientSite_.query_interface(&site_);
 				if (hr != S_OK)
 				{
 					return hr;
@@ -716,7 +716,7 @@ namespace MTL {
 			if (site_)
 			{
 				punk<IOleControlSite> iocs;
-				if (S_OK == site_.queryInterface(&iocs))
+				if (S_OK == site_.query_interface(&iocs))
 				{
 					if (iocs)
 					{
@@ -756,19 +756,19 @@ namespace MTL {
 		}
 
 		// inner IOleInPlaceActiveObject
-		class OleInPlaceActiveObj :
-			public implements<OleInPlaceActiveObj(IOleInPlaceActiveObject, of<IOleInPlaceActiveObject,IOleWindow>) >
+		class ole_inplace_active_obj :
+			public implements<ole_inplace_active_obj(IOleInPlaceActiveObject, of<IOleInPlaceActiveObject,IOleWindow>) >
 		{
 		public:
 
-			OleInPlaceActiveObj(Control<T>* ctrl)
+			ole_inplace_active_obj(control<T>* ctrl)
 			{
 				ctrl_ = ctrl;
 				T* that = (T*)ctrl;
 				//that->AddRef();
 			}
 
-			virtual ~OleInPlaceActiveObj() 
+			virtual ~ole_inplace_active_obj()
 			{
 				T* that = (T*)ctrl_;
 				//that->Release();
@@ -834,37 +834,37 @@ namespace MTL {
 			}
 
 		protected:
-			Control<T>* ctrl_;
+			control<T>* ctrl_;
 		};
 
 
-		punk<OleInPlaceActiveObj>   active_;
-		punk<IOleInPlaceSite>		site_;
-		punk<IOleClientSite>		clientSite_;
-		punk<IOleInPlaceFrame>		frame_;
-		punk<IOleInPlaceUIWindow>	uiWnd_;
-		punk<IOleAdviseHolder>		adviseHolder_;
-		punk<IDataAdviseHolder>		dataAdviseHolder_;
-		punk<IAdviseSink>			adviseSink_;
+		punk<ole_inplace_active_obj>    active_;
+		punk<IOleInPlaceSite>			site_;
+		punk<IOleClientSite>			clientSite_;
+		punk<IOleInPlaceFrame>			frame_;
+		punk<IOleInPlaceUIWindow>		uiWnd_;
+		punk<IOleAdviseHolder>			adviseHolder_;
+		punk<IDataAdviseHolder>			dataAdviseHolder_;
+		punk<IAdviseSink>				adviseSink_;
 
-		std::wstring				containerApp_;
-		std::wstring				containerObj_;
-		SIZEL						sizel_;
-		RECT						posRect_;
+		std::wstring					containerApp_;
+		std::wstring					containerObj_;
+		SIZEL							sizel_;
+		RECT							posRect_;
 
-		HWND						parentWindow_ = nullptr;
-		bool						isDirty_ = false;
-		bool						uiActive_ = false;
+		HWND							parentWindow_ = nullptr;
+		bool							isDirty_ = false;
+		bool							uiActive_ = false;
 
-		DWORD						adviseAspect_;
-		DWORD						adviseAdvf_;
+		DWORD							adviseAspect_;
+		DWORD							adviseAdvf_;
 
 };
 
 	namespace details
 	{
 		template<class T, class ... Args>
-		class interfaces<T(Control<T>, Args...)>
+		class interfaces<T(control<T>, Args...)>
 		{
 		public:
 

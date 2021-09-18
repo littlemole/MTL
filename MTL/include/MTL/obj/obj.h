@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MTL/obj/impl.h"
+#include "mtl/obj/impl.h"
 
-namespace MTL {
+namespace mtl {
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -10,19 +10,19 @@ namespace MTL {
 	//////////////////////////////////////////////////////////////////////////////
 
 	template<class T>
-	class ClassObject : public implements<ClassObject<T>(IClassFactory)>
+	class class_object : public implements<class_object<T>(IClassFactory)>
 	{
 	public:
 
 		virtual ULONG __stdcall AddRef(void) override
 		{
-			comModule().lock();
+			the_com_module().lock();
 			return 2;
 		}
 
 		virtual ULONG __stdcall Release(void) override
 		{
-			comModule().unlock();
+			the_com_module().unlock();
 			return 1;
 		}
 
@@ -46,11 +46,11 @@ namespace MTL {
 		{
 			if (fLock)
 			{
-				comModule().lock();
+				the_com_module().lock();
 			}
 			else
 			{
-				comModule().unlock();
+				the_com_module().unlock();
 			}
 			return S_OK;
 		}
@@ -62,7 +62,7 @@ namespace MTL {
 	//////////////////////////////////////////////////////////////////////////////
 
 	template<class T>
-	class ClassObject<aggregatable<T>> : public ClassObject<T> // public implements<ClassObject<aggregatable<T>>(IClassFactory)>
+	class class_object<aggregatable<T>> : public class_object<T> // public implements<ClassObject<aggregatable<T>>(IClassFactory)>
 	{
 	public:
 		/*
@@ -132,7 +132,7 @@ namespace MTL {
 	};
 
 	template<class T>
-	class ClassObject<localserver<T>> : public ClassObject<T>
+	class class_object<localserver<T>> : public class_object<T>
 	{
 	public:
 

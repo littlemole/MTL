@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MTL/obj/obj.h"
-#include "MTL/win32/box.h"
+#include "mtl/obj/obj.h"
+#include "mtl/win32/box.h"
 #include <iostream>
 
-namespace MTL {
+namespace mtl {
 
 	namespace details {
 
 		template<class T>
-		class Registrar
+		class registrar
 		{
 		public:
 
@@ -18,13 +18,13 @@ namespace MTL {
 		};
 
 		template<class T>
-		class Registrar<void(T)>
+		class registrar<void(T)>
 		{
 		public:
 
 			static void register_class_objects(std::vector<DWORD>& cookies)
 			{
-				static ClassObject<localserver<T>> classObject;
+				static class_object<localserver<T>> classObject;
 
 				DWORD cookie = 0;
 				HRESULT hr = ::CoRegisterClassObject(
@@ -42,14 +42,14 @@ namespace MTL {
 		};
 
 		template<class T, class ... Args>
-		class Registrar<void(T, Args...)>
+		class registrar<void(T, Args...)>
 		{
 		public:
 
 			static void register_class_objects(std::vector<DWORD>& cookies)
 			{
-				Registrar<void(T)>::register_class_objects(cookies);
-				Registrar<void(Args...)>::register_class_objects(cookies);
+				registrar<void(T)>::register_class_objects(cookies);
+				registrar<void(Args...)>::register_class_objects(cookies);
 			}
 		};
 
@@ -63,13 +63,13 @@ namespace MTL {
 		{
 			DWORD mainThreadId = ::GetCurrentThreadId();
 
-			comModule().onUnLoad = [mainThreadId]() {
+			the_com_module().onUnLoad = [mainThreadId]() {
 				::PostThreadMessage(mainThreadId, WM_QUIT, 0, 0);
 			};
 
 			::CoSuspendClassObjects();
 
-			details::Registrar<void(Args...)>::register_class_objects(cookies_);
+			details::registrar<void(Args...)>::register_class_objects(cookies_);
 
 			::CoResumeClassObjects();
 		}
@@ -111,7 +111,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,				\
 	UNREFERENCED_PARAMETER(hPrevInstance);					\
 	UNREFERENCED_PARAMETER(lpCmdLine);						\
 	STA enter;												\
-	MTL::local_server<__VA_ARGS__> server;					\
+	mtl::local_server<__VA_ARGS__> server;					\
 	int r = server.run();									\
 															\
 	return r;												\
@@ -146,7 +146,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,				\
 		return unregister_module() == S_OK ? 0 : 1;			\
 	}														\
 															\
-	MTL::local_server<__VA_ARGS__> server;					\
+	mtl::local_server<__VA_ARGS__> server;					\
 	int r = server.run();									\
 															\
 	return r;												\

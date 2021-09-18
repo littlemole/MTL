@@ -1,14 +1,14 @@
 #pragma once
 
-#include "MTL/obj/impl.h"
-#include "MTL/persist/stream.h"
-#include "MTL/persist/stgm.h"
+#include "mtl/obj/impl.h"
+#include "mtl/persist/stream.h"
+#include "mtl/persist/stgm.h"
 #include <map>
 #include <shellapi.h>
 
-namespace MTL {
+namespace mtl {
 
-	class DataObject : public IDataObject
+	class data_object : public IDataObject
 	{
 	public:
 
@@ -20,8 +20,8 @@ namespace MTL {
 				return DV_E_FORMATETC;
 			}
 						
-			Global::Lock<void*> lock(formats_[*pformatetcIn].hGlobal);
-			Global dest(*lock, lock.size(), GHND | GMEM_SHARE);
+			global::lock<void*> lock(formats_[*pformatetcIn].hGlobal);
+			global dest(*lock, lock.size(), GHND | GMEM_SHARE);
 			pmedium->hGlobal = *dest;
 			pmedium->tymed = TYMED_HGLOBAL;
 			dest.detach();
@@ -47,8 +47,8 @@ namespace MTL {
 			{
 				case TYMED_HGLOBAL:
 				{
-					Global::Lock<void*> lock(formats_[*pformatetc].hGlobal);
-					Global glob(lock.get(), lock.size(), GHND | GMEM_SHARE);
+					global::lock<void*> lock(formats_[*pformatetc].hGlobal);
+					global glob(lock.get(), lock.size(), GHND | GMEM_SHARE);
 					pmedium->hGlobal = *glob;
 					glob.detach();
 					return S_OK;
@@ -98,7 +98,7 @@ namespace MTL {
 			if (!pformatetc) return E_INVALIDARG;
 			if (!pmedium) return E_INVALIDARG;
 
-			formats_[*pformatetc] = StgMedium(*pmedium);
+			formats_[*pformatetc] = stg_medium(*pmedium);
 
 			return S_OK;
 		}
@@ -133,42 +133,42 @@ namespace MTL {
 		}
 
 	protected:
-		std::map<format_etc, StgMedium> formats_;
+		std::map<format_etc, stg_medium> formats_;
 	};
 
-	class DataTransferObject : public implements<DataTransferObject(::MTL::DataObject)>
+	class data_transfer_object : public implements<data_transfer_object(data_object)>
 	{
 	public:
 
-		DataTransferObject()
+		data_transfer_object()
 		{}
 
-		DataTransferObject(MTL::format_etc& fe, MTL::StgMedium& stgm)
+		data_transfer_object(format_etc& fe, stg_medium& stgm)
 		{
 			init(fe, stgm);
 		}
 
-		DataTransferObject( MTL::format_etc& fe, void* d, size_t s)
+		data_transfer_object( format_etc& fe, void* d, size_t s)
 		{
-			MTL::StgMedium stgm(d, s);
+			stg_medium stgm(d, s);
 			init(fe, stgm);
 		}
 
-		DataTransferObject(MTL::format_etc& fe, const std::wstring& s)
+		data_transfer_object(format_etc& fe, const std::wstring& s)
 		{
-			MTL::StgMedium stgm(s);
+			stg_medium stgm(s);
 			init(fe, stgm);
 		}
 
-		DataTransferObject(MTL::format_etc& fe, const std::string& s)
+		data_transfer_object(format_etc& fe, const std::string& s)
 		{
-			MTL::StgMedium stgm(s);
+			stg_medium stgm(s);
 			init(fe, stgm);
 		}
 
-		virtual ~DataTransferObject() {}
+		virtual ~data_transfer_object() {}
 
-		HRESULT setDropFiles(const std::vector<std::wstring> v)
+		HRESULT set_drop_files(const std::vector<std::wstring> v)
 		{
 			std::wstring s;
 			int c = 0;
@@ -179,16 +179,16 @@ namespace MTL {
 				c += (int)(v[i].size() + 1) * sizeof(wchar_t);
 			}
 
-			Global glob;
+			global glob;
 			glob.alloc(c + 1 + sizeof(DROPFILES), GHND | GMEM_SHARE);
-			Global::Lock<DROPFILES*> lock(*glob);
+			global::lock<DROPFILES*> lock(*glob);
 
 			DROPFILES* drop = *lock;
 			drop->pFiles = sizeof(DROPFILES);
 			drop->fWide = TRUE;
 			memcpy(((char*)drop + sizeof(DROPFILES)), s.c_str(), c + sizeof(wchar_t));
 
-			StgMedium medium(*glob);// Nono , GHND | GMEM_SHARE);
+			stg_medium medium(*glob);// Nono , GHND | GMEM_SHARE);
 			format_etc_dropfile fed;
 			HRESULT hr = SetData(&fed, &medium, TRUE);
 			glob.detach();
@@ -198,36 +198,36 @@ namespace MTL {
 
 	protected:
 
-		void init(MTL::format_etc& fe, MTL::StgMedium& stgm)
+		void init(format_etc& fe, stg_medium& stgm)
 		{
 			SetData(&fe, &stgm, TRUE);
 		}
 	};
 
 	template<class T>
-	punk<IDataObject> dataObject(MTL::format_etc& fe, const T& t)
+	punk<IDataObject> data_obj(format_etc& fe, const T& t)
 	{
-		MTL::punk<IDataObject> ido(new MTL::DataTransferObject(fe, t));
+	    punk<IDataObject> ido(new data_transfer_object(fe, t));
 		return ido;
 	}
 
 	template<class T>
-	punk<IDataObject> dataObject(CLIPFORMAT cf, const T& t)
+	punk<IDataObject> data_obj(CLIPFORMAT cf, const T& t)
 	{
-		MTL::format_etc fe(cf);
-		return dataObject(fe, t);
+		format_etc fe(cf);
+		return data_obj(fe, t);
 	}
 
-	inline punk<IDataObject> dataObject(MTL::format_etc& fe, void* p, size_t s)
+	inline punk<IDataObject> data_obj(format_etc& fe, void* p, size_t s)
 	{
-		MTL::punk<IDataObject> ido(new MTL::DataTransferObject(fe, p,s));
+		punk<IDataObject> ido(new data_transfer_object(fe, p,s));
 		return ido;
 	}
 
-	inline punk<IDataObject> dataObject(CLIPFORMAT cf, void* p, size_t s)
+	inline punk<IDataObject> data_obj(CLIPFORMAT cf, void* p, size_t s)
 	{
-		MTL::format_etc fe(cf);
-		return dataObject(fe, p, s);
+		format_etc fe(cf);
+		return data_obj(fe, p, s);
 	}
 
 
@@ -238,7 +238,7 @@ namespace MTL {
 			: dataObject(dataObj)
 		{}
 
-		bool has(MTL::format_etc& fe)
+		bool has(format_etc& fe)
 		{
 			HRESULT hr = dataObject->QueryGetData(&fe);
 			return hr == S_OK;
@@ -246,13 +246,13 @@ namespace MTL {
 
 		bool has(CLIPFORMAT cf)
 		{
-			MTL::format_etc fe(cf);
+			format_etc fe(cf);
 			return has(fe);
 		}
 
-		std::wstring wstring(MTL::format_etc& fe)
+		std::wstring wstring(format_etc& fe)
 		{
-			MTL::StgMedium sm;
+			stg_medium sm;
 			HRESULT hr = dataObject->GetData(&fe, &sm);
 			if (hr != S_OK)
 				return L"";
@@ -260,21 +260,21 @@ namespace MTL {
 			if (sm.tymed != TYMED_HGLOBAL || !sm.hGlobal)
 				return L"";
 
-			MTL::Global::Lock<wchar_t*> glob(sm.hGlobal);
+			global::lock<wchar_t*> glob(sm.hGlobal);
 			std::wstring result(*glob);
 			return result;
 		}
 
 		std::wstring wstring(CLIPFORMAT cf)
 		{
-			MTL::format_etc fe(cf);
+			format_etc fe(cf);
 			return wstring(fe);
 		}
 
 
-		std::string string(MTL::format_etc& fe)
+		std::string string(format_etc& fe)
 		{
-			MTL::StgMedium sm;
+			stg_medium sm;
 			HRESULT hr = dataObject->GetData(&fe, &sm);
 			if (hr != S_OK)
 				return "";
@@ -282,14 +282,14 @@ namespace MTL {
 			if (sm.tymed != TYMED_HGLOBAL || !sm.hGlobal)
 				return "";
 
-			MTL::Global::Lock<char*> glob(sm.hGlobal);
+			global::lock<char*> glob(sm.hGlobal);
 			std::string result(*glob);
 			return result;
 		}
 
 		std::string string(CLIPFORMAT cf)
 		{
-			MTL::format_etc fe(cf);
+			format_etc fe(cf);
 			return string(fe);
 		}
 
@@ -301,14 +301,14 @@ namespace MTL {
 				return v;
 
 			format_etc_dropfile	fe;
-			MTL::StgMedium		sm;
+			stg_medium		sm;
 
 			if (S_OK != dataObject->GetData(&fe, &sm))
 			{
 				return v;
 			}
 
-			Global::Lock<HDROP> lock(sm.hGlobal);
+			global::lock<HDROP> lock(sm.hGlobal);
 			HDROP hDrop = *lock;
 			if (!hDrop)
 			{
@@ -337,8 +337,8 @@ namespace MTL {
 
 
 	template<class T>
-	bool doDragDrop( 
-		MTL::format_etc& fe, 
+	bool do_drag_drop( 
+		format_etc& fe, 
 		const T& t, 
 		DWORD effect = DROPEFFECT_COPY | DROPEFFECT_MOVE, 
 		DWORD* pEffect = nullptr, 
@@ -348,7 +348,7 @@ namespace MTL {
 		DWORD tmp;
 		pEffect = pEffect ? pEffect : &tmp;
 
-		auto obj = dataObject(fe, t);
+		auto obj = data_obj(fe, t);
 
 		HRESULT hr = ::DoDragDrop(*obj, drop, effect, pEffect);
 
@@ -356,7 +356,7 @@ namespace MTL {
 	}
 
 	template<class T>
-	bool doDragDrop(
+	bool do_drag_drop(
 		CLIPFORMAT cf,
 		const T& t,
 		DWORD effect = DROPEFFECT_COPY | DROPEFFECT_MOVE,
@@ -367,7 +367,7 @@ namespace MTL {
 		DWORD tmp;
 		pEffect = pEffect ? pEffect : &tmp;
 
-		auto obj = dataObject(cf, t);
+		auto obj = data_obj(cf, t);
 
 		HRESULT hr = ::DoDragDrop(*obj, drop, effect, pEffect);
 
@@ -375,7 +375,7 @@ namespace MTL {
 	}
 
 	/* deprecated */
-	inline std::vector<std::wstring> vectorFromDataObject(IDataObject* ido)
+	inline std::vector<std::wstring> vector_from_data_object(IDataObject* ido)
 	{
 		format_etc_dropfile			fe;
 
@@ -395,8 +395,8 @@ namespace MTL {
 		}
 
 
-		Global glob(sm.hGlobal);
-		Global::Lock<HDROP> lock(*glob);
+		global glob(sm.hGlobal);
+		global::lock<HDROP> lock(*glob);
 		HDROP hDrop = *lock;
 		if (hDrop)
 		{
@@ -419,12 +419,12 @@ namespace MTL {
 		return v;
 	}
 
-	namespace Shell{
+	namespace shell{
 
-		class DataObject : public implements<DataObject(::MTL::DataObject)>
+		class data_object : public implements<data_object(::mtl::data_object)>
 		{
 		public:
-			DataObject(std::vector<std::wstring>& v, bool cut = false)
+			data_object(std::vector<std::wstring>& v, bool cut = false)
 				: cut_(cut)
 			{
 				{
@@ -434,9 +434,9 @@ namespace MTL {
 						de = DROPEFFECT_MOVE;
 					}
 
-					StgMedium medium(de, GHND | GMEM_SHARE);
+					stg_medium medium(de, GHND | GMEM_SHARE);
 					format_etc_pref_dropeffect fepde;
-					::MTL::DataObject::SetData(&fepde, &medium, TRUE);
+					::mtl::data_object::SetData(&fepde, &medium, TRUE);
 				}
 				
 				{
@@ -446,9 +446,9 @@ namespace MTL {
 						s += to_string(v[i]);
 						s += "\r\n";
 					}
-					StgMedium medium(s, GHND | GMEM_SHARE);
+					stg_medium medium(s, GHND | GMEM_SHARE);
 					format_etc_text fet;
-					::MTL::DataObject::SetData(&fet, &medium, TRUE);
+					::mtl::data_object::SetData(&fet, &medium, TRUE);
 				}
 
 				{
@@ -458,9 +458,9 @@ namespace MTL {
 						s += v[i];
 						s += L"\r\n";
 					}
-					StgMedium medium(s, GHND | GMEM_SHARE);
+					stg_medium medium(s, GHND | GMEM_SHARE);
 					format_etc_unicodetext feut;
-					::MTL::DataObject::SetData(&feut, &medium, TRUE);
+					::mtl::data_object::SetData(&feut, &medium, TRUE);
 				}
 				
 				{
@@ -473,18 +473,18 @@ namespace MTL {
 						c += (int)(v[i].size() + 1)*sizeof(wchar_t);
 					}
 
-					Global glob;
+					global glob;
 					glob.alloc(c + 1 + sizeof(DROPFILES), GHND | GMEM_SHARE);
-					Global::Lock<DROPFILES*> lock(*glob);
+					global::lock<DROPFILES*> lock(*glob);
 
 					DROPFILES* drop = *lock;
 					drop->pFiles = sizeof(DROPFILES);
 					drop->fWide = TRUE;
 					memcpy(((char*)drop + sizeof(DROPFILES)), s.c_str(), c + sizeof(wchar_t));
 
-					StgMedium medium(*glob);// Nono , GHND | GMEM_SHARE);
+					stg_medium medium(*glob);// Nono , GHND | GMEM_SHARE);
 					format_etc_dropfile fed;
-					::MTL::DataObject::SetData(&fed, &medium, TRUE);
+					::mtl::data_object::SetData(&fed, &medium, TRUE);
 					glob.detach();
 				}
 			}
@@ -499,8 +499,8 @@ namespace MTL {
 				{
 					if (pmedium->tymed == TYMED_HGLOBAL)
 					{
-						Global glob(pmedium->hGlobal);
-						Global::Lock<DWORD*> lock(*glob);
+						global glob(pmedium->hGlobal);
+						global::lock<DWORD*> lock(*glob);
 						DWORD de = **lock;
 						glob.detach();
 						onDrop.fire(de);
@@ -512,7 +512,7 @@ namespace MTL {
 				return S_OK;
 			}
 
-			Event<void(DWORD)> onDrop;
+			event<void(DWORD)> onDrop;
 		private:
 			bool							cut_;
 		};
@@ -521,7 +521,7 @@ namespace MTL {
 	namespace details {
 
 		template<class T, class ... Args>
-		class interfaces<T(DataObject, Args...)>
+		class interfaces<T(data_object, Args...)>
 		{
 		public:
 
@@ -541,10 +541,10 @@ namespace MTL {
 
 
 	template<class T>
-	class DropTargetBase : public implements<T(IDropTarget)>
+	class drop_target_base : public implements<T(IDropTarget)>
 	{
 	public:
-		virtual ~DropTargetBase() {}
+		virtual ~drop_target_base() {}
 
 		HRESULT virtual __stdcall DragEnter(IDataObject*, DWORD grfKeyState, POINTL, DWORD* pEffect)
 		{
@@ -575,10 +575,10 @@ namespace MTL {
 	};
 
 	template<class T>
-	class DropSrcBase : public implements<T(IDropSource)>
+	class drop_src_base : public implements<T(IDropSource)>
 	{
 	public:
-		virtual ~DropSrcBase() {}
+		virtual ~drop_src_base() {}
 
 		HRESULT virtual __stdcall QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 		{
@@ -596,34 +596,32 @@ namespace MTL {
 
 	};
 
-	class DefaultDropSource : public DropSrcBase<DefaultDropSource>
+	class default_drop_source : public drop_src_base<default_drop_source>
 	{
 	public:
 
 	};
 
-	inline MTL::punk<IDropSource> dropSource()
+	inline punk<IDropSource> drop_source()
 	{
-		MTL::punk<IDropSource> source(new DefaultDropSource());
+		punk<IDropSource> source(new default_drop_source());
 		return source;
 	}
 
-	class DefaultDropTarget : public DropTargetBase<DefaultDropTarget>
+	class default_drop_target : public drop_target_base<default_drop_target>
 	{
 	public:
 
-		MTL::Event<void(IDataObject*,DWORD,DWORD&)> onDrop;
-		MTL::format_etc fe;
+		event<void(IDataObject*,DWORD,DWORD&)> onDrop;
+		format_etc fe;
 		DWORD effect = 0;
 
-		DefaultDropTarget(MTL::format_etc f, DWORD ef = DROPEFFECT_COPY) 
+		default_drop_target(format_etc f, DWORD ef = DROPEFFECT_COPY)
 			: fe(f), effect(ef) 
 		{}
 
 		HRESULT virtual __stdcall Drop(IDataObject* ido, DWORD grfKeyState, POINTL, DWORD* pEffect)
 		{
-			OutputDebugString(L"DROP");
-
 			DWORD effect = *pEffect;
 			onDrop.fire(ido, grfKeyState,effect);
 			*pEffect = effect;
@@ -631,17 +629,17 @@ namespace MTL {
 		}
 	};
 
-	inline MTL::punk<DefaultDropTarget> dropTarget(MTL::format_etc fe)
+	inline punk<default_drop_target> drop_target(format_etc fe)
 	{
-		MTL::punk<DefaultDropTarget> target(new DefaultDropTarget(fe));
+		punk<default_drop_target> target(new default_drop_target(fe));
 		return target;
 	}
 
 
-	inline MTL::punk<DefaultDropTarget> dropTarget(CLIPFORMAT cf)
+	inline punk<default_drop_target> drop_target(CLIPFORMAT cf)
 	{
-		MTL::format_etc fe(cf);
-		return dropTarget(fe);
+		format_etc fe(cf);
+		return drop_target(fe);
 	}
 
 }

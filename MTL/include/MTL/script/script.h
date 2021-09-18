@@ -1,26 +1,27 @@
 #pragma once
 
-#include "MTL/punk.h"
-#include "MTL/disp/variant.h"
-#include "MTL/disp/disp.h"
+#include "mtl/punk.h"
+#include "mtl/disp/variant.h"
+#include "mtl/disp/disp.h"
+
 #include <ActivScp.h>
 
 #include <sstream>
 
-namespace MTL {
+namespace mtl {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////
 
-	class ActiveScript : public implements< ActiveScript(IActiveScriptSite, IActiveScriptSiteWindow)>
+	class active_script : public implements< active_script(IActiveScriptSite, IActiveScriptSiteWindow)>
 	{
 	public:
-		ActiveScript()
+		active_script()
 		{
 			::ZeroMemory(&ei_, sizeof(ei_));
 			hWnd_ = ::GetDesktopWindow();
 		}
 
-		ActiveScript(const std::wstring& engine)
+		active_script(const std::wstring& engine)
 		{
 			::ZeroMemory(&ei_, sizeof(ei_));
 			hWnd_ = ::GetDesktopWindow();
@@ -28,7 +29,7 @@ namespace MTL {
 			HR hr = init(engine);
 		}
 
-		ActiveScript(const std::wstring& engine, HWND hWnd)
+		active_script(const std::wstring& engine, HWND hWnd)
 		{
 			::ZeroMemory(&ei_, sizeof(ei_));
 			hWnd_ = hWnd;
@@ -36,9 +37,9 @@ namespace MTL {
 			HR hr = init(engine);
 		}
 
-		virtual ~ActiveScript() {}
+		virtual ~active_script() {}
 
-		void setWindow(HWND wnd)
+		void set_window(HWND wnd)
 		{
 			hWnd_ = wnd;
 		}
@@ -64,7 +65,7 @@ namespace MTL {
 				hr = asprop->SetProperty(SCRIPTPROP_INVOKEVERSIONING, NULL, &v);
 			}
 
-			hr = activeScript.queryInterface(&asp_);
+			hr = activeScript.query_interface(&asp_);
 			if (hr != S_OK)
 			{
 				return hr;
@@ -76,13 +77,13 @@ namespace MTL {
 				return hr;
 			}
 
-			hr = setHost((IActiveScriptSite*)this);
+			hr = set_host((IActiveScriptSite*)this);
 			if (hr != S_OK)
 			{
 				return hr;
 			}
 
-			hr = setState(SCRIPTSTATE_INITIALIZED);//SCRIPTSTATE_STARTED);//SCRIPTSTATE_INITIALIZED);
+			hr = set_state(SCRIPTSTATE_INITIALIZED);//SCRIPTSTATE_STARTED);//SCRIPTSTATE_INITIALIZED);
 			if (hr != S_OK)
 			{
 				return hr;
@@ -93,10 +94,10 @@ namespace MTL {
 
 		virtual HRESULT exec()
 		{
-			return setState(SCRIPTSTATE_STARTED);
+			return set_state(SCRIPTSTATE_STARTED);
 		}
 
-		HRESULT addNamedObject(IUnknown* punk, const std::wstring& obj, int state = SCRIPTITEM_ISVISIBLE)
+		HRESULT add_named_object(IUnknown* punk, const std::wstring& obj, int state = SCRIPTITEM_ISVISIBLE)
 		{
 			punk->AddRef();
 			if (objectMap_.count(obj) > 0)
@@ -115,7 +116,7 @@ namespace MTL {
 			return hr;
 		}
 
-		HRESULT removeNamedObject(const std::wstring& obj)
+		HRESULT remove_named_object(const std::wstring& obj)
 		{
 			if (objectMap_.count(obj) > 0)
 			{
@@ -126,14 +127,14 @@ namespace MTL {
 			return S_OK;
 		}
 
-		virtual HRESULT setState(SCRIPTSTATE state)
+		virtual HRESULT set_state(SCRIPTSTATE state)
 		{
 			if (activeScript)
 				return activeScript->SetScriptState(state);
 			return E_UNEXPECTED;
 		}
 
-		virtual HRESULT setHost(IActiveScriptSite* host)
+		virtual HRESULT set_host(IActiveScriptSite* host)
 		{
 			if (!host)
 				return E_FAIL;
@@ -160,7 +161,7 @@ namespace MTL {
 			return S_OK;
 		}
 
-		virtual HRESULT runScript(const std::wstring& script, int flag = SCRIPTTEXT_ISEXPRESSION | SCRIPTTEXT_ISVISIBLE)
+		virtual HRESULT run_script(const std::wstring& script, int flag = SCRIPTTEXT_ISEXPRESSION | SCRIPTTEXT_ISVISIBLE)
 		{
 			varResult_.clear();
 			::ZeroMemory(&ei_, sizeof(ei_));
@@ -177,7 +178,7 @@ namespace MTL {
 			return E_FAIL;
 		}
 
-		virtual HRESULT getScriptDispatch(const std::wstring& script, IDispatch** ppdisp)
+		virtual HRESULT get_script_dispatch(const std::wstring& script, IDispatch** ppdisp)
 		{
 			if (activeScript)
 				if (script.length() > 0)
@@ -188,7 +189,7 @@ namespace MTL {
 			return E_FAIL;
 		}
 
-		virtual HRESULT addScriptlet(std::wstring& name, const std::wstring& handler, const std::wstring& obj, const std::wstring& subobj, const std::wstring& eventname)
+		virtual HRESULT add_scriptlet(std::wstring& name, const std::wstring& handler, const std::wstring& obj, const std::wstring& subobj, const std::wstring& eventname)
 		{
 			varResult_.clear();
 			::ZeroMemory(&ei_, sizeof(ei_));
@@ -211,7 +212,7 @@ namespace MTL {
 			return varResult_;
 		}
 
-		EXCEPINFO& errorInfo()
+		EXCEPINFO& error_info()
 		{
 			return ei_;
 		}

@@ -1,29 +1,29 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
 
-namespace MTL {
+namespace mtl {
 
 
-	class Monitor
+	class monitor
 	{
 	public:
 
-		MTL::Event<void(std::wstring)> onFileChanged;
+		event<void(std::wstring)> onFileChanged;
 
 		std::wstring path;
 
 		bool done = false;
 
-		Monitor()
+		monitor()
 		{}
 
-		Monitor(const std::wstring& p)
+		monitor(const std::wstring& p)
 		{
 			watch(p);
 		}
 
-		~Monitor()
+		~monitor()
 		{
 			stop();
 		}
@@ -69,7 +69,7 @@ namespace MTL {
 				FILE_NOTIFY_CHANGE_LAST_WRITE,
 				&ret,
 				overTheLap,
-				&Monitor::overlappedCompletionRoutine
+				&monitor::overlappedCompletionRoutine
 			);
 		}
 
@@ -81,26 +81,26 @@ namespace MTL {
 			LPOVERLAPPED lpOverlapped
 		)
 		{
-			Monitor* monitor = (Monitor*)(lpOverlapped->hEvent);
-			if (monitor->done)
+			monitor* mon = (monitor*)(lpOverlapped->hEvent);
+			if (mon->done)
 			{
 				delete lpOverlapped;
-				free(monitor->fni);
-				::CloseHandle(monitor->fileHandle);
+				free(mon->fni);
+				::CloseHandle(mon->fileHandle);
 				return;
 			}
 
-			FILE_NOTIFY_INFORMATION* fni = monitor->fni;
+			FILE_NOTIFY_INFORMATION* fni = mon->fni;
 
 			std::wstring fn(fni->FileName, fni->FileNameLength / sizeof(wchar_t));
 			if (!fn.empty())
 			{
-				monitor->onFileChanged.fire(fn);
+				mon->onFileChanged.fire(fn);
 			}
 
 			DWORD ret = 0;
 			::ZeroMemory(lpOverlapped, sizeof(OVERLAPPED));
-			lpOverlapped->hEvent = (HANDLE)monitor;
+			lpOverlapped->hEvent = (HANDLE)mon;
 
 			fni->FileNameLength = MAX_PATH * 2;
 			fni->Action = 0;
@@ -109,14 +109,14 @@ namespace MTL {
 
 
 			::ReadDirectoryChangesW(
-				monitor->fileHandle,
+				mon->fileHandle,
 				fni,
 				sizeof(FILE_NOTIFY_INFORMATION) + MAX_PATH * 2,
 				FALSE,
 				FILE_NOTIFY_CHANGE_LAST_WRITE,
 				&ret,
 				lpOverlapped,
-				&Monitor::overlappedCompletionRoutine
+				&monitor::overlappedCompletionRoutine
 			);
 
 		}

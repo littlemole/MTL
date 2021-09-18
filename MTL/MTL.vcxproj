@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="async.h" />
     <ClInclude Include="include\MTL\disp\aut.h" />
     <ClInclude Include="include\MTL\disp\bstr.h" />
     <ClInclude Include="include\MTL\disp\disp.h" />
@@ -35,6 +34,7 @@
     <ClInclude Include="include\MTL\obj\localserver.h" />
     <ClInclude Include="include\MTL\obj\marshall.h" />
     <ClInclude Include="include\MTL\obj\obj.h" />
+    <ClInclude Include="include\MTL\ole\async.h" />
     <ClInclude Include="include\MTL\ole\control.h" />
     <ClInclude Include="include\MTL\ole\cp.h" />
     <ClInclude Include="include\MTL\ole\dataobj.h" />

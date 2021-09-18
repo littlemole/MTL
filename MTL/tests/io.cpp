@@ -23,7 +23,7 @@
 #include <condition_variable>
 #include <ShlObj.h>
 
-using namespace MTL;
+using namespace mtl;
 
 class IOTest : public ::testing::Test {
 protected:
@@ -94,12 +94,12 @@ TEST_F(IOTest, testSimpleFile)
 
     std::fstream fs;
     std::ostringstream oss;
-    fs.open( MTL::to_string(file_name), std::ios::binary | std::ios::in);
+    fs.open( mtl::to_string(file_name), std::ios::binary | std::ios::in);
     if (fs)
     {
         while (fs)
         {
-            MTL::cbuff buf(1024);
+            mtl::cbuff buf(1024);
             fs.read(buf, buf.size());
             oss.write(buf, fs.gcount());
         }
@@ -147,7 +147,7 @@ TEST_F(IOTest, testSimpleFileWin32)
 
     unsigned long long fsize = uli.QuadPart;
 
-    MTL::cbuff buf(fsize);
+    mtl::cbuff buf(fsize);
 
     DWORD nRead = 0;
     r = ::ReadFile(
@@ -195,7 +195,7 @@ TEST_F(IOTest, testSimpleFileWin32Async)
         LPOVERLAPPED lpOverlapped
     ) 
     {
-        MTL::detail::ReadOverLap* overlap = (MTL::detail::ReadOverLap*)lpOverlapped;
+        mtl::detail::ReadOverLap* overlap = (mtl::detail::ReadOverLap*)lpOverlapped;
 
         if (dwErrorCode == ERROR_SUCCESS)
         {
@@ -228,7 +228,7 @@ TEST_F(IOTest, testSimpleFileWin32Async)
     uli.HighPart = fi.nFileSizeHigh;
     uli.LowPart = fi.nFileIndexLow;
 
-    MTL::detail::ReadOverLap* overlap = new MTL::detail::ReadOverLap(handle, uli.QuadPart);
+    mtl::detail::ReadOverLap* overlap = new mtl::detail::ReadOverLap(handle, uli.QuadPart);
 
     char* buf = *overlap->buf;
     DWORD nRead = 0;
@@ -346,7 +346,7 @@ TEST_F(IOTest, testSpitFileWin32Async)
 
 void pipeServer(std::wstring pipe_name)
 {
-    NamedPipe pipe = NamedPipe::open(pipe_name);
+    named_pipe pipe = named_pipe::open(pipe_name);
     EXPECT_TRUE( (bool)pipe );
 
     std::string data = pipe.read();
@@ -362,7 +362,7 @@ TEST_F(IOTest, testNamedPipe)
 
     auto pipe_name = L"\\\\.\\pipe\\mtl-test";
 
-    NamedPipe pipe = NamedPipe::create(pipe_name);
+    named_pipe pipe = named_pipe::create(pipe_name);
     EXPECT_TRUE((bool)pipe);
 
     if (!pipe)
@@ -388,7 +388,7 @@ TEST_F(IOTest, testNamedPipe)
 
 void pipeAsyncServer(std::wstring pipe_name)
 {
-    NamedPipe pipe = NamedPipe::open(pipe_name);
+    named_pipe pipe = named_pipe::open(pipe_name);
     EXPECT_TRUE((bool)pipe);
 
     std::string data = pipe.read();
@@ -407,7 +407,7 @@ TEST_F(IOTest, testNamedPipeAsync)
 {
     auto pipe_name = L"\\\\.\\pipe\\mtl-test";
 
-    auto pipe = AsyncNamedPipe::create(pipe_name);
+    auto pipe = async_named_pipe::create(pipe_name);
     EXPECT_TRUE((bool)*pipe);
 
     if (!*pipe)
@@ -465,7 +465,7 @@ TEST_F(IOTest, testNamedPipeAsyncReadAll)
 {
     auto pipe_name = L"\\\\.\\pipe\\mtl-test";
 
-    auto pipe = AsyncNamedPipe::create(pipe_name);
+    auto pipe = async_named_pipe::create(pipe_name);
     EXPECT_TRUE((bool)*pipe);
 
     if (!*pipe)
@@ -486,7 +486,7 @@ TEST_F(IOTest, testNamedPipeAsyncReadAll)
         std::cout << "WRITTEN" << std::endl;
     });
 
-    pipe->readAll([&pipe, &data](std::string rcvd)
+    pipe->read_all([&pipe, &data](std::string rcvd)
     {
         std::cout << "RECEIVD: " << rcvd << std::endl;
         EXPECT_EQ("some pipe data send oversome pipe data send over", rcvd);

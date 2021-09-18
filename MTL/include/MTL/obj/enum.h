@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MTL/punk.h"
-#include "MTL/obj/impl.h"
+#include "mtl/punk.h"
+#include "mtl/obj/impl.h"
 
-namespace MTL {
+namespace mtl {
 
-	class EnumUnknown : public implements<EnumUnknown(IEnumUnknown)>
+	class enum_unknown : public implements<enum_unknown(IEnumUnknown)>
 	{
 	public:
 
-		EnumUnknown(const std::vector<punk<IUnknown>>& v)
+		enum_unknown(const std::vector<punk<IUnknown>>& v)
 			: unks_(v)
 		{}
 
@@ -34,7 +34,7 @@ namespace MTL {
 				return S_FALSE;
 			}
 
-			HRESULT hr = unks_[pos_].queryInterface(&(rgelt[0]));
+			HRESULT hr = unks_[pos_].query_interface(&(rgelt[0]));
 			if (hr != S_OK)
 				return hr;
 
@@ -61,8 +61,8 @@ namespace MTL {
 
 		virtual HRESULT __stdcall Clone(IEnumUnknown** ppenum) override
 		{
-			punk<IEnumUnknown> unk(new EnumUnknown(unks_));
-			return unk.queryInterface(ppenum);
+			punk<IEnumUnknown> unk(new enum_unknown(unks_));
+			return unk.query_interface(ppenum);
 		}
 
 	private:
@@ -70,16 +70,16 @@ namespace MTL {
 		int pos_ = 0;
 	};
 
-	class EnumVariant : public implements<EnumVariant(IEnumVARIANT)>
+	class enum_variant : public implements<enum_variant(IEnumVARIANT)>
 	{
 	public:
 
-		EnumVariant(const std::vector<variant>& v)
+		enum_variant(const std::vector<variant>& v)
 			: vars_(v)
 		{}
 
 		template<class T>
-		EnumVariant(const std::vector<T>& v)
+		enum_variant(const std::vector<T>& v)
 		{
 			for (auto& it : v)
 			{
@@ -129,8 +129,8 @@ namespace MTL {
 
 		virtual HRESULT __stdcall Clone(IEnumVARIANT** ppenum) override
 		{
-			punk<IEnumVARIANT> var(new EnumVariant(vars_));
-			return var.queryInterface(ppenum);
+			punk<IEnumVARIANT> var(new enum_variant(vars_));
+			return var.query_interface(ppenum);
 		}
 
 	private:

@@ -1,11 +1,10 @@
 #pragma once
 
-#include <MTL/punk.h>
-#include <MTL/obj/impl.h>
-//#include <MTL/ole/control.h>
-#include <MTL/win/wind.h>
-#include <MTL/win32/mem.h>
-//#include <MTL/disp/bstr.h>
+#include <mtl/punk.h>
+#include <mtl/win/wind.h>
+#include <mtl/win32/mem.h>
+#include <mtl/obj/impl.h>
+
 #include <olectl.h>
 #include <shobjidl_core.h>
 #include <Shlwapi.h>
@@ -13,16 +12,16 @@
 #include <Windowsx.h.>
 #include <KnownFolders.h>
 
-namespace MTL {
+namespace mtl {
 
-	class ExplorerTree : public Window<ExplorerTree>, public implements<stack_object<ExplorerTree>(INameSpaceTreeControlEvents, IServiceProvider)>
+	class explorer_tree : public window<explorer_tree>, public implements<stack_object<explorer_tree>(INameSpaceTreeControlEvents, IServiceProvider)>
 	{
 	public:
 
-		Event<void(bool, std::wstring)> onClick;
-		Event<void(std::wstring)> onSelect;
+		event<void(bool, std::wstring)> onClick;
+		event<void(std::wstring)> onSelect;
 
-		ExplorerTree()
+		explorer_tree()
 		{
 			adviseCookie_ = -1;
 			lastClickTime_ = 0;
@@ -36,18 +35,18 @@ namespace MTL {
 			bgBrush_ = ::CreateSolidBrush(bgCol_);
 		}
 
-		~ExplorerTree()
+		~explorer_tree()
 		{
 			::DeleteObject(bgBrush_);
 		}
 
-		virtual LRESULT wmEraseBackground(WPARAM wParam) override
+		virtual LRESULT wm_erase_background(WPARAM wParam) override
 		{
 			// prevent bkgrnd erase
 			return 1;
 		}
 
-		virtual LRESULT wmDestroy() override
+		virtual LRESULT wm_destroy() override
 		{
 			if (tree_)
 			{
@@ -64,7 +63,7 @@ namespace MTL {
 			return 0;
 		}
 
-		virtual LRESULT wmCreate() override
+		virtual LRESULT wm_create() override
 		{
 			//treeMenu_.load(IDM_TREE_DIR);
 			::GetClientRect(handle,&clientRect_);
@@ -73,7 +72,7 @@ namespace MTL {
 			::GetWindowRect(handle,&rc);
 			::MapWindowRect(HWND_DESKTOP, handle, &rc);
 
-			HRESULT hr = tree_.createObject(CLSID_NamespaceTreeControl, CLSCTX_INPROC);
+			HRESULT hr = tree_.create_object(CLSID_NamespaceTreeControl, CLSCTX_INPROC);
 			if (SUCCEEDED(hr))
 			{
 				const NSTCSTYLE nsctsFlags = //NSTCS_HASEXPANDOS |            // Show expandos
@@ -125,14 +124,14 @@ namespace MTL {
 			return 0;
 		}
 
-		virtual void showItem(const std::wstring& path)
+		virtual void show_item(const std::wstring& path)
 		{
 			std::wstring p = path + L"\\";
-			MTL::punk<IShellItem> shit;
+			punk<IShellItem> shit;
 			HRESULT hr = ::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_IShellItem, (void**)&shit);
 			if (hr == S_OK && shit)
 			{
-				MTL::punk<INameSpaceTreeControl2> tree2(tree_);
+				punk<INameSpaceTreeControl2> tree2(tree_);
 				hr = tree2->EnsureItemVisible(*shit);
 				if (hr != S_OK)
 				{
@@ -141,7 +140,7 @@ namespace MTL {
 			};
 		}
 
-		virtual void setRoot()
+		virtual void set_root()
 		{
 
 			punk<IShellItem> shit;
@@ -153,7 +152,7 @@ namespace MTL {
 			}
 		}
 
-		virtual void setRoot(const std::wstring& path)
+		virtual void set_root(const std::wstring& path)
 		{
 
 			punk<IShellItem> shit;
@@ -165,7 +164,7 @@ namespace MTL {
 			}
 		}
 
-		virtual LRESULT wmSize(RECT& clientRect) override
+		virtual LRESULT wm_size(RECT& clientRect) override
 		{
 			clientRect_ = clientRect;
 
@@ -175,7 +174,7 @@ namespace MTL {
 			RECT rc;
 			::GetWindowRect(hwndTree,&rc);
 			::MapWindowRect(HWND_DESKTOP, handle, &rc);
-			SetWindowPos(hwndTree, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
+			::SetWindowPos(hwndTree, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
 			return 0;
 		}
 

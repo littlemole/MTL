@@ -1,25 +1,25 @@
 #pragma once
 
-#include "MTL/win32/uni.h"
-#include "MTL/punk.h"
-#include "MTL/util/path.h"
-#include "MTL/win32/mem.h"
-#include <sstream>
+#include "mtl/punk.h"
+#include "mtl/win32/uni.h"
+#include "mtl/win32/mem.h"
+#include "mtl/util/path.h"
 #include <ShlObj.h>
+#include <sstream>
 
-namespace MTL {
+namespace mtl {
 
-	class StgMedium : public STGMEDIUM
+	class stg_medium : public STGMEDIUM
 	{
 	public:
-		StgMedium()
+		stg_medium()
 		{
 			this->tymed = 0;
 			this->pUnkForRelease = 0;
 			this->hGlobal = 0;
 		}
 
-		StgMedium(const STGMEDIUM& rhs)
+		stg_medium(const STGMEDIUM& rhs)
 		{
 			this->tymed = rhs.tymed;
 			this->pUnkForRelease = 0;
@@ -27,7 +27,7 @@ namespace MTL {
 			::CopyStgMedium(&rhs, this);
 		}
 
-		StgMedium(STGMEDIUM&& rhs) 
+		stg_medium(STGMEDIUM&& rhs)
 		{
 			this->tymed = rhs.tymed;
 			this->pUnkForRelease = rhs.pUnkForRelease;
@@ -35,7 +35,7 @@ namespace MTL {
 			::ZeroMemory(&rhs, sizeof(STGMEDIUM));
 		}
 
-		~StgMedium()
+		~stg_medium()
 		{
 			::ReleaseStgMedium(this);
 		}
@@ -49,7 +49,7 @@ namespace MTL {
 			return S_OK;
 		}
 
-		StgMedium& operator=(StgMedium&& rhs)
+		stg_medium& operator=(stg_medium&& rhs)
 		{
 			if (this == &rhs)
 			{
@@ -65,7 +65,7 @@ namespace MTL {
 		}
 
 
-		StgMedium& operator=(const STGMEDIUM& rhs)
+		stg_medium& operator=(const STGMEDIUM& rhs)
 		{
 			if (this == &rhs)
 			{
@@ -76,7 +76,7 @@ namespace MTL {
 			return *this;
 		}
 
-		StgMedium(HGLOBAL hglob, IUnknown* pUnk = 0)
+		stg_medium(HGLOBAL hglob, IUnknown* pUnk = 0)
 		{
 			this->tymed = TYMED_HGLOBAL;
 			this->pUnkForRelease = pUnk;
@@ -87,9 +87,9 @@ namespace MTL {
 			}
 		}
 
-		StgMedium(const std::wstring& s, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
+		stg_medium(const std::wstring& s, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
 		{
-			Global glob(s, opt);
+			global glob(s, opt);
 			this->tymed = TYMED_HGLOBAL;
 			this->pUnkForRelease = pUnk;
 			if (pUnk)
@@ -98,9 +98,9 @@ namespace MTL {
 			glob.detach();
 		}
 
-		StgMedium(const std::string& s, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
+		stg_medium(const std::string& s, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
 		{
-			Global glob(s, opt);
+			global glob(s, opt);
 			this->tymed = TYMED_HGLOBAL;
 			this->pUnkForRelease = pUnk;
 			if (pUnk)
@@ -111,9 +111,9 @@ namespace MTL {
 
 
 		template<class T>
-		StgMedium(const T& t, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
+		stg_medium(const T& t, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
 		{
-			Global glob( (void*)&t, sizeof(T), opt);
+			global glob( (void*)&t, sizeof(T), opt);
 			this->tymed = TYMED_HGLOBAL;
 			this->pUnkForRelease = pUnk;
 			this->hGlobal = *glob;
@@ -123,9 +123,9 @@ namespace MTL {
 		}
 
 
-		StgMedium(void* v, size_t size, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
+		stg_medium(void* v, size_t size, int opt = GMEM_MOVEABLE | GMEM_NODISCARD, IUnknown* pUnk = 0)
 		{
-			Global glob(v, size, opt);
+			global glob(v, size, opt);
 			this->tymed = TYMED_HGLOBAL;
 			this->pUnkForRelease = pUnk;
 			this->hGlobal = *glob;
@@ -245,7 +245,7 @@ namespace MTL {
 
 	namespace ole {
 
-		class DummyStorage : public IStorage
+		class dummy_storage : public IStorage
 		{
 		public:
 

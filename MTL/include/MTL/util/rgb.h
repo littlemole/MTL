@@ -1,11 +1,11 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
 
-namespace MTL {
+namespace mtl {
 
 
-	inline const char* rgb2hex(COLORREF col)
+	inline const char* rgb_to_hex(COLORREF col)
 	{
 		static char ret[12];
 		char buf[12];
@@ -23,7 +23,7 @@ namespace MTL {
 		return ret;
 	}
 
-	inline COLORREF hex2rgb(const std::string& h)
+	inline COLORREF hex_to_rgb(const std::string& h)
 	{
 		if (h.empty())
 			return 0;

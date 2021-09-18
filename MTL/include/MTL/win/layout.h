@@ -1,17 +1,18 @@
 #pragma once
 
-#include "MTL/win/wind.h"
+#include "mtl/win/wind.h"
+#include "mtl/win/gdi.h"
 #include <windowsx.h>
 
-namespace MTL {
+namespace mtl {
 
-	struct Widget;
+	struct widget;
 
-	class Layout
+	class layout
 	{
 	public:
 
-		enum class Style {
+		enum class style {
 			NONE,
 			FILL,
 			NORTH,
@@ -20,32 +21,32 @@ namespace MTL {
 			WEST
 		};
 
-		virtual ~Layout() {}
+		virtual ~layout() {}
 
-		Layout()
+		layout()
 		{}
 
-		Layout(std::vector<Widget>&& widgets)
+		layout(std::vector<widget>&& widgets)
 			: widgets_(std::move(widgets))
 		{}
 
-		void move(Widget& w, RECT& dest);
+		void move(widget& w, RECT& dest);
 
 		virtual void do_layout(RECT& r, RECT& p);
 
 	protected:
-		std::vector<Widget> widgets_;
+		std::vector<widget> widgets_;
 	};
 
-	class DefaultLayout : public Layout
+	class default_layout : public layout
 	{
 	public:
 
-		DefaultLayout()
+		default_layout()
 		{}
 
-		DefaultLayout(std::vector<Widget>&& widgets)
-			: Layout(std::move(widgets))
+		default_layout(std::vector<widget>&& widgets)
+			: layout(std::move(widgets))
 		{}
 
 		//	void move(Widget& w, RECT& dest);
@@ -54,7 +55,7 @@ namespace MTL {
 
 	};
 
-	class ColumnLayout : public Layout
+	class column_layout : public layout
 	{
 	public:
 
@@ -62,11 +63,11 @@ namespace MTL {
 
 			//struct Widget;
 
-		ColumnLayout()
+		column_layout()
 		{}
 
-		ColumnLayout(std::vector<Widget>&& widgets)
-			: Layout(std::move(widgets))
+		column_layout(std::vector<widget>&& widgets)
+			: layout(std::move(widgets))
 		{}
 
 		//void move(Widget& w, RECT& dest);
@@ -75,29 +76,29 @@ namespace MTL {
 
 	};
 
-	class RowLayout : public Layout
+	class row_layout : public layout
 	{
 	public:
 
-		RowLayout()
+		row_layout()
 		{}
 
-		RowLayout(std::vector<Widget>&& widgets)
-			: Layout(std::move(widgets))
+		row_layout(std::vector<widget>&& widgets)
+			: layout(std::move(widgets))
 		{}
 
 		void do_layout(RECT& r, RECT& p) override;
 	};
 
-	class Splitter : public Window<Splitter>
+	class splitter : public window<splitter>
 	{
 	public:
 
-		Splitter()
+		splitter()
 		{
 			static int unused = []() // init once
 			{
-				windowClass<Splitter>().hCursor = ::LoadCursor(nullptr, IDC_HAND);// IDC_SIZEWE);
+				windowclass<splitter>().hCursor = ::LoadCursor(nullptr, IDC_HAND);// IDC_SIZEWE);
 				return 0;
 			}();
 		}
@@ -110,43 +111,43 @@ namespace MTL {
 		bool			bTrack_;
 	};
 
-	class SplitterLayout :  public Layout
+	class splitter_layout :  public layout
 	{
 	public:
 
-		SplitterLayout(HWND w1, HWND w2, HWND w3);
+		splitter_layout(HWND w1, HWND w2, HWND w3);
 
 		void do_layout(RECT& r, RECT& p) override;
 
 	};
 
 
-	struct Widget
+	struct widget
 	{
 		HWND hWnd = nullptr;
-		Layout::Style style;
-		std::shared_ptr<Layout> layout;
+		layout::style style;
+		std::shared_ptr<layout> layout;
 		RECT padding = { 0,0,0,0 };
 
-		Widget() {}
+		widget() {}
 
-		Widget(const Widget& rhs)
+		widget(const widget& rhs)
 			:hWnd(rhs.hWnd), style(rhs.style), layout(rhs.layout), padding(rhs.padding)
 		{
 		}
 
-		Widget(Widget&& rhs)
+		widget(widget&& rhs)
 			:hWnd(rhs.hWnd), style(rhs.style), padding(rhs.padding)
 		{
 			if (rhs.layout)
 			{
-				layout = std::shared_ptr<Layout>(std::move(rhs.layout));
+				layout = std::shared_ptr<::mtl::layout>(std::move(rhs.layout));
 			}
 			rhs.hWnd = 0;
 			rhs.layout = 0;
 		}
 
-		Widget& operator=(const Widget& rhs)
+		widget& operator=(const widget& rhs)
 		{
 			if (&rhs == this)
 			{
@@ -161,7 +162,7 @@ namespace MTL {
 			return *this;
 		}
 
-		Widget& operator=(Widget&& rhs)
+		widget& operator=(widget&& rhs)
 		{
 			if (&rhs == this)
 			{
@@ -180,34 +181,28 @@ namespace MTL {
 			return *this;
 		}
 
-		Widget(SplitterLayout&& l, Layout::Style s = MTL::Layout::Style::NONE)
-			:layout(new SplitterLayout(std::move(l))), style(s)
+		widget(splitter_layout&& l, layout::style s = mtl::layout::style::NONE)
+			:layout(new splitter_layout(std::move(l))), style(s)
 		{}
 
-		Widget(HWND wnd, Layout::Style s = MTL::Layout::Style::NONE)
+		widget(HWND wnd, layout::style s = mtl::layout::style::NONE)
 			:hWnd(wnd), style(s)
 		{}
 
-		Widget(DefaultLayout&& l, Layout::Style s)
-			:layout(new DefaultLayout(std::move(l))), style(s)
+		widget(default_layout&& l, layout::style s)
+			:layout(new default_layout(std::move(l))), style(s)
 		{}
 
-		Widget(ColumnLayout&& l, RECT&& p)
-			:layout(new ColumnLayout(std::move(l))), padding(p)
+		widget(column_layout&& l, ::RECT&& p)
+			:layout(new column_layout(std::move(l))), padding(p)
 		{}
 
-		Widget(RowLayout&& l, RECT&& p)
-			:layout(new RowLayout(std::move(l))), padding(p)
+		widget(row_layout&& l, ::RECT&& p)
+			:layout(new row_layout(std::move(l))), padding(p)
 		{}
-
-		/*
-		Widget(ColumnLayout&& l, Layout::Style s)
-			:layout(std::move(l)), style(s)
-		{}
-		*/
 	};
 
-	inline void Layout::move(Widget& w, RECT& dest)
+	inline void layout::move(widget& w, RECT& dest)
 	{
 		if (w.hWnd)
 		{
@@ -220,7 +215,7 @@ namespace MTL {
 		}
 	}
 
-	inline void Layout::do_layout(RECT& r, RECT& p)
+	inline void layout::do_layout(RECT& r, RECT& p)
 	{
 		RECT& avail = r;
 		for (auto& w : widgets_)
@@ -239,18 +234,18 @@ namespace MTL {
 			}
 			switch (w.style)
 			{
-			case Style::NONE:
+			case style::NONE:
 			{
 				break;
 			}
-			case Style::FILL:
+			case style::FILL:
 			{
 				RECT dest = avail;
 				move(w, dest);
 				return;
 				break;
 			}
-			case Style::NORTH:
+			case style::NORTH:
 			{
 				RECT dest = avail;
 				RECT wr;
@@ -264,7 +259,7 @@ namespace MTL {
 				avail.top = dest.bottom;
 				break;
 			}
-			case Style::EAST:
+			case style::EAST:
 			{
 				RECT dest = avail;
 				RECT wr;
@@ -276,7 +271,7 @@ namespace MTL {
 				avail.right = dest.left;
 				break;
 			}
-			case Style::SOUTH:
+			case style::SOUTH:
 			{
 				RECT dest = avail;
 				RECT wr;
@@ -288,7 +283,7 @@ namespace MTL {
 				avail.bottom = dest.top;
 				break;
 			}
-			case Style::WEST:
+			case style::WEST:
 			{
 				RECT dest = avail;
 				RECT wr;
@@ -305,23 +300,8 @@ namespace MTL {
 		}
 	}
 
-	inline void ColumnLayout::do_layout(RECT& padded, RECT& p)
+	inline void column_layout::do_layout(RECT& padded, RECT& p)
 	{
-		/*
-		int width = 0;
-		for (auto& w : widgets_)
-		{
-			RECT wRect;
-			::GetWindowRect(w.hWnd, &wRect);
-			int w = wRect.right - wRect.left;
-			if (w > width)
-			{
-				width = w;
-			}
-		}
-
-		int cellHeight = (padded.bottom - padded.top) / widgets_.size();
-		*/
 		int top = padded.top;
 		for (int i = 0; i < widgets_.size(); i++)
 		{
@@ -346,11 +326,11 @@ namespace MTL {
 
 			switch (w.style)
 			{
-			case Style::NONE: { break; }
-			case Style::NORTH: { adjust = { x,0,x,2 * y }; break; }
-			case Style::EAST: { adjust = { 2 * x,y,0,y }; break; }
-			case Style::SOUTH: { adjust = { x,2 * y,x,0 }; break; }
-			case Style::WEST: { adjust = { 0,y,2 * x,y }; break; }
+			case style::NONE: { break; }
+			case style::NORTH: { adjust = { x,0,x,2 * y }; break; }
+			case style::EAST: { adjust = { 2 * x,y,0,y }; break; }
+			case style::SOUTH: { adjust = { x,2 * y,x,0 }; break; }
+			case style::WEST: { adjust = { 0,y,2 * x,y }; break; }
 			}
 
 			RECT dest = {
@@ -365,23 +345,8 @@ namespace MTL {
 	}
 
 
-	inline void RowLayout::do_layout(RECT& padded, RECT& p)
+	inline void row_layout::do_layout(RECT& padded, RECT& p)
 	{
-		/*
-		int height = 0;
-		for (auto& w : widgets_)
-		{
-			RECT wRect;
-			::GetWindowRect(w.hWnd, &wRect);
-			int size = wRect.bottom - wRect.top;
-			if (size > height)
-			{
-				height = size;
-			}
-		}
-
-		int cellWidth = (padded.right - padded.left) / widgets_.size();
-		*/
 		int left = padded.left;
 		for (int i = 0; i < widgets_.size(); i++)
 		{
@@ -406,11 +371,11 @@ namespace MTL {
 
 			switch (w.style)
 			{
-			case Style::NONE: { break; }
-			case Style::NORTH: { adjust = { x,0,x,2 * y }; break; }
-			case Style::EAST: { adjust = { 2 * x,y,0,y }; break; }
-			case Style::SOUTH: { adjust = { x,2 * y,x,0 }; break; }
-			case Style::WEST: { adjust = { 0,y,2 * x,y }; break; }
+			case style::NONE: { break; }
+			case style::NORTH: { adjust = { x,0,x,2 * y }; break; }
+			case style::EAST: { adjust = { 2 * x,y,0,y }; break; }
+			case style::SOUTH: { adjust = { x,2 * y,x,0 }; break; }
+			case style::WEST: { adjust = { 0,y,2 * x,y }; break; }
 			}
 
 			RECT dest = {
@@ -428,13 +393,12 @@ namespace MTL {
 		};
 	}
 
-	inline SplitterLayout::SplitterLayout(HWND w1, HWND w2, HWND w3)
-		: Layout(std::move(std::vector<Widget>({ Widget(w1),Widget(w2),Widget(w3) })))
+	inline splitter_layout::splitter_layout(HWND w1, HWND w2, HWND w3)
+		: layout(std::move(std::vector<widget>({ widget(w1),widget(w2),widget(w3) })))
 	{
 	}
 
-	// TODO add support for invisible windows. only splitter if both childs are visible!
-	inline void SplitterLayout::do_layout(RECT& r, RECT& p)
+	inline void splitter_layout::do_layout(RECT& r, RECT& p)
 	{
 		RECT wr1;
 		RECT wr2;
@@ -494,7 +458,7 @@ namespace MTL {
 	}
 
 
-	inline LRESULT Splitter::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	inline LRESULT splitter::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -504,11 +468,11 @@ namespace MTL {
 		}
 		case WM_PAINT:
 		{
-			MTL::PaintDC dc(hWnd);
-			RECT r;
-			::GetClientRect(hWnd, &r);
+			mtl::paint_dc dc(hWnd);
+			RECT r = client_rect();
 			HBRUSH br = GetStockBrush(LTGRAY_BRUSH);
-			::FillRect(*dc, &r, br);
+			mtl::dc_view dcv(*dc);
+			dcv.fill_rect(r, br);
 			break;
 		}
 		case WM_LBUTTONDOWN:
@@ -572,7 +536,7 @@ namespace MTL {
 			break;
 		}
 		}
-		return Window<Splitter>::wndProc(hWnd, message, wParam, lParam);
+		return window<splitter>::wndProc(hWnd, message, wParam, lParam);
 	}
 
 }

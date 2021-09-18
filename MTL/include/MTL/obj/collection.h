@@ -1,26 +1,27 @@
 #pragma once
 
 #include "gtest/gtest.h"
-#include "MTL/win32/uni.h"
-#include "MTL/disp/bstr.h"
-#include "MTL/disp/disp.h"
-#include "MTL/disp/variant.h"
-#include "MTL/disp/sf_array.h"
-#include "MTL/obj/enum.h"
-#include "MTL/punk.h"
-#include "MTL/win32/box.h"
-#include "MTL/util/path.h"
+#include "mtl/punk.h"
+#include "mtl/win32/uni.h"
+#include "mtl/win32/box.h"
+#include "mtl/disp/bstr.h"
+#include "mtl/disp/disp.h"
+#include "mtl/disp/variant.h"
+#include "mtl/disp/sf_array.h"
+#include "mtl/obj/enum.h"
+#include "mtl/util/path.h"
+
+#include <ShlObj.h>
 #include <sstream>
 #include <deque>
 #include <mutex>
 #include <thread>
-#include <ShlObj.h>
 
-namespace MTL {
+namespace mtl {
 
 
     template<class C, class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class Collection : public Dispatch<T,I,LIBID,MAJOR,MINOR>
+    class collection : public dispatch<T,I,LIBID,MAJOR,MINOR>
     {
     public:
 
@@ -63,7 +64,7 @@ namespace MTL {
             if (!enu)
                 return E_INVALIDARG;
 
-            *enu = new EnumVariant(data_);
+            *enu = new enum_variant(data_);
             (*enu)->AddRef();
             return S_OK;
         }
@@ -74,7 +75,7 @@ namespace MTL {
     };
 
     template<class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class LongCollection : public Collection<long,T,I,LIBID,MAJOR,MINOR>
+    class long_collection : public collection<long,T,I,LIBID,MAJOR,MINOR>
     {
     public:
 
@@ -114,7 +115,7 @@ namespace MTL {
     namespace details
     {
         template<class T, class I, class ... Args>
-        class interfaces<T(LongCollection<T, I>, Args...)>
+        class interfaces<T(long_collection<T, I>, Args...)>
         {
         public:
 
@@ -146,13 +147,13 @@ namespace MTL {
         };
 
         template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR,class ... Args>
-        class interfaces<T(LongCollection<T, I, LIBID, MAJOR,MINOR>, Args...)>
+        class interfaces<T(long_collection<T, I, LIBID, MAJOR,MINOR>, Args...)>
         {
         public:
 
             static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
             {
-                return interfaces<T(LongCollection<T, I>)>::QueryInterface(that, riid, ppvObject);
+                return interfaces<T(long_collection<T, I>)>::QueryInterface(that, riid, ppvObject);
             }
         };
 
@@ -160,7 +161,7 @@ namespace MTL {
 
 
     template<class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class BstrCollection: public Collection<bstr,T,I,LIBID,MAJOR,MINOR>
+    class bstr_collection: public collection<bstr,T,I,LIBID,MAJOR,MINOR>
     {
     public:
 
@@ -199,7 +200,7 @@ namespace MTL {
     namespace details
     {
         template<class T, class I, class ... Args>
-        class interfaces<T(BstrCollection<T, I>, Args...)>
+        class interfaces<T(bstr_collection<T, I>, Args...)>
         {
         public:
 
@@ -224,20 +225,20 @@ namespace MTL {
         };
 
         template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-        class interfaces<T(BstrCollection<T, I, LIBID, MAJOR, MINOR>, Args...)>
+        class interfaces<T(bstr_collection<T, I, LIBID, MAJOR, MINOR>, Args...)>
         {
         public:
 
             static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
             {
-                return interfaces<T(BstrCollection<T, I>)>::QueryInterface(that, riid, ppvObject);
+                return interfaces<T(bstr_collection<T, I>)>::QueryInterface(that, riid, ppvObject);
             }
         };
 
     }
 
     template<class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class VariantCollection : public Collection<variant,T,I,LIBID,MAJOR,MINOR>
+    class variant_collection : public collection<variant,T,I,LIBID,MAJOR,MINOR>
     {
     public:
 
@@ -276,7 +277,7 @@ namespace MTL {
     namespace details
     {
         template<class T, class I, class ... Args>
-        class interfaces<T(VariantCollection<T, I>, Args...)>
+        class interfaces<T(variant_collection<T, I>, Args...)>
         {
         public:
 
@@ -301,20 +302,20 @@ namespace MTL {
         };
 
         template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-        class interfaces<T(VariantCollection<T, I, LIBID, MAJOR, MINOR>, Args...)>
+        class interfaces<T(variant_collection<T, I, LIBID, MAJOR, MINOR>, Args...)>
         {
         public:
 
             static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
             {
-                return interfaces<T(VariantCollection<T, I>)>::QueryInterface(that, riid, ppvObject);
+                return interfaces<T(variant_collection<T, I>)>::QueryInterface(that, riid, ppvObject);
             }
         };
 
     }
 
     template<class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class DispCollection : public Collection<punk<IDispatch>,T,I,LIBID,MAJOR,MINOR >
+    class disp_collection : public collection<punk<IDispatch>,T,I,LIBID,MAJOR,MINOR >
     {
     public:
 
@@ -326,7 +327,7 @@ namespace MTL {
             if (index >= this->data_.size())
                 return E_INVALIDARG;
 
-            return this->data_[index].queryInterface(value);
+            return this->data_[index].query_interface(value);
         }
 
         virtual HRESULT __stdcall Item(long index, IDispatch** value)
@@ -353,7 +354,7 @@ namespace MTL {
     namespace details
     {
         template<class T, class I, class ... Args>
-        class interfaces<T(DispCollection<T, I>, Args...)>
+        class interfaces<T(disp_collection<T, I>, Args...)>
         {
         public:
 
@@ -378,20 +379,20 @@ namespace MTL {
         };
 
         template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-        class interfaces<T(DispCollection<T, I, LIBID, MAJOR, MINOR>, Args...)>
+        class interfaces<T(disp_collection<T, I, LIBID, MAJOR, MINOR>, Args...)>
         {
         public:
 
             static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
             {
-                return interfaces<T(DispCollection<T, I>)>::QueryInterface(that, riid, ppvObject);
+                return interfaces<T(disp_collection<T, I>)>::QueryInterface(that, riid, ppvObject);
             }
         };
 
     }
 
     template<class T, class I, REFGUID LIBID = GUID_NULL, int MAJOR = 1, int MINOR = 0>
-    class UnknownCollection : public Collection<punk<IUnknown>, T, I, LIBID, MAJOR, MINOR >
+    class unknown_collection : public collection<punk<IUnknown>, T, I, LIBID, MAJOR, MINOR >
     {
     public:
 
@@ -403,7 +404,7 @@ namespace MTL {
             if (index >= this->data_.size())
                 return E_INVALIDARG;
 
-            return this->data_[index].queryInterface(value);
+            return this->data_[index].query_interface(value);
         }
 
         virtual HRESULT __stdcall Item(long index, IUnknown** value)
@@ -430,7 +431,7 @@ namespace MTL {
     namespace details
     {
         template<class T, class I, class ... Args>
-        class interfaces<T(UnknownCollection<T, I>, Args...)>
+        class interfaces<T(unknown_collection<T, I>, Args...)>
         {
         public:
 
@@ -455,13 +456,13 @@ namespace MTL {
         };
 
         template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-        class interfaces<T(UnknownCollection<T, I, LIBID, MAJOR, MINOR>, Args...)>
+        class interfaces<T(unknown_collection<T, I, LIBID, MAJOR, MINOR>, Args...)>
         {
         public:
 
             static HRESULT __stdcall QueryInterface(T* that, REFIID riid, void** ppvObject)
             {
-                return interfaces<T(UnknownCollection<T, I>)>::QueryInterface(that, riid, ppvObject);
+                return interfaces<T(unknown_collection<T, I>)>::QueryInterface(that, riid, ppvObject);
             }
         };
 

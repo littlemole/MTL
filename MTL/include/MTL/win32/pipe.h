@@ -1,39 +1,39 @@
 #pragma once
 
-#include "MTL/ole/shell.h"
+#include "mtl/ole/shell.h"
 
-namespace MTL {
+namespace mtl {
 
 
-    class NamedPipe
+    class named_pipe
     {
     public:
 
         static const int BUFSIZE = 4096;
 
-        NamedPipe()
+        named_pipe()
             :pipe_(INVALID_HANDLE_VALUE)
         {}
 
-        NamedPipe(HANDLE h)
+        named_pipe(HANDLE h)
             :pipe_(h)
         {}
 
-        ~NamedPipe()
+        ~named_pipe()
         {
             close();
         }
 
-        NamedPipe(const NamedPipe& rhs) = delete;
-        NamedPipe& operator=(const NamedPipe& rhs) = delete;
+        named_pipe(const named_pipe& rhs) = delete;
+        named_pipe& operator=(const named_pipe& rhs) = delete;
 
-        NamedPipe(NamedPipe&& rhs) noexcept
+        named_pipe(named_pipe&& rhs) noexcept
         {
             pipe_ = rhs.pipe_;
             rhs.pipe_ = INVALID_HANDLE_VALUE;
         }
 
-        NamedPipe& operator=(NamedPipe&& rhs) noexcept
+        named_pipe& operator=(named_pipe&& rhs) noexcept
         {
             if (this == &rhs)
             {
@@ -64,9 +64,9 @@ namespace MTL {
             return pipe_;
         }
 
-        static NamedPipe create(const std::wstring& pipename)
+        static named_pipe create(const std::wstring& pipename)
         {
-            HANDLE handle = CreateNamedPipe(
+            HANDLE handle = ::CreateNamedPipe(
                 pipename.c_str(),             // pipe name 
                 PIPE_ACCESS_DUPLEX,			// read/write access 
                 PIPE_TYPE_BYTE |				// message type pipe 
@@ -78,10 +78,10 @@ namespace MTL {
                 0,							// client time-out 
                 NULL);						// default security attribute 
 
-            return NamedPipe(handle);
+            return named_pipe(handle);
         }
 
-        static NamedPipe open(const std::wstring& pipename)
+        static named_pipe open(const std::wstring& pipename)
         {
 
             if (!::WaitNamedPipe(pipename.c_str(), 20000))
@@ -105,24 +105,24 @@ namespace MTL {
 
                 // all OK ? 
                 if (handle != INVALID_HANDLE_VALUE)
-                    return NamedPipe(handle);
+                    return named_pipe(handle);
 
                 // Exit if an error other than ERROR_PIPE_BUSY occurs. 
 
                 if (::GetLastError() != ERROR_PIPE_BUSY)
                 {
-                    return NamedPipe(INVALID_HANDLE_VALUE);
+                    return named_pipe(INVALID_HANDLE_VALUE);
                 }
 
                 // All pipe instances are busy, so wait for 20 seconds. 	 
                 if (!::WaitNamedPipe(pipename.c_str(), 20000))
                 {
-                    return NamedPipe(INVALID_HANDLE_VALUE);
+                    return named_pipe(INVALID_HANDLE_VALUE);
                 }
             }
 
             // never get here
-            return NamedPipe(INVALID_HANDLE_VALUE);
+            return named_pipe(INVALID_HANDLE_VALUE);
         }
 
         bool connect(int milisecs = 3000)
@@ -240,7 +240,7 @@ namespace MTL {
 
             std::function<void(std::string)> onRead;
             bool readAll = false;
-            MTL::cbuff buf;
+            cbuff buf;
             std::ostringstream data;
 
             static void overlappedCompletionRoutine(
@@ -358,34 +358,34 @@ namespace MTL {
         };
     }
 
-    class AsyncNamedPipe
+    class async_named_pipe
     {
     public:
 
-        AsyncNamedPipe()
+        async_named_pipe()
             :pipe_(INVALID_HANDLE_VALUE)
         {}
 
-        AsyncNamedPipe(HANDLE h)
+        async_named_pipe(HANDLE h)
             :pipe_(h)
         {
         }
 
-        ~AsyncNamedPipe()
+        ~async_named_pipe()
         {
             close();
         }
 
-        AsyncNamedPipe(const AsyncNamedPipe& rhs) = delete;
-        AsyncNamedPipe& operator=(const AsyncNamedPipe& rhs) = delete;
+        async_named_pipe(const async_named_pipe& rhs) = delete;
+        async_named_pipe& operator=(const async_named_pipe& rhs) = delete;
 
-        AsyncNamedPipe(AsyncNamedPipe&& rhs) noexcept
+        async_named_pipe(async_named_pipe&& rhs) noexcept
         {
             pipe_ = rhs.pipe_;
             rhs.pipe_ = INVALID_HANDLE_VALUE;
         }
 
-        AsyncNamedPipe& operator=(AsyncNamedPipe&& rhs) noexcept
+        async_named_pipe& operator=(async_named_pipe&& rhs) noexcept
         {
             if (this == &rhs)
             {
@@ -416,9 +416,9 @@ namespace MTL {
             return pipe_;
         }
 
-        static std::shared_ptr<AsyncNamedPipe> create(const std::wstring& pipename)
+        static std::shared_ptr<async_named_pipe> create(const std::wstring& pipename)
         {
-            HANDLE handle = CreateNamedPipe(
+            HANDLE handle = ::CreateNamedPipe(
                 pipename.c_str(),             // pipe name 
                 PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,	// read/write access 
                 PIPE_TYPE_BYTE |				// message type pipe 
@@ -431,15 +431,15 @@ namespace MTL {
                 NULL);						// default security attribute 
 
 
-            return std::make_shared<AsyncNamedPipe>(handle);
+            return std::make_shared<async_named_pipe>(handle);
         }
 
-        static std::shared_ptr<AsyncNamedPipe> open(const std::wstring& pipename)
+        static std::shared_ptr<async_named_pipe> open(const std::wstring& pipename)
         {
 
             if (!::WaitNamedPipe(pipename.c_str(), 20000))
             {
-                return std::make_shared<AsyncNamedPipe>(INVALID_HANDLE_VALUE);
+                return std::make_shared<async_named_pipe>(INVALID_HANDLE_VALUE);
             }
 
             // Try to open named pipe; wait for it, if necessary. 
@@ -458,24 +458,24 @@ namespace MTL {
 
                 // all OK ? 
                 if (handle != INVALID_HANDLE_VALUE)
-                    return std::make_shared<AsyncNamedPipe>(handle);
+                    return std::make_shared<async_named_pipe>(handle);
 
                 // Exit if an error other than ERROR_PIPE_BUSY occurs. 
 
                 if (::GetLastError() != ERROR_PIPE_BUSY)
                 {
-                    return std::make_shared<AsyncNamedPipe>(INVALID_HANDLE_VALUE);
+                    return std::make_shared<async_named_pipe>(INVALID_HANDLE_VALUE);
                 }
 
                 // All pipe instances are busy, so wait for 20 seconds. 	 
                 if (!::WaitNamedPipe(pipename.c_str(), 20000))
                 {
-                    return std::make_shared<AsyncNamedPipe>(INVALID_HANDLE_VALUE);
+                    return std::make_shared<async_named_pipe>(INVALID_HANDLE_VALUE);
                 }
             }
 
             // never get here
-            return std::make_shared<AsyncNamedPipe>(INVALID_HANDLE_VALUE);
+            return std::make_shared<async_named_pipe>(INVALID_HANDLE_VALUE);
         }
 
         bool connect(int milisecs = 3000)
@@ -520,7 +520,7 @@ namespace MTL {
             }
         }
 
-        void readAll(std::function<void(std::string)> cb)
+        void read_all(std::function<void(std::string)> cb)
         {
             detail::PipeReadOverlap* overlap = new detail::PipeReadOverlap();
             overlap->pipe = pipe_;
@@ -577,11 +577,11 @@ namespace MTL {
 
 
 
-    class Elevator
+    class elevator
     {
     public:
 
-        Elevator(
+        elevator(
             const std::wstring& executor, 
             const std::wstring& pipename
         )
@@ -592,7 +592,7 @@ namespace MTL {
 
         std::string read(const std::wstring& file)
         {
-            NamedPipe pipe = NamedPipe::create(pipe_name_);
+            named_pipe pipe = named_pipe::create(pipe_name_);
 
             std::wostringstream oss_args;
             oss_args
@@ -602,7 +602,7 @@ namespace MTL {
                 << file
                 << L"\"";
 
-            BOOL r = MTL::Shell::ExecuteArgs(
+            BOOL r = mtl::shell::execute_args(
                 executor_, 
                 oss_args.str(), 
                 L"runas", 
@@ -633,7 +633,7 @@ namespace MTL {
 
         void read(const std::wstring& file, std::function<void(std::string)> cb)
         {
-            std::shared_ptr<AsyncNamedPipe> pipe = AsyncNamedPipe::create(pipe_name_);
+            std::shared_ptr<async_named_pipe> pipe = async_named_pipe::create(pipe_name_);
 
             std::wostringstream oss_args;
             oss_args
@@ -643,7 +643,7 @@ namespace MTL {
                 << file
                 << L"\"";
 
-            BOOL r = MTL::Shell::ExecuteArgs(
+            BOOL r = mtl::shell::execute_args(
                 executor_, 
                 oss_args.str(), 
                 L"runas", 
@@ -666,7 +666,7 @@ namespace MTL {
                 return;
             }
 
-            pipe->readAll([pipe, cb](std::string data)
+            pipe->read_all([pipe, cb](std::string data)
             {
                 cb(data);
                 pipe->disconnect();
@@ -677,7 +677,7 @@ namespace MTL {
 
         bool write(const std::wstring& file, const std::string& data)
         {
-            NamedPipe pipe = NamedPipe::create(pipe_name_);
+            named_pipe pipe = named_pipe::create(pipe_name_);
 
             std::wostringstream oss_args;
             oss_args
@@ -687,7 +687,7 @@ namespace MTL {
                 << file
                 << "\"";
 
-            BOOL r = MTL::Shell::ExecuteArgs(
+            BOOL r = mtl::shell::execute_args(
                 executor_, 
                 oss_args.str(), 
                 L"runas", 
@@ -724,7 +724,7 @@ namespace MTL {
 
         void write(const std::wstring& file, const std::string& data, std::function<void(bool)> cb)
         {
-            auto pipe = AsyncNamedPipe::create(pipe_name_);
+            auto pipe = async_named_pipe::create(pipe_name_);
 
             std::wostringstream oss_args;
             oss_args
@@ -734,7 +734,7 @@ namespace MTL {
                 << file
                 << "\"";
 
-            BOOL r = MTL::Shell::ExecuteArgs(
+            BOOL r = mtl::shell::execute_args(
                 executor_, 
                 oss_args.str(), 
                 L"runas", 

@@ -12,6 +12,7 @@
 #include "MTL/obj/marshall.h"
 #include "MTL/ole/control.h"
 #include "MTL/win/enc.h"
+#include "MTL/win/dlg.h"
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -21,7 +22,7 @@
 #include <condition_variable>
 #include <ShlObj.h>
 
-using namespace MTL;
+using namespace mtl;
 
 class CollectionTest : public ::testing::Test {
 protected:
@@ -91,7 +92,7 @@ protected:
 
 #include "../test_h.h"
 
-class MyLongCollection : public implements<MyLongCollection(LongCollection< MyLongCollection,ITestLongCollection>)>
+class MyLongCollection : public implements<MyLongCollection(long_collection< MyLongCollection,ITestLongCollection>)>
 {
 public:
 
@@ -110,7 +111,7 @@ public:
 
 class MyExplicitLongCollection : public implements<
     MyExplicitLongCollection(
-        LongCollection< MyExplicitLongCollection, ITestLongCollection, LIBID_ExampleLib, 1,0>
+        long_collection< MyExplicitLongCollection, ITestLongCollection, LIBID_ExampleLib, 1,0>
     )>
 {
 public:
@@ -150,8 +151,6 @@ TEST_F(CollectionTest, testDispTypeLibLoading) {
 
 TEST_F(CollectionTest, testcollection) {
 
-    using namespace MTL;
-
     punk<MyLongCollection> collection( new MyLongCollection() );
     collection->Add(1);
     collection->Add(2);
@@ -177,7 +176,6 @@ TEST_F(CollectionTest, testcollection) {
 TEST_F(CollectionTest, testDisp) {
 
     try {
-        using namespace MTL;
 
         punk<MyLongCollection> collection( new MyLongCollection() );
         collection->Add(1);
@@ -331,7 +329,6 @@ TEST_F(CollectionTest, testDispLookup) {
 TEST_F(CollectionTest, testDispExplicitTypelib) {
 
     try {
-        using namespace MTL;
 
         punk<MyExplicitLongCollection> collection( new MyExplicitLongCollection() );
 
@@ -838,6 +835,7 @@ TEST_F(CollectionTest, testMsgBoxWin32StopThreadBox)
     std::cout << "loop ended" << std::endl;
 }
 
+/*
 class Dlg;
 
 
@@ -904,7 +902,7 @@ void dlg_bind( Bind<ID,std::vector<std::wstring>>& b)
     for( auto& i : v) std::wcout << i << L" ";
     std::wcout << std::endl;
 }
-
+*/
 /*
 inline void dlg_bind( ) {}
 
@@ -915,6 +913,7 @@ void dlg_bind(  T t, Args ... args)
     dlg_bind(args...);
 }
 */
+/*
 template<int ID>
 void dlg_sync( Bind<ID,bool>& b)
 {
@@ -1039,7 +1038,7 @@ public:
     Binder(Args& ... args)
         : binding_( new Bindings<Args...>(args...) )
     {}
-*/
+* /
 
     template<class ... Args>
     Binder& operator()(Args&... args)
@@ -1077,15 +1076,15 @@ protected:
         : binding(this)
     {}
 };
-
-class TestClass : public Dlg
+*/
+class TestClass : public dialog
 {
 public:
 
-    Bind<1,int> intVal = 23;
-    Bind<2,bool> boolVal = true;
-    Bind<3,std::wstring> strVal = L"a wstring";
-    Bind<4,std::vector<std::wstring>> vecVal = {{ L"One", L"Two", L"Three"}};
+    dlg_value<1,int> intVal = 23;
+    dlg_value<2,bool> boolVal = true;
+    dlg_value<3,std::wstring> strVal = std::wstring(L"a wstring");
+    dlg_value<4,std::vector<std::wstring>> vecVal = {{ L"One", L"Two", L"Three"}};
 
     //Binder binder;
 
@@ -1108,6 +1107,7 @@ public:
         binding.sync();
     }
 };
+
 
 TEST_F(CollectionTest, testBindings)
 {
@@ -1145,13 +1145,13 @@ TEST_F(CollectionTest, testBrowseFolder)
 
 TEST_F(CollectionTest, testPath)
 {
-    Path path(L"C:\\temp\\test.txt");
+    mtl::path path(L"C:\\temp\\test.txt");
     EXPECT_STREQ( L".txt", path.ext().c_str());
 
-    auto path2 = Path(L"C://temp/test.txt");
+    auto path2 = mtl::path(L"C://temp/test.txt");
     EXPECT_STREQ( L".txt", path2.ext().c_str());
 
-    auto path3 = Path(L"C://temp/../test.txt");
+    auto path3 = mtl::path(L"C://temp/../test.txt");
     EXPECT_STREQ(L"C:\\test.txt", path3.str().c_str());
 
 }
@@ -1176,7 +1176,7 @@ TEST_F(CollectionTest, testEnums)
 }
 
 class __declspec(uuid("{AB896A62-4EA8-465F-A6D8-71998AEA83BA}"))
-    MyControl : public implements< MyControl( dual<ITestObject>, Control< MyControl> )>
+    MyControl : public implements< MyControl( dual<ITestObject>, control< MyControl> )>
 {
 public:
 
@@ -1231,7 +1231,7 @@ TEST_F(CollectionTest, testCtrl)
 
 TEST_F(CollectionTest, testEncodings)
 {
-    auto cp = MTL::codePages();
+    auto cp = mtl::codepages();
 
     for (auto& it : cp)
     {
@@ -1242,7 +1242,7 @@ TEST_F(CollectionTest, testEncodings)
 TEST_F(CollectionTest, testEncodingSniffing)
 {
     std::ifstream ifs;
-    ifs.open(MTL::pathToSelf(), std::ios::in | std::ios::binary);
+    ifs.open(mtl::path_to_self(), std::ios::in | std::ios::binary);
     std::ostringstream oss;
     while (ifs)
     {
@@ -1255,9 +1255,9 @@ TEST_F(CollectionTest, testEncodingSniffing)
 
     std::string s = oss.str();
 
-    MTL::FileEncoding fe = MTL::sniff(s.c_str(), s.size());
+    mtl::file_encoding fe = mtl::sniff(s.c_str(), s.size());
 
-    EXPECT_TRUE(fe.isBinary);
+    EXPECT_TRUE(fe.is_binary);
 }
 
 TEST_F(CollectionTest, testEncodingSniffingHosts)
@@ -1277,10 +1277,10 @@ TEST_F(CollectionTest, testEncodingSniffingHosts)
 
     std::string s = oss.str();
 
-    MTL::FileEncoding fe = MTL::sniff(s.c_str(), s.size());
+    mtl::file_encoding fe = mtl::sniff(s.c_str(), s.size());
 
-    std::wcout << MTL::codePages()[fe.codePage].second << std::endl;
+    std::wcout << mtl::codepages()[fe.code_page].second << std::endl;
 
-    EXPECT_FALSE(fe.isBinary);
-    EXPECT_EQ(fe.codePage, CP_UTF8);
+    EXPECT_FALSE(fe.is_binary);
+    EXPECT_EQ(fe.code_page, CP_UTF8);
 }

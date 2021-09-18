@@ -1,30 +1,31 @@
 #pragma once
-#include <windows.h>
+#include "mtl/sdk.h"
+#include "mtl/win32/mem.h"
 #include <string>
 #include <map>
 #include <vector>
 //#include <MTL/comem.h>
 
-namespace MTL {
+namespace mtl {
 
-	class Clipboard
+	class clipboard
 	{
 	public:
 
-		class Lock
+		class lock
 		{
 		public:
-			Lock()
+			lock()
 			{
 				::OpenClipboard(NULL);
 			}
 
-			Lock(HWND hWnd)
+			lock(HWND hWnd)
 			{
 				::OpenClipboard(hWnd);
 			}
 
-			~Lock()
+			~lock()
 			{
 				::CloseClipboard();
 			}
@@ -35,15 +36,15 @@ namespace MTL {
 
 		static void clear(HWND hWnd = 0)
 		{
-			Lock lock(hWnd);
+			lock guard(hWnd);
 			::EmptyClipboard();
 		}
 
-		static void setData(HWND hWnd, UINT format, HANDLE data)
+		static void set(HWND hWnd, UINT format, HANDLE data)
 		{
 			HWND owner = ::GetClipboardOwner();
 
-			Lock lock(hWnd);
+			lock guard(hWnd);
 			if (owner != hWnd)
 			{
 				::EmptyClipboard();
@@ -53,17 +54,17 @@ namespace MTL {
 
 		static void setText(HWND hWnd, const std::wstring& txt)
 		{
-			Global glob(txt, GMEM_MOVEABLE);
-			setData(hWnd, CF_UNICODETEXT, *glob);
+			global glob(txt, GMEM_MOVEABLE);
+			set(hWnd, CF_UNICODETEXT, *glob);
 		}
 
 		static void setText(HWND hWnd, const std::string& txt)
 		{
-			Global glob(txt, GMEM_MOVEABLE);
-			setData(hWnd, CF_TEXT, *glob);
+			global glob(txt, GMEM_MOVEABLE);
+			set(hWnd, CF_TEXT, *glob);
 		}
 
-		static HANDLE getData(UINT format)
+		static HANDLE get(UINT format)
 		{
 			HANDLE handle = ::GetClipboardData(format);
 			return handle;
@@ -71,31 +72,31 @@ namespace MTL {
 
 		static std::string as_string(UINT format)
 		{
-			Lock lock;
+			lock giard;
 			HANDLE handle = ::GetClipboardData(format);
 			if (!handle)
 				return "";
 
-			Global::Lock<char*> glock((HGLOBAL)handle);
+			global::lock<char*> glock((HGLOBAL)handle);
 			std::string result(*glock,(int) glock.size());
 			return result;
 		}
 
 		static std::wstring as_wstring(UINT format)
 		{
-			Lock lock;
+			lock guard;
 			HANDLE handle = ::GetClipboardData(format);
 			if (!handle)
 				return L"";
 
-			Global::Lock<wchar_t*> glock((HGLOBAL)handle);
+			global::lock<wchar_t*> glock((HGLOBAL)handle);
 			std::wstring result(*glock, (int)(glock.size()/sizeof(wchar_t)));
 			return result;
 		}
 
-		struct Format
+		struct format
 		{
-			Format(int id, const wchar_t* desc)
+			format(int id, const wchar_t* desc)
 				: format_id(id), description(desc)
 			{}
 
@@ -134,17 +135,17 @@ namespace MTL {
 			return f;
 		}
 
-		static std::vector<Format> enumerate()
+		static std::vector<format> enumerate()
 		{
-			std::vector<Format> result;
+			std::vector<format> result;
 
-			UINT format = 0;
+			UINT f = 0;
 
-			Lock lock;
-			format = ::EnumClipboardFormats(format);
-			while (format)
+			lock guard;
+			f = ::EnumClipboardFormats(f);
+			while (f)
 			{
-				switch (format)
+				switch (f)
 				{
 				case CF_TEXT:
 				case CF_BITMAP:
@@ -164,23 +165,23 @@ namespace MTL {
 				case CF_LOCALE:
 				case CF_DIBV5:
 				{
-					result.push_back(Format(format, format_description()[format]));
+					result.push_back(format(f, format_description()[f]));
 					break;
 				}
 
 				default:
 				{
 					wchar_t buf[MAX_PATH];
-					int c = ::GetClipboardFormatNameW(format, buf, MAX_PATH);
+					int c = ::GetClipboardFormatNameW(f, buf, MAX_PATH);
 
 					if (c > 0)
 					{
 						std::wstring title(buf, c);
-						result.push_back(Format(format, title.c_str()));
+						result.push_back(format(f, title.c_str()));
 					}
 				}
 				}
-				format = ::EnumClipboardFormats(format);
+				f = ::EnumClipboardFormats(f);
 			}
 			return result;
 		}

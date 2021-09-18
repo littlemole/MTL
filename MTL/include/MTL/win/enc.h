@@ -1,33 +1,35 @@
 #pragma once
 
-#include "MTL/sdk.h"
-#include "MTL/punk.h"
-#include "MTL/win32/uni.h"
-#include "MTL/disp/bstr.h"
+#include "mtl/sdk.h"
+#include "mtl/punk.h"
+#include "mtl/win32/uni.h"
+#include "mtl/disp/bstr.h"
+
 #include <MLang.h>
 #include <regex>
 
-namespace MTL {
+namespace mtl {
 
-	using CodePage = std::pair<int, std::wstring>;
-	using CodePages = std::map<int, CodePage >;
+	using codepage = std::pair<int, std::wstring>;
+	using codepages = std::map<int, codepage >;
 
 	//inline CodePages& codePages();
-	inline const CodePage& systemDefaultCodePage();
+	inline const codepage& system_default_codepage();
 
 	namespace details {
 
-		inline CodePages& codePages();
+//		inline codepage& code_pages();
+		inline codepages& the_codepages();
 
-		class CodePagesEnumeration
+		class codepages_enumeration
 		{
-			friend inline CodePagesEnumeration& codePagesEnumeration();
-			friend inline const CodePage& MTL::systemDefaultCodePage();
+			friend inline codepages_enumeration& the_codepages_enumeration();
+			friend inline const codepage& ::mtl::system_default_codepage();
 		public:
 			
 		private:
 
-			CodePagesEnumeration()
+			codepages_enumeration()
 			{
 				::EnumSystemCodePages(codePageEnumProc, CP_INSTALLED);
 				::GetCPInfoEx(CP_ACP, 0, &cpi_);
@@ -41,7 +43,7 @@ namespace MTL {
 				if (::GetCPInfoEx(cp, 0, &cpi))
 				{
 					std::wstring s(cpi.CodePageName);
-					MTL::details::codePages().insert(
+					the_codepages().insert(
 						std::make_pair(
 							cp, std::make_pair(cp, s)
 						)
@@ -52,67 +54,67 @@ namespace MTL {
 			CPINFOEX cpi_;
 		};
 
-		inline CodePagesEnumeration& codePagesEnumeration()
+		inline codepages_enumeration& the_codepages_enumeration()
 		{
-			static CodePagesEnumeration cpe;
+			static codepages_enumeration cpe;
 			return cpe;
 		}
 
-		inline CodePages& codePages()
+		inline codepages& the_codepages()
 		{
-			static CodePages cp;
+			static codepages cp;
 			return cp;
 		}
 	}
 
-	inline CodePages& codePages()
+	inline codepages& code_pages()
 	{
-		static details::CodePagesEnumeration& cpe = details::codePagesEnumeration();
-		static CodePages& cp = details::codePages();
+		static details::codepages_enumeration& cpe = details::the_codepages_enumeration();
+		static codepages& cp = details::the_codepages();
 		return cp;
 	}
 
-	inline const CodePage& systemDefaultCodePage()
+	inline const codepage& system_default_codepage()
 	{
-		UINT codePage = details::codePagesEnumeration().cpi_.CodePage;
+		UINT codePage = details::the_codepages_enumeration().cpi_.CodePage;
 			
-		static CodePage cp(
+		static codepage cp(
 			std::make_pair(
-				details::codePagesEnumeration().cpi_.CodePage,
-				details::codePagesEnumeration().cpi_.CodePageName
+				details::the_codepages_enumeration().cpi_.CodePage,
+				details::the_codepages_enumeration().cpi_.CodePageName
 			)
 		);
 		return cp;
 	}
 
-	inline const CodePage& UTF7()
+	inline const codepage& UTF7()
 	{
-		return codePages()[CP_UTF7];
+		return code_pages()[CP_UTF7];
 	}
 
-	inline const CodePage& UTF8()
+	inline const codepage& UTF8()
 	{
-		return codePages()[CP_UTF8];
+		return code_pages()[CP_UTF8];
 	}
 
-	inline const CodePage& UTF16()
+	inline const codepage& UTF16()
 	{
-		static CodePage cp(CP_WINUNICODE, L"1200 (Unicode utf-16)");
+		static codepage cp(CP_WINUNICODE, L"1200 (Unicode utf-16)");
 		return cp;
 	}
 
-	inline const CodePage& ANSI()
+	inline const codepage& ANSI() 
 	{
-		static CodePage cp(CP_WINANSI, L"Ansi (Windows Default)");
+		static codepage cp(CP_WINANSI, L"Ansi (Windows Default)");
 		return cp;
 	}
 
-	struct FileEncoding
+	struct file_encoding
 	{
 		enum eol_mode { UNIX, DOS } eol;
-		unsigned int codePage = CP_UTF8;
-		bool isBinary = false;
-		bool hasBOM = false;
+		unsigned int code_page = CP_UTF8;
+		bool is_binary = false;
+		bool has_bom = false;
 
 	};
 
@@ -125,15 +127,15 @@ namespace MTL {
 				:raw_bytes_(raw_bytes), len_(len)
 			{}
 
-			FileEncoding  investigate()
+			file_encoding  investigate()
 			{
 				return investigate("");
 			}
 
-			FileEncoding  investigate(const std::string& h)
+			file_encoding  investigate(const std::string& h)
 			{
 				std::string c(raw_bytes_, len_);
-				FileEncoding result = getEncoding(c,h);
+				file_encoding result = getEncoding(c,h);
 
 				// check eol mode 
 				size_t p = c.find_first_of("\r\n");
@@ -141,11 +143,11 @@ namespace MTL {
 				{
 					if (c[p] == 0x0a)
 					{
-						result.eol = FileEncoding::UNIX;
+						result.eol = file_encoding::UNIX;
 					}
 					else
 					{
-						result.eol = FileEncoding::DOS;
+						result.eol = file_encoding::DOS;
 					}
 				}
 
@@ -157,7 +159,7 @@ namespace MTL {
 
 				if (p < c.size())
 				{
-					switch (result.codePage)
+					switch (result.code_page)
 					{
 						case CP_WINUNICODE:
 						{
@@ -175,7 +177,7 @@ namespace MTL {
 						}
 					}
 				}
-				result.isBinary = isBinary;
+				result.is_binary = isBinary;
 				return result;
 			}
 
@@ -229,22 +231,22 @@ namespace MTL {
 			const char* raw_bytes_ = 0;
 			size_t len_ = 0;
 
-			FileEncoding  getEncoding( const std::string& str,  const std::string& h)
+			file_encoding  getEncoding( const std::string& str,  const std::string& h)
 			{
 				punk<IMultiLanguage> ml;
-				HR hr = ml.createObject(CLSID_CMultiLanguage);
+				HR hr = ml.create_object(CLSID_CMultiLanguage);
 
 				punk<IMultiLanguage2> ml2(ml);
 
 				// first look for supported ByteOrder4marks
 				if (hasUTF8_BOM(raw_bytes_,len_) == true)
 				{
-					return FileEncoding{ FileEncoding::UNIX, CP_UTF8, false, true };
+					return file_encoding{ file_encoding::UNIX, CP_UTF8, false, true };
 				}
 
 				if (hasUTF16_BOM(raw_bytes_, len_) == true)
 				{
-					return FileEncoding{ FileEncoding::UNIX, CP_WINUNICODE, false, true };
+					return file_encoding{ file_encoding::UNIX, CP_WINUNICODE, false, true };
 				}
 
 				// second check headers for charset specs in content-type
@@ -255,7 +257,7 @@ namespace MTL {
 
 					if (std::regex_search(h, m, e))
 					{
-						std::wstring s = MTL::to_wstring(m[2]);
+						std::wstring s = to_wstring(m[2]);
 						s = trim(s);
 
 						bstr b((ole_char(s.c_str())));
@@ -264,7 +266,7 @@ namespace MTL {
 						HRESULT hr = ml2->GetCharsetInfo( *b, &minfo);
 						if (hr == S_OK)
 						{
-							return FileEncoding{ FileEncoding::UNIX, minfo.uiInternetEncoding, false, false };
+							return file_encoding{ file_encoding::UNIX, minfo.uiInternetEncoding, false, false };
 						}
 					}
 				}
@@ -288,7 +290,7 @@ namespace MTL {
 					HRESULT hr = ml2->GetCharsetInfo( *b, &minfo);
 					if (hr == S_OK)
 					{
-						return FileEncoding{ FileEncoding::UNIX, minfo.uiInternetEncoding, false, false };
+						return file_encoding{ file_encoding::UNIX, minfo.uiInternetEncoding, false, false };
 					}
 				}
 
@@ -312,7 +314,7 @@ namespace MTL {
 						HRESULT hr = ml2->GetCharsetInfo( *b, &minfo);
 						if (hr == S_OK)
 						{
-							return FileEncoding{ FileEncoding::UNIX, minfo.uiInternetEncoding, false, false };
+							return file_encoding{ file_encoding::UNIX, minfo.uiInternetEncoding, false, false };
 						}
 					}
 				}
@@ -335,7 +337,7 @@ namespace MTL {
 						HRESULT hr = ml2->GetCharsetInfo( *b, &minfo);
 						if (hr == S_OK)
 						{
-							return FileEncoding{ FileEncoding::UNIX, minfo.uiInternetEncoding, false, false };
+							return file_encoding{ file_encoding::UNIX, minfo.uiInternetEncoding, false, false };
 						}
 					}
 				}
@@ -359,36 +361,36 @@ namespace MTL {
 						s--;
 					}
 
-					return FileEncoding{ FileEncoding::UNIX, dei.nCodePage, false, false };
+					return file_encoding{ file_encoding::UNIX, dei.nCodePage, false, false };
 				}
-				return FileEncoding{ FileEncoding::UNIX, CP_UTF8, false, false };;
+				return file_encoding{ file_encoding::UNIX, CP_UTF8, false, false };;
 			}
 
 		};
 
 	}
 
-	inline FileEncoding sniff(const char* raw_bytes, size_t len)
+	inline file_encoding sniff(const char* raw_bytes, size_t len)
 	{
 		details::FileSniffer sniffer(raw_bytes, len);
 		return sniffer.investigate();
 	}
 
-	inline std::string raw_bytes_as_utf8(FileEncoding& fe, const char* raw_bytes, size_t len)
+	inline std::string raw_bytes_as_utf8(file_encoding& fe, const char* raw_bytes, size_t len)
 	{
-		if (fe.codePage == CP_UTF8)
+		if (fe.code_page == CP_UTF8)
 		{
 			size_t adjust = 0;
-			if (fe.hasBOM)
+			if (fe.has_bom)
 			{
 				adjust = 3;
 			}
 			return std::string(raw_bytes + adjust, len - adjust);
 		}
-		if (fe.codePage == CP_WINUNICODE)
+		if (fe.code_page == CP_WINUNICODE)
 		{
 			size_t adjust = 0;
-			if (fe.hasBOM)
+			if (fe.has_bom)
 			{
 				adjust = 2;
 			}
@@ -396,32 +398,32 @@ namespace MTL {
 			std::wstring ws( (wchar_t*)(raw_bytes+adjust), (len - adjust)/sizeof(wchar_t) );
 			return to_string(ws);
 		}
-		std::wstring ws(to_wstring(raw_bytes, (int)len, fe.codePage));
+		std::wstring ws(to_wstring(raw_bytes, (int)len, fe.code_page));
 		return to_string(ws);
 	}
 
-	inline std::wstring raw_bytes_as_wstring(FileEncoding& fe, const char* raw_bytes, size_t len)
+	inline std::wstring raw_bytes_as_wstring(file_encoding& fe, const char* raw_bytes, size_t len)
 	{
-		if (fe.codePage == CP_UTF8)
+		if (fe.code_page == CP_UTF8)
 		{
 			size_t adjust = 0;
-			if (fe.hasBOM)
+			if (fe.has_bom)
 			{
 				adjust = 3;
 			}
 			return to_wstring(raw_bytes + adjust, (int)( len - adjust));
 		}
-		if (fe.codePage == CP_WINUNICODE)
+		if (fe.code_page == CP_WINUNICODE)
 		{
 			size_t adjust = 0;
-			if (fe.hasBOM)
+			if (fe.has_bom)
 			{
 				adjust = 2;
 			}
 
 			return std::wstring((wchar_t*)(raw_bytes + adjust), (len - adjust) / sizeof(wchar_t));
 		}
-		return to_wstring(raw_bytes,(int)len,fe.codePage);
+		return to_wstring(raw_bytes,(int)len,fe.code_page);
 	}
 
 }

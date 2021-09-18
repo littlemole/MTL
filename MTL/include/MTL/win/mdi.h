@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MTL/win/wind.h"
-#include "MTL/win/layout.h"
+#include "mtl/win/wind.h"
+#include "mtl/win/layout.h"
 
-namespace MTL {
+namespace mtl {
 
-    class MdiChild;
+    class mdi_child;
 
     namespace details {
 
-        HMENU getViewSubMenu(HMENU menu, int pos = -1)
+        HMENU get_view_submenu(HMENU menu, int pos = -1)
         {
             HMENU subMenu = nullptr;
             if (pos == -1)
@@ -43,16 +43,15 @@ namespace MTL {
         }
     }
 
-//	template<class W>
-	class MdiFrame : public Window<MdiFrame>
+	class mdi_frame : public window<mdi_frame>
 	{
 	public:
 
         HMENU menu = nullptr;
 
-        DefaultLayout layout;
+        default_layout layout;
 
-        MdiFrame(int windowMenuIndex = -1, UINT idFirstMdiChild = 50000)
+        mdi_frame(int windowMenuIndex = -1, UINT idFirstMdiChild = 50000)
         {
             windowMenuIndex_ = windowMenuIndex;
             ccs_.idFirstChild = idFirstMdiChild;
@@ -60,19 +59,19 @@ namespace MTL {
 
         void maximize()
         {
-            ::PostMessage(mdiClient_, WM_MDIMAXIMIZE, (WPARAM)getActive(), 0);
+            ::PostMessage(mdiClient_, WM_MDIMAXIMIZE, (WPARAM)active(), 0);
         }
 
         void minimize()
         {
-            ::ShowWindow(getActive(), SW_MINIMIZE);
-            ::UpdateWindow(getActive());
+            ::ShowWindow(active(), SW_MINIMIZE);
+            ::UpdateWindow(active());
             next();
         }
 
         void restore()
         {
-            ::PostMessage(mdiClient_, WM_MDIRESTORE, (WPARAM)getActive(), 0);
+            ::PostMessage(mdiClient_, WM_MDIRESTORE, (WPARAM)active(), 0);
         }
 
         void next()
@@ -85,46 +84,46 @@ namespace MTL {
             ::PostMessage(mdiClient_, WM_MDICASCADE, 0, 0);
         }
 
-        void tileHorizontal()
+        void tile_horizontal()
         {
             ::PostMessage(mdiClient_, WM_MDITILE, 0, 0);
         }
 
-        void tileVertical()
+        void tile_vertical()
         {
             ::PostMessage(mdiClient_, WM_MDITILE, MDITILE_VERTICAL, 0);
         }
 
-        void iconArrange()
+        void icon_arrange()
         {
             ::PostMessage(mdiClient_, WM_MDIICONARRANGE, 0, 0);
         }
 
-        HWND getActive()
+        HWND active()
         {
             return (HWND)(::SendMessage(mdiClient_, WM_MDIGETACTIVE, 0, 0));
         }
 
-        void destroyChild(HWND wnd)
+        void destroy_child(HWND wnd)
         {
             ::PostMessage(mdiClient_, WM_MDIDESTROY, (WPARAM)(wnd), 0);
         }
 
-        void resetMenu()
+        void reset_menu()
         {
-            HWND client = mdiClient();
+            HWND client = mdi_client();
             if (client && menu)
             {
-                HMENU viewMenu = details::getViewSubMenu(menu, windowMenuIndex_);
+                HMENU viewMenu = details::get_view_submenu(menu, windowMenuIndex_);
                 ::SendMessage(client, WM_MDISETMENU, (WPARAM)menu, (LPARAM)viewMenu);
                 ::DrawMenuBar(handle);
             }
         }
 
-        virtual LRESULT wmSize(RECT& clientRect) override
+        virtual LRESULT wm_size(RECT& clientRect) override
         {
             RECT r = { 0,0,0,0 };
-            ::InvalidateRect(mdiClient(), 0, FALSE);
+            ::InvalidateRect(mdi_client(), 0, FALSE);
             layout.do_layout(clientRect, r);
 
             // do not do that here
@@ -132,10 +131,10 @@ namespace MTL {
             return 0;
         }
 
-        virtual LRESULT wmDraw(HDC dc, RECT& r) override
+        virtual LRESULT wm_draw(HDC dc, RECT& r) override
         {
-            ::InvalidateRect(mdiClient(), 0, TRUE);
-            ::UpdateWindow(mdiClient());
+            ::InvalidateRect(mdi_client(), 0, TRUE);
+            ::UpdateWindow(mdi_client());
             return 0;
         }
 
@@ -145,14 +144,14 @@ namespace MTL {
             {
                 RECT r;
                 ::GetClientRect(hWnd, &r);
-                this->wmLayout(r);
+                this->wm_layout(r);
                 return 0;
             }
 
             if (message == WM_SEARCH)
             {
                 FINDREPLACE* fp = (FINDREPLACE*)lParam;
-                this->wmSearch(fp);
+                this->wm_search(fp);
                 return 0;
             }
 
@@ -180,7 +179,7 @@ namespace MTL {
                     &ccs_
                 );
 
-                LRESULT r = this->wmCreate();
+                LRESULT r = this->wm_create();
 
                 if (r) return r;
                 return 0;
@@ -188,7 +187,7 @@ namespace MTL {
             }
             case WM_DESTROY:
             {
-                LRESULT r = this->wmDestroy();
+                LRESULT r = this->wm_destroy();
                 if (r) return r;
                 break;
             }
@@ -200,18 +199,18 @@ namespace MTL {
                 LRESULT r = 0;
                 if (code == 0 && lParam == 0)
                 {
-                    r = this->wmCommand(wmId);
+                    r = this->wm_command(wmId);
                 }
                 else if (code == 1)
                 {
-                    r = this->wmAccellerator(wmId);
+                    r = this->wm_accellerator(wmId);
                 }
                 else
                 {
-                    r = this->wmControl(message, wParam, lParam);
+                    r = this->wm_control(message, wParam, lParam);
                 }
 
-                HWND active = this->getActive();
+                HWND active = this->active();
                 if (::IsWindow(active))
                     ::SendMessage(active, WM_COMMAND, wParam, lParam);
                 break;
@@ -223,17 +222,17 @@ namespace MTL {
 
                 RECT bounds;
                 ::GetClientRect(hWnd, &bounds);
-                return this->wmSize(bounds);
+                return this->wm_size(bounds);
                 break;
             }
             case WM_PAINT:
             {
-                this->wmPaint();
+                this->wm_paint();
                 break;
             }
             case WM_ERASEBKGND:
             {
-                return this->wmEraseBackground(wParam);
+                return this->wm_erase_background(wParam);
             }
             case WM_DPICHANGED:
             {
@@ -243,13 +242,13 @@ namespace MTL {
                 {
                     ::SetWindowPos(hWnd, NULL, r->left, r->top, r->right - r->left, r->bottom - r->top, 0);
                 }
-                LRESULT result = this->wmDpiChanged(r);
+                LRESULT result = this->wm_dpi_changed(r);
                 ::UpdateWindow(hWnd);
                 break;
             }
             case WM_DPICHANGED_BEFOREPARENT:
             {
-                LRESULT result = this->wmDpiChanged(0);
+                LRESULT result = this->wm_dpi_changed(0);
                 ::InvalidateRect(hWnd, 0, TRUE);
                 ::UpdateWindow(hWnd);
                 break;
@@ -268,20 +267,20 @@ namespace MTL {
             return ::DefWindowProc(hWnd, message, wParam, lParam);
         }
 
-        HWND mdiClient()
+        HWND mdi_client()
         {
             return mdiClient_;
         }
         
         template<class C, class ... Args>
-        C& createMDIChild(std::wstring title, Args ... args)
+        C& create_mdi_child(std::wstring title, Args ... args)
         {
             C* c = new C(args...);
-            HWND hWnd = createDocument(title, (MdiChild*)c);
+            HWND hWnd = create_document(title, (mdi_child*)c);
             return *c;
         }
         
-        HWND createDocument(std::wstring title, MdiChild* wnd, UINT styles = WS_BORDER | WS_CHILD | WS_CLIPSIBLINGS |
+        HWND create_document(std::wstring title, mdi_child* wnd, UINT styles = WS_BORDER | WS_CHILD | WS_CLIPSIBLINGS |
             WS_CLIPCHILDREN | WS_THICKFRAME |
             WS_SYSMENU | WS_CAPTION | MDIS_ALLCHILDSTYLES|
             WS_MAXIMIZEBOX | WS_MINIMIZEBOX, UINT exStyles = WS_EX_MDICHILD);
@@ -293,26 +292,26 @@ namespace MTL {
 	};
 
 
-    class MdiChild : public Window<MdiChild>
+    class mdi_child : public window<mdi_child>
     {
     public:
 
-        Menu menu;
+        mtl::menu menu;
 
-        MdiChild()
+        mdi_child()
         {
-            auto& wc = windowClass<MdiChild>();
-            wc.lpfnWndProc = &MdiChild::WndProc;
+            auto& wc = windowclass<mdi_child>();
+            wc.lpfnWndProc = &mdi_child::windowProc;
         }
 
-        MdiChild(int menuId, int viewMenuIndex = -1)
+        mdi_child(int menuId, int viewMenuIndex = -1)
             : menu(menuId), viewMenuIndex_(viewMenuIndex)
         {
-            auto& wc = windowClass<MdiChild>();
-            wc.lpfnWndProc = &MdiChild::WndProc;
+            auto& wc = windowclass<mdi_child>();
+            wc.lpfnWndProc = &mdi_child::windowProc;
         }
 
-        virtual LRESULT wmSize(RECT& clientRect) override
+        virtual LRESULT wm_size(RECT& clientRect) override
         {
             return 0;
         }
@@ -321,15 +320,15 @@ namespace MTL {
         {
             if (handle)
             {
-                MdiFrame* frame = unwrap<MdiFrame>(::GetParent(::GetParent(handle)));
+                mdi_frame* frame = unwrap<mdi_frame>(::GetParent(::GetParent(handle)));
                 if (frame)
                 {
-                    frame->destroyChild(handle);
+                    frame->destroy_child(handle);
                 }
             }
         }
 
-        virtual LRESULT wmNcDestroy()
+        virtual LRESULT wm_nc_destroy() override
         {
             return 0;
         }
@@ -342,14 +341,14 @@ namespace MTL {
             {
                 RECT r;
                 ::GetClientRect(hWnd, &r);
-                this->wmLayout(r);
+                this->wm_layout(r);
                 return 0;
             }
 
             if (message == WM_SEARCH)
             {
                 FINDREPLACE* fp = (FINDREPLACE*)lParam;
-                this->wmSearch(fp);
+                this->wm_search(fp);
                 return 0;
             }
 
@@ -357,18 +356,18 @@ namespace MTL {
             {
             case WM_CREATE:
             {
-                LRESULT r = this->wmCreate();
+                LRESULT r = this->wm_create();
                 break;
             }
             case WM_DESTROY:
             {
-                LRESULT r = this->wmDestroy();
+                LRESULT r = this->wm_destroy();
                 if (r) return r;
                 break;
             }
             case WM_NCDESTROY:
             {
-                LRESULT r = this->wmNcDestroy();
+                LRESULT r = this->wm_nc_destroy();
                 if (r) return r;
                 delete this;
                 break;
@@ -381,15 +380,15 @@ namespace MTL {
                 LRESULT r = 0;
                 if (code == 0 && lParam == 0)
                 {
-                    r = this->wmCommand(wmId);
+                    r = this->wm_command(wmId);
                 }
                 else if (code == 1)
                 {
-                    r = this->wmAccellerator(wmId);
+                    r = this->wm_accellerator(wmId);
                 }
                 else
                 {
-                    r = this->wmControl(message, wParam, lParam);
+                    r = this->wm_control(message, wParam, lParam);
                 }
 
                 break;
@@ -401,17 +400,17 @@ namespace MTL {
 
                 RECT bounds;
                 ::GetClientRect(hWnd, &bounds);
-                this->wmSize(bounds);
+                this->wm_size(bounds);
                 break;
             }
             case WM_PAINT:
             {
-                this->wmPaint();
+                this->wm_paint();
                 break;
             }
             case WM_ERASEBKGND:
             {
-                return this->wmEraseBackground(wParam);
+                return this->wm_erase_background(wParam);
             }
             case WM_DPICHANGED:
             {
@@ -421,13 +420,13 @@ namespace MTL {
                 {
                     ::SetWindowPos(hWnd, NULL, r->left, r->top, r->right - r->left, r->bottom - r->top, 0);
                 }
-                LRESULT result = this->wmDpiChanged(r);
+                LRESULT result = this->wm_dpi_changed(r);
                 ::UpdateWindow(hWnd);
                 break;
             }
             case WM_DPICHANGED_BEFOREPARENT:
             {
-                LRESULT result = this->wmDpiChanged(0);
+                LRESULT result = this->wm_dpi_changed(0);
                 ::InvalidateRect(hWnd, 0, TRUE);
                 ::UpdateWindow(hWnd);
                 break;
@@ -441,17 +440,17 @@ namespace MTL {
                 {
                     if (menu)
                     {
-                        HMENU viewMenu = details::getViewSubMenu(*menu, viewMenuIndex_);
+                        HMENU viewMenu = details::get_view_submenu(*menu, viewMenuIndex_);
                         ::SendMessage(::GetParent(hWnd), WM_MDISETMENU, (WPARAM)*menu, (LPARAM)viewMenu);
                         ::DrawMenuBar(frameWnd);
                     }
                 }
                 else // deactivated
                 {
-                    MdiFrame* frame = unwrap<MdiFrame>(frameWnd);
+                    mdi_frame* frame = unwrap<mdi_frame>(frameWnd);
                     if (frame)
                     {
-                        frame->resetMenu();
+                        frame->reset_menu();
                     }
                 }
                 break;
@@ -465,7 +464,7 @@ namespace MTL {
             return ::DefMDIChildProc(hWnd, message, wParam, lParam);
         }
 
-        static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+        static LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             switch (message)
             {
@@ -473,7 +472,7 @@ namespace MTL {
             {
                 CREATESTRUCTW* cs       = (CREATESTRUCTW*)lParam;
                 MDICREATESTRUCT* mcs    = (MDICREATESTRUCT*)(cs->lpCreateParams);
-                MdiChild* that          = (MdiChild*)(mcs->lParam);
+                mdi_child* that          = (mdi_child*)(mcs->lParam);
 
                 that->handle = hWnd;
                 ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)that);
@@ -487,7 +486,7 @@ namespace MTL {
                     return DefMDIChildProc(hWnd, message, wParam, lParam);
                 }
 
-                MdiChild* that = (MdiChild*)l;
+                mdi_child* that = (mdi_child*)l;
                 return that->wndProc(hWnd, message, wParam, lParam);
             }
             }
@@ -511,11 +510,11 @@ namespace MTL {
 
     };
 
-    HWND MdiFrame::createDocument(std::wstring title, MdiChild* child, UINT styles , UINT exStyles )
+    HWND mdi_frame::create_document(std::wstring title, mdi_child* child, UINT styles , UINT exStyles )
     {
         RECT bounds = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
 
-        auto& wc = windowClass<MdiChild>();
+        auto& wc = windowclass<mdi_child>();
 
         HWND wnd = ::CreateMDIWindow(
             wc.name(), 
@@ -533,7 +532,7 @@ namespace MTL {
 
     }
 
-    HWND MdiChild::create(
+    HWND mdi_child::create(
         const wchar_t* title, 
         int style,
         int exStyle, 
@@ -543,7 +542,7 @@ namespace MTL {
     {
         RECT bounds = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
 
-        auto& wc = windowClass<MdiChild>();
+        auto& wc = windowclass<mdi_child>();
 
         HWND wnd = ::CreateMDIWindow(
             wc.name(),

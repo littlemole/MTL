@@ -1,11 +1,11 @@
 #pragma once
 
-#include <MTL/ole/dataobj.h>
-#include "MTL/win/gdi.h"
+#include <mtl/ole/dataobj.h>
+#include "mtl/win/gdi.h"
 
-namespace MTL {
+namespace mtl {
 
-	inline std::wstring appFilesPath(const std::wstring& dir)
+	inline std::wstring app_files_path(const std::wstring& dir)
 	{
 		wchar_t buff[MAX_PATH];
 		::SHGetSpecialFolderPath(0, buff, CSIDL_APPDATA, TRUE);
@@ -25,40 +25,40 @@ namespace MTL {
 		return path;
 	}
 
-	namespace Shell {
-		class Folder;
+	namespace shell {
+		class folder;
 	}
 
-	inline Shell::Folder desktop();
+	inline shell::folder desktop();
 
-	namespace Shell {
+	namespace shell {
 
-		class Item
+		class item
 		{
-			friend class Folder;
+			friend class folder;
 		public:
-			Item(LPITEMIDLIST pidl, DWORD attributes)
+			item(LPITEMIDLIST pidl, DWORD attributes)
 				:pidl_(pidl), attributes_(attributes)
 			{}
 
-			~Item();
+			~item();
 
-			bool isDir()
+			bool is_dir()
 			{
 				return (attributes_ & SFGAO_FOLDER) != 0;;
 			}
 
-			bool isFile()
+			bool is_file()
 			{
 				return (attributes_ & SFGAO_STREAM) != 0;
 			}
 
-			bool isPartOfFileSystem()
+			bool is_part_of_filesystem()
 			{
 				return (attributes_ & SFGAO_FILESYSANCESTOR) != 0; //SFGAO_FILESYSTEM) != 0;
 			}
 
-			bool isBrowsable()
+			bool is_browsable()
 			{
 				return (attributes_ & SFGAO_BROWSABLE) != 0;
 			}
@@ -79,19 +79,19 @@ namespace MTL {
 
 	}
 
-	typedef std::shared_ptr<Shell::Item> Shit;
+	typedef std::shared_ptr<shell::item> shit;
 
-	namespace Shell {
+	namespace shell {
 
-		class Enumerator 
+		class enumerator 
 		{
 		public:
 
-			Enumerator()
+			enumerator()
 			{}
 
 			// while next
-			Shit next(DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR);
+			shit next(DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR);
 
 			// restart enum
 			void reset()
@@ -109,68 +109,68 @@ namespace MTL {
 			punk<IEnumIDList>				enumIdl_;
 		};
 
-		class Folder
+		class folder
 		{
-			friend class Item;
+			friend class item;
 		public:
-			Folder()
+			folder()
 			{
-				::SHGetDesktopFolder(&folder);
+				::SHGetDesktopFolder(&shell_folder);
 			}
 
-			Folder(LPITEMIDLIST pidl, Folder parent = desktop())
+			folder(LPITEMIDLIST pidl, folder parent = desktop())
 			{
-				folder = parent.subFolder(pidl).folder;
+				shell_folder = parent.sub_folder(pidl).shell_folder;
 			}
 
-			Folder(IShellFolder* sf)
+			folder(IShellFolder* sf)
 			{
-				folder = sf;
+				shell_folder = sf;
 			}
 
-			Folder(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
+			folder(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
 			{
 				//ULONG chEaten = 0;
 				//LPITEMIDLIST pidl = 0;
 
-				auto shit = parseDisplayName(path, attributes);
+				auto shit = parse_display_name(path, attributes);
 				auto desk = desktop();
 				//HR hr = desk.folder->ParseDisplayName(0, 0, (wchar_t*)path.c_str(), &chEaten, &pidl, 0);
-				HR hr = desk.folder->BindToObject(**shit, 0, IID_IShellFolder, (void**)&folder);
+				HR hr = desk.shell_folder->BindToObject(**shit, 0, IID_IShellFolder, (void**)&shell_folder);
 				//desk.release_pidl(pidl);
 			}
 
-			~Folder()
+			~folder()
 			{}
 
-			std::wstring getDisplayName(DWORD flags = SHGDN_FORPARSING)
+			std::wstring display_name(DWORD flags = SHGDN_FORPARSING)
 			{
-				Shell::Folder desk = desktop();
-				return getDisplayName(desk, flags);;
+				shell::folder desk = desktop();
+				return display_name(desk, flags);
 			}
 
-			std::wstring getDisplayName(MTL::Shell::Item& shit, DWORD flags = SHGDN_FORPARSING)
+			std::wstring display_name(shell::item& shit, DWORD flags = SHGDN_FORPARSING)
 			{
-				return getDisplayName(*shit, flags);
+				return display_name(*shit, flags);
 			}
 
-			std::wstring getDisplayName(Shell::Folder& parent, DWORD flags = SHGDN_FORPARSING)
+			std::wstring display_name(shell::folder& parent, DWORD flags = SHGDN_FORPARSING)
 			{
-				punk<IPersistFolder2> pf2(folder);
+				punk<IPersistFolder2> pf2(shell_folder);
 				if (!pf2) return L"";
 
 				LPITEMIDLIST pidl = 0;
 				HR hr = pf2->GetCurFolder(&pidl);
 
-				std::wstring result = parent.getDisplayName(pidl, flags);
+				std::wstring result = parent.display_name(pidl, flags);
 
 				release_pidl(pidl);
 				return result;
 			}
 			
-			std::wstring getDisplayName(LPITEMIDLIST pidl, DWORD flags = SHGDN_FORPARSING)
+			std::wstring display_name(LPITEMIDLIST pidl, DWORD flags = SHGDN_FORPARSING)
 			{
-				if (S_OK == folder->GetDisplayNameOf(pidl, flags, &strret_))
+				if (S_OK == shell_folder->GetDisplayNameOf(pidl, flags, &strret_))
 				{
 					wchar_t buf[MAX_PATH];
 					StrRetToBuf(&strret_, pidl, buf, MAX_PATH);
@@ -179,59 +179,59 @@ namespace MTL {
 				return L"";
 			}
 
-			Shit shellItem()
+			shit shell_item()
 			{
-				punk<IPersistFolder2> pf2(folder);
+				punk<IPersistFolder2> pf2(shell_folder);
 				if (pf2)
 				{
 					LPITEMIDLIST pidl;
 					if (S_OK == pf2->GetCurFolder(&pidl))
-						return Shit(new Shell::Item(pidl, getAttributesOf(pidl)));
+						return shit(new shell::item(pidl, attributes_of(pidl)));
 				}
-				return Shit();
+				return shit();
 			}
 
-			Shit getSpecialFolder(int csidl)
+			shit special_folder(int csidl)
 			{
 				LPITEMIDLIST pidl = 0;
 				::SHGetSpecialFolderLocation(0, csidl, &pidl);
-				return Shit(new Shell::Item(pidl, getAttributesOf(pidl)));
+				return shit(new shell::item(pidl, attributes_of(pidl)));
 			}
 
-			Shit parseDisplayName(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
+			shit parse_display_name(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
 			{
-				Shell::Folder	desk;
+				shell::folder	desk;
 				LPITEMIDLIST pidl = 0;
 				ULONG ulong = 0;
 				// first param hwnd
-				if (S_OK == desk.folder->ParseDisplayName(0, NULL, (LPOLESTR)(path.c_str()), &ulong, &pidl, &attributes))
+				if (S_OK == desk.shell_folder->ParseDisplayName(0, NULL, (LPOLESTR)(path.c_str()), &ulong, &pidl, &attributes))
 				{
-					Shell::Item* it = new Shell::Item(pidl, desk.getAttributesOf(pidl, attributes));
-					return Shit(it);
+					shell::item* it = new shell::item(pidl, desk.attributes_of(pidl, attributes));
+					return shit(it);
 				}
-				return Shit();
+				return shit();
 			}
 
 			// get Attributes of item
-			ULONG getAttributesOf(LPITEMIDLIST pidl, ULONG attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
+			ULONG attributes_of(LPITEMIDLIST pidl, ULONG attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
 			{
-				if (S_OK == folder->GetAttributesOf(1, (LPCITEMIDLIST*)&pidl, &attributes))
+				if (S_OK == shell_folder->GetAttributesOf(1, (LPCITEMIDLIST*)&pidl, &attributes))
 					return attributes;
 				return 0;
 			}
 
 			// prepare enumeration
-			Enumerator enumerate(HWND owner = NULL, SHCONTF flags = SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN)
+			enumerator enumerate(HWND owner = NULL, SHCONTF flags = SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN)
 			{
-				Enumerator enumObj;
-				HR hr = folder->EnumObjects(owner, flags, &enumObj);
+				enumerator enumObj;
+				HR hr = shell_folder->EnumObjects(owner, flags, &enumObj);
 				return enumObj;
 			}
 
 			// is valid
-			operator bool() { return folder; }
+			operator bool() { return shell_folder; }
 
-			punk<IShellFolder>   folder;
+			punk<IShellFolder>   shell_folder;
 
 
 			void release_pidl(LPITEMIDLIST pidl)
@@ -242,15 +242,14 @@ namespace MTL {
 				}
 			}
 
-			Shell::Folder subFolder(LPITEMIDLIST pidl)
+			shell::folder sub_folder(LPITEMIDLIST pidl)
 			{
 				IShellFolder* pFolder = nullptr;
-				HR hr = folder->BindToObject(pidl, NULL, IID_IShellFolder, (LPVOID*)&pFolder);
-				return Shell::Folder(pFolder);
+				HR hr = shell_folder->BindToObject(pidl, NULL, IID_IShellFolder, (LPVOID*)&pFolder);
+				return shell::folder(pFolder);
 			}
 
 		protected:
-
 
 			punk<IEnumIDList>				enumIdl_;
 			punk<IShellFolder>				desk_;
@@ -259,18 +258,18 @@ namespace MTL {
 
 		////////////////////////////////////////////////////////////////////////////////////
 
-		inline Shit parseDisplayName(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
+		inline shit parse_display_name(const std::wstring& path, DWORD attributes = SFGAO_FOLDER | SFGAO_STREAM | SFGAO_FILESYSTEM | SFGAO_BROWSABLE | SFGAO_FILESYSANCESTOR)
 		{
-			Shell::Folder	desk;
+			shell::folder	desk;
 			LPITEMIDLIST pidl = 0;
 			ULONG ulong = 0;
 			// first param hwnd
-			if (S_OK == desk.folder->ParseDisplayName(0, NULL, (LPOLESTR)(path.c_str()), &ulong, &pidl, &attributes))
+			if (S_OK == desk.shell_folder->ParseDisplayName(0, NULL, (LPOLESTR)(path.c_str()), &ulong, &pidl, &attributes))
 			{
-				Shell::Item* it = new Shell::Item(pidl, desk.getAttributesOf(pidl, attributes));
-				return Shit(it);
+				shell::item* it = new shell::item(pidl, desk.attributes_of(pidl, attributes));
+				return shit(it);
 			}
-			return Shit();
+			return shit();
 		}
 
 		namespace details {
@@ -339,7 +338,7 @@ namespace MTL {
 		}
 
 
-		inline int  Copy(
+		inline int  copy(
 			HWND hwnd,
 			const std::wstring& from,
 			const std::wstring& to,
@@ -348,7 +347,7 @@ namespace MTL {
 			return details::op(FO_COPY, hwnd, from, to, flags);
 		}
 
-		inline int  Copy(
+		inline int  copy(
 			HWND hwnd,
 			const std::vector<std::wstring>& from,
 			const std::wstring& to,
@@ -358,7 +357,7 @@ namespace MTL {
 		}
 
 
-		inline int  Remove(
+		inline int  remove(
 			HWND hwnd,
 			const std::wstring& from,
 			FILEOP_FLAGS flags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_NOERRORUI)
@@ -367,7 +366,7 @@ namespace MTL {
 			return details::op(FO_DELETE, hwnd, from, to, flags);
 		}
 
-		inline int  Remove(
+		inline int  remove(
 			HWND hwnd,
 			const std::vector<std::wstring>& from,
 			FILEOP_FLAGS flags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_NOERRORUI)
@@ -376,7 +375,7 @@ namespace MTL {
 			return details::multiOp(FO_DELETE, hwnd, from, to, flags);
 		}
 
-		inline int  Move(
+		inline int  move(
 			HWND hwnd,
 			const std::wstring& from,
 			const std::wstring& to,
@@ -386,7 +385,7 @@ namespace MTL {
 		}
 
 
-		inline int  Move(
+		inline int  move(
 			HWND hwnd,
 			const std::vector<std::wstring>& from,
 			const std::wstring& to,
@@ -395,7 +394,7 @@ namespace MTL {
 			return details::multiOp(FO_MOVE, hwnd, from, to, flags);
 		}
 
-		inline int  Rename(
+		inline int  rename(
 			HWND hwnd,
 			const std::wstring& from,
 			const std::wstring& to,
@@ -404,14 +403,14 @@ namespace MTL {
 			return details::op(FO_RENAME, hwnd, from, to, flags);
 		}
 
-		inline bool CreateDir(const std::wstring& dirname)
+		inline bool create_dir(const std::wstring& dirname)
 		{
-			return ::CreateDirectoryW(Path(dirname).wpath().c_str(), 0) == TRUE;
+			return ::CreateDirectoryW(mtl::path(dirname).wpath().c_str(), 0) == TRUE;
 		}
 
 		//		SHFILEOPSTRUCT sfos_;
 
-		inline BOOL Execute(const std::wstring& path, const std::wstring& verb = L"open", int nShow = SW_SHOWNORMAL, ULONG fMask = 0)
+		inline BOOL execute(const std::wstring& path, const std::wstring& verb = L"open", int nShow = SW_SHOWNORMAL, ULONG fMask = 0)
 		{
 			SHELLEXECUTEINFO sei;
 			ZeroMemory(&sei, sizeof(sei));
@@ -425,7 +424,7 @@ namespace MTL {
 		}
 
 
-		inline BOOL ExecuteArgs(
+		inline BOOL execute_args(
 			const std::wstring& path,
 			const std::wstring& args,
 			const std::wstring& verb = L"open",
@@ -489,14 +488,14 @@ namespace MTL {
 	}
 
 	//! get the desktop singleton
-	inline Shell::Folder desktop()
+	inline shell::folder desktop()
 	{
-		return Shell::Folder();
+		return shell::folder();
 	}
 
-	namespace Shell {
+	namespace shell {
 
-		inline HICON getStockIcon(SHSTOCKICONID id)
+		inline HICON stock_icon(SHSTOCKICONID id)
 		{
 			SHSTOCKICONINFO sii;
 			::ZeroMemory(&sii, sizeof(sii));
@@ -510,11 +509,11 @@ namespace MTL {
 			return sii.hIcon;
 		}
 
-		inline HICON getFileIcon(const std::wstring& path)
+		inline HICON file_icon(const std::wstring& filepath)
 		{
-			static std::map<std::wstring, MTL::Icon> map;
+			static std::map<std::wstring, icon> map;
 
-			std::wstring ext = MTL::Path(path).ext();
+			std::wstring ext = mtl::path(filepath).ext();
 
 			if (map.count(ext))
 			{
@@ -524,7 +523,7 @@ namespace MTL {
 			SHFILEINFO sfi;
 			::ZeroMemory(&sfi, sizeof(sfi));
 			
-			bool b = ::SHGetFileInfo(path.c_str(), FILE_ATTRIBUTE_NORMAL, &sfi, sizeof(sfi), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SMALLICON);
+			bool b = ::SHGetFileInfo(filepath.c_str(), FILE_ATTRIBUTE_NORMAL, &sfi, sizeof(sfi), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SMALLICON);
 			if (!b)
 			{
 				return 0;
@@ -533,7 +532,7 @@ namespace MTL {
 			return sfi.hIcon;
 		}
 
-		inline Item::~Item()
+		inline item::~item()
 		{
 			desktop().release_pidl(pidl_);
 			pidl_ = 0;
@@ -545,7 +544,7 @@ namespace MTL {
 			return parent.getDisplayName(pidl_, flags);
 		}
 		*/
-		inline Shit Enumerator::next(DWORD attributes )
+		inline shit enumerator::next(DWORD attributes )
 		{
 			ULONG fetched;
 			LPITEMIDLIST pidl = 0;
@@ -556,26 +555,26 @@ namespace MTL {
 				{
 					if (fetched == 1)
 					{
-						Shell::Item* it = new Shell::Item(pidl, desktop().getAttributesOf(pidl, attributes));
-						return Shit(it);
+						shell::item* it = new shell::item(pidl, desktop().attributes_of(pidl, attributes));
+						return shit(it);
 					}
 				}
 			}
-			return Shit();
+			return shit();
 		}
 
-		class FolderView : public MTL::Window<FolderView>,
-			public implements<stack_object<FolderView>(
+		class folder_view : public window<folder_view>,
+			public implements<stack_object<folder_view>(
 				IShellBrowser, 
 				IServiceProvider, 
 				ICommDlgBrowser2, of<ICommDlgBrowser2, ICommDlgBrowser>)>//, IContextMenuSite)>
 		{
 		public:
 
-			FolderView()
+			folder_view()
 			{}
 
-			~FolderView()
+			~folder_view()
 			{
 				if (shellView_)
 				{
@@ -589,17 +588,17 @@ namespace MTL {
 
 			// events
 
-			Event<void(ULONG)> onChange;
-			Event<void(std::wstring)> onPath;
-			Event<void(std::wstring)> onOpen;
+			event<void(ULONG)> onChange;
+			event<void(std::wstring)> onPath;
+			event<void(std::wstring)> onOpen;
 
 			// api
 
-			bool displayFiles()					{ return displayFiles_; }
-			void displayFiles(bool b)			{ displayFiles_ = b;  }
-			void path(const std::wstring& p)	{ path_ = p; showPath(p); }
+			bool display_files()				{ return displayFiles_; }
+			void display_files(bool b)			{ displayFiles_ = b;  }
+			void path(const std::wstring& p)	{ path_ = p; show_path(p); }
 			std::wstring path()					{ return path_; }
-			bool hasFocus()						{ return ::GetFocus() == viewWnd_; }
+			bool has_focus()					{ return ::GetFocus() == viewWnd_; }
 		
 
 			std::vector<std::wstring> selected()
@@ -608,7 +607,7 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					return vectorFromDataObject(*dao);
+					return vector_from_data_object(*dao);
 				}
 				return std::vector<std::wstring>();
 			}
@@ -632,10 +631,10 @@ namespace MTL {
 				hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						punk<IDataObject> ido(new Shell::DataObject(v,true));
+						punk<IDataObject> ido(new shell::data_object(v,true));
 
 						hr = ::OleSetClipboard(*ido);
 
@@ -661,10 +660,10 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						punk<IDataObject> ido( new Shell::DataObject(v, false));
+						punk<IDataObject> ido( new shell::data_object(v, false));
 						HRESULT hr = ::OleSetClipboard(*ido);
 						if (hr == S_OK)
 						{
@@ -689,7 +688,7 @@ namespace MTL {
 				std::vector<std::wstring> v;
 				if (hr == S_OK)
 				{
-					v = vectorFromDataObject(*dao);
+					v = vector_from_data_object(*dao);
 				}
 
 				std::wstring path;
@@ -707,7 +706,7 @@ namespace MTL {
 					return;
 
 				v.clear();
-				v = vectorFromDataObject(*ido);
+				v = vector_from_data_object(*ido);
 
 				if (v.size() < 1)
 					return;
@@ -719,9 +718,9 @@ namespace MTL {
 				{
 					if (sm.tymed == TYMED_HGLOBAL)
 					{
-						Global glob(sm.hGlobal);
+						global glob(sm.hGlobal);
 
-						Global::Lock<DWORD*> lock(*glob);
+						global::lock<DWORD*> lock(*glob);
 
 						*d = **lock;
 						glob.detach();
@@ -730,14 +729,14 @@ namespace MTL {
 
 				if (*d & DROPEFFECT_COPY)
 				{
-					Shell::Copy(handle, v, path, FOF_ALLOWUNDO);
+					shell::copy(handle, v, path, FOF_ALLOWUNDO);
 				}
 				else if (*d & DROPEFFECT_MOVE)
 				{
-					Shell::Move(handle, v, path, FOF_ALLOWUNDO);
+					shell::move(handle, v, path, FOF_ALLOWUNDO);
 				}
 				format_etc_dropeffect fede;
-				StgMedium stgm(*d, GHND | GMEM_SHARE);
+				stg_medium stgm(*d, GHND | GMEM_SHARE);
 				ido->SetData(&fede, &stgm, TRUE);
 			}
 
@@ -750,12 +749,12 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						Shit it;
-						Shell::Folder sf = desktop();
-						it = sf.parseDisplayName(v[0]);
+						shit it;
+						shell::folder sf = desktop();
+						it = sf.parse_display_name(v[0]);
 						if (!it)
 							return;
 						HRESULT hr = shellView_->SelectItem(**it, SVSI_EDIT);
@@ -772,10 +771,10 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						::MTL::Shell::Remove( handle, v[0], FOF_ALLOWUNDO);
+						::mtl::shell::remove( handle, v[0], FOF_ALLOWUNDO);
 					}
 				}
 			}
@@ -789,31 +788,31 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						Shell::Execute(v[0]);
+						shell::execute(v[0]);
 					}
 				}
 				if (hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND))
 				{
 					// no selection
-					Shell::Execute(path_);
+					shell::execute(path_);
 				}
 			}
 
-			void updir()
+			void up_dir()
 			{
 				std::wstring p(path_);
-				std::wstring parent = MTL::Path(path_).parentDir().addBackSlash().str();
-				if (Path(parent).isDir())
+				std::wstring parent = ::mtl::path(path_).parent_dir().add_backslash().str();
+				if (mtl::path(parent).is_dir())
 				{
 					path_ = parent;
-					showPath(path_);
+					show_path(path_);
 				}
 			}
 
-			void newdir()
+			void new_dir()
 			{
 				if (!shellView_)
 					return;
@@ -822,7 +821,7 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
 						std::wstring tmp = L"newDir_";
@@ -832,7 +831,7 @@ namespace MTL {
 							std::wstring p(path_);
 							std::wstringstream oss;
 							oss << tmp << i;
-							p = Path(p).append(oss.str()).str();
+							p = mtl::path(p).append(oss.str()).str();
 							if (!::CreateDirectory(p.c_str(), 0))
 							{
 								if (::GetLastError() == ERROR_ALREADY_EXISTS)
@@ -857,7 +856,7 @@ namespace MTL {
 						std::wstring p(path_);
 						std::wstringstream oss;
 						oss << tmp << i;
-						p = Path(p).append(oss.str()).str();
+						p = mtl::path(p).append(oss.str()).str();
 						if (!::CreateDirectory(p.c_str(), 0))
 						{
 							if (::GetLastError() == ERROR_ALREADY_EXISTS)
@@ -881,16 +880,16 @@ namespace MTL {
 				HRESULT hr = shellView_->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						Shell::Execute(v[0], L"properties", 1, SEE_MASK_INVOKEIDLIST);
+						shell::execute(v[0], L"properties", 1, SEE_MASK_INVOKEIDLIST);
 					}
 				}
 				if (hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND))
 				{
 					// no selection
-					Shell::Execute(path_, L"properties", 1, SEE_MASK_INVOKEIDLIST);
+					shell::execute(path_, L"properties", 1, SEE_MASK_INVOKEIDLIST);
 				}
 			}
 
@@ -916,7 +915,7 @@ namespace MTL {
 					::SetWindowPos(viewWnd_, NULL, 0, 0, clientRect_.right, clientRect_.bottom, SWP_NOZORDER | SWP_DRAWFRAME | SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOCOPYBITS);
 					::RedrawWindow(viewWnd_, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_INTERNALPAINT);
 				}
-				return Window<FolderView>::wndProc(hwnd, message, wParam, lParam);
+				return window<folder_view>::wndProc(hwnd, message, wParam, lParam);
 			}
 
 
@@ -970,7 +969,7 @@ namespace MTL {
 
 			virtual HRESULT __stdcall BrowseObject(PCUIDLIST_RELATIVE pidl, UINT wFlags) override
 			{
-				std::wstring s = desktop().getDisplayName((LPITEMIDLIST)pidl);
+				std::wstring s = desktop().display_name((LPITEMIDLIST)pidl);
 				onPath.fire(s);
 				return S_OK;
 			}
@@ -1039,13 +1038,13 @@ namespace MTL {
 				HRESULT hr = ppshv->GetItemObject(SVGIO_SELECTION, IID_IDataObject, (void**)&dao);
 				if (hr == S_OK)
 				{
-					std::vector<std::wstring> v = vectorFromDataObject(*dao);
+					std::vector<std::wstring> v = vector_from_data_object(*dao);
 					if (!v.empty())
 					{
-						if (Path(v[0]).isDir())
+						if (mtl::path(v[0]).is_dir())
 						{
 							path_ = v[0];
-							this->showPath(path_);
+							this->show_path(path_);
 							onPath.fire(path_);
 						}
 						else
@@ -1096,16 +1095,16 @@ namespace MTL {
 
 		protected:
 
-			bool showPath(const std::wstring& path)
+			bool show_path(const std::wstring& path)
 			{
-				Shit it;
-				Shell::Folder sf = desktop();
+				shit it;
+				shell::folder sf = desktop();
 
-				it = sf.parseDisplayName(path);
+				it = sf.parse_display_name(path);
 				if (!it)
 					return false;
 
-				Shell::Folder f(**it);
+				shell::folder f(**it);
 				if (!f)
 					return false;
 
@@ -1120,10 +1119,10 @@ namespace MTL {
 				::ZeroMemory(&sc, sizeof(sc));
 				sc.cbSize = sizeof(sc);
 				sc.psfvcb = NULL;
-				sc.pshf = *(f.folder);
+				sc.pshf = *(f.shell_folder);
 				sc.psvOuter = NULL;
 
-				hr = f.folder->CreateViewObject( handle, IID_IShellView, (void**)&shellView_);
+				hr = f.shell_folder->CreateViewObject( handle, IID_IShellView, (void**)&shellView_);
 				if (hr != S_OK)
 					return false;
 

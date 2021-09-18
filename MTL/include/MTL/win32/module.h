@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MTL/fwd.h"
+#include "mtl/fwd.h"
 #include <sstream>
 
-namespace MTL {
+namespace mtl {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// globals hidden behing meyers singletons
@@ -21,12 +21,12 @@ namespace MTL {
 	// helpers
 	//////////////////////////////////////////////////////////////////////////////
 
-	inline HMODULE getSelfModule()
+	inline HMODULE get_self_module()
 	{
 		HMODULE hm = NULL;
 		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 			GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-			(LPCWSTR)&getSelfModule, &hm) == 0)
+			(LPCWSTR)&get_self_module, &hm) == 0)
 		{
 			int ret = GetLastError();
 			fprintf(stderr, "GetModuleHandle failed, error = %d\n", ret);
@@ -35,9 +35,9 @@ namespace MTL {
 		return hm;
 	}
 
-	inline std::wstring pathToSelf()
+	inline std::wstring path_to_self()
 	{
-		HMODULE hm = getSelfModule();
+		HMODULE hm = get_self_module();
 
 		wchar_t path[MAX_PATH];
 		if (GetModuleFileName(hm, path, MAX_PATH) == 0)
@@ -51,9 +51,9 @@ namespace MTL {
 
 
 
-	inline std::wstring pathToSelfDirectory(const wchar_t* postfix = 0)
+	inline std::wstring path_to_self_directory(const wchar_t* postfix = 0)
 	{
-		std::wstring self = pathToSelf();
+		std::wstring self = path_to_self();
 
 		std::size_t pos = self.find_last_of(L"\\");
 		if (pos == std::wstring::npos)
@@ -71,11 +71,11 @@ namespace MTL {
 		return self.substr(0, pos);
 	}
 
-	class ComModule
+	class com_module
 	{
 	public:
 
-		virtual ~ComModule()
+		virtual ~com_module()
 		{}
 
 		virtual long lock()
@@ -97,7 +97,7 @@ namespace MTL {
 			return cnt_;
 		}
 
-		bool canUnload()
+		bool can_unload()
 		{
 			return cnt_ == 0;
 		}
@@ -108,9 +108,9 @@ namespace MTL {
 		std::atomic<long> cnt_;
 	};
 
-	inline ComModule& comModule()
+	inline com_module& the_com_module()
 	{
-		static ComModule com;
+		static com_module com;
 		return com;
 	}
 

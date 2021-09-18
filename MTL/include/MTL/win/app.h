@@ -1,23 +1,20 @@
 #pragma once
 
-#include "MTL/win32/box.h" 
-#include "MTL/win/wind.h" 
+#include "mtl/win32/box.h" 
+#include "mtl/win/wind.h" 
 
-namespace MTL {
+namespace mtl {
 
-
-
-
-    class Application
+    class application
     {
     public:
-        Application(HINSTANCE hInst)
+        application(HINSTANCE hInst)
         {
             module_instance() = hInst;
             UINT unused = WmReflect();
         }
 
-        HACCEL loadAccelerators(int id)
+        HACCEL load_accelerators(int id)
         {
             hAccelTable_ = LoadAccelerators(module_instance(), MAKEINTRESOURCE(id));
             return hAccelTable_;

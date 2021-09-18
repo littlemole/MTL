@@ -18,7 +18,7 @@
 #include <condition_variable>
 #include <ShlObj.h>
 
-using namespace MTL;
+using namespace mtl;
 
 class ShellTest : public ::testing::Test {
 protected:
@@ -86,13 +86,13 @@ TEST_F(ShellTest, desktop) {
     {
         auto desk = desktop();
 
-        auto win = desk.getSpecialFolder(CSIDL_WINDOWS);
+        auto win = desk.special_folder(CSIDL_WINDOWS);
 
 //        punk<IPersistFolder2> pf2(win.folder);
  //       LPITEMIDLIST pidl = 0;
  //       pf2->GetCurFolder(&pidl);
 
-        std::wstring dn = desk.getDisplayName(*win);
+        std::wstring dn = desk.display_name(*win);
   //      desk.release_pidl(pidl);
 
         std::wcout << dn << std::endl;
@@ -116,15 +116,15 @@ TEST_F(ShellTest, enumerate) {
     {
         auto desk = desktop();
 
-        auto win = desk.getSpecialFolder(CSIDL_WINDOWS);
+        auto win = desk.special_folder(CSIDL_WINDOWS);
 
         //        punk<IPersistFolder2> pf2(win.folder);
          //       LPITEMIDLIST pidl = 0;
          //       pf2->GetCurFolder(&pidl);
 
-        auto path = desk.getDisplayName(*win);
+        auto path = desk.display_name(*win);
 
-        MTL::Shell::Folder folder(path);
+        mtl::shell::folder folder(path);
         /*
         ULONG chEaten = 0;
         LPITEMIDLIST pidl = 0;
@@ -135,18 +135,18 @@ TEST_F(ShellTest, enumerate) {
 
         MTL::Shell::Folder folder(*f);
         */
-        std::wcout << folder.getDisplayName() << std::endl;
+        std::wcout << folder.display_name() << std::endl;
 //        std::wcout << desk.getDisplayName(f) << std::endl;
 
         auto enumerator = folder.enumerate();
 
-        Shit shit = enumerator.next();
+        mtl::shit shit = enumerator.next();
 
         while (shit)
         {
-            std::wcout << folder.getDisplayName(*shit) << std::endl;
+            std::wcout << folder.display_name(*shit) << std::endl;
 
-            if (folder.getDisplayName(*shit) == L"C:\\Windows\\notepad.exe")
+            if (folder.display_name(*shit) == L"C:\\Windows\\notepad.exe")
             {
                 hasNotepad = true;
             }
@@ -168,28 +168,28 @@ TEST_F(ShellTest, enumerate) {
 
 TEST_F(ShellTest, copy) 
 {
-    std::wstring selfPath = MTL::pathToSelf();
+    std::wstring selfPath = mtl::path_to_self();
     bool copied = false;
     bool renamed = false;
     bool removed = false;
     try
     {
-        std::wstring to = Path(selfPath).parentDir().str() + L"/tmp.exe";
-        MTL::Shell::Copy(nullptr,selfPath, to);
+        std::wstring to = mtl::path(selfPath).parent_dir().str() + L"/tmp.exe";
+        mtl::shell::copy(nullptr,selfPath, to);
 
-        copied = Path(to).exists();
+        copied = mtl::path(to).exists();
 
-        std::wstring to2 = Path(selfPath).parentDir().str() + L"/tmp2.exe";
+        std::wstring to2 = mtl::path(selfPath).parent_dir().str() + L"/tmp2.exe";
 
-        MTL::Shell::Move(nullptr,to, to2);
+        mtl::shell::move(nullptr,to, to2);
 
-        renamed = Path(to2).exists();
-        removed = !Path(to).exists();
+        renamed = mtl::path(to2).exists();
+        removed = !mtl::path(to).exists();
 
         EXPECT_TRUE(removed);
 
-        MTL::Shell::Remove(nullptr, to2);
-        removed = !Path(to2).exists();
+        mtl::shell::remove(nullptr, to2);
+        removed = !mtl::path(to2).exists();
     }
     catch (HRESULT hr)
     {

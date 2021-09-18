@@ -1,11 +1,12 @@
 #pragma once
 
-#include "MTL/persist/xml.h"
+#include "mtl/obj/obj.h"
+#include "mtl/persist/xml.h"
 
-namespace MTL {
+namespace mtl {
 
     template<class T>
-    class PersistStream : public IPersistStreamInit
+    class persist_stream : public IPersistStreamInit
     {
     public:
 
@@ -69,15 +70,15 @@ namespace MTL {
     namespace details
     {
         template< class T, class ... Args>
-        class derives<T(streamable, Args...)> : public PersistStream<T>, public derives<T(Args...)>
+        class derives<T(streamable, Args...)> : public ::mtl::persist_stream<T>, public derives<T(Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(streamable, Args...)> : public interfaces<T(PersistStream<T>, Args...)>
+        class interfaces<T(streamable, Args...)> : public interfaces<T(persist_stream<T>, Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(PersistStream<T>, Args...)>
+        class interfaces<T(persist_stream<T>, Args...)>
         {
         public:
 
@@ -111,7 +112,7 @@ namespace MTL {
 
 
     template<class T>
-    class PersistFile : public IPersistFile
+    class persist_file : public IPersistFile
     {
     public:
 
@@ -132,14 +133,14 @@ namespace MTL {
         virtual HRESULT __stdcall Load(LPCOLESTR pszFileName, DWORD dwMode) override
         {
             filename_ = pszFileName;
-            Path p(pszFileName);
-            Stream stream(p, dwMode);
-            if (!stream)
+            path p(pszFileName);
+            stream strm(p, dwMode);
+            if (!strm)
             {
                 return E_FAIL;
             }
 
-            std::string xml = stream.read();
+            std::string xml = strm.read();
             
             MsxmlDocument doc(xml);
             if (doc)
@@ -155,7 +156,7 @@ namespace MTL {
                     bstr xml;
                     child->get_xml(&xml);
 
-                    Stream mem(xml.to_string());
+                    stream mem(xml.to_string());
                     T* that = (T*)this;
                     return ((IPersistStreamInit*)that)->Load(*mem);
                 }
@@ -171,13 +172,13 @@ namespace MTL {
                 filename_ = pszFileName;
             }
 
-            Path p(pszFileName);
-            Stream stream(p);
-            if (!stream)
+            path p(pszFileName);
+            stream strm(p);
+            if (!strm)
             {
                 return E_FAIL;
             }
-            stream.size(0);
+            strm.size(0);
 
             MsxmlDocument doc(CLSID_DOMDocument60);
 
@@ -190,7 +191,7 @@ namespace MTL {
             doc.appendChild( obj);
 
             T* that = (T*)this;
-            Stream tmp;
+            stream tmp;
             hr = ((IPersistStreamInit*)(that))->Save(*tmp, FALSE);
 
             tmp.reset();
@@ -206,7 +207,7 @@ namespace MTL {
                 hr = doc->get_xml(&tmpXml);
 
                 std::string result = tmpXml.to_string();
-                return stream->Write(result.data(), (ULONG)result.size(), 0);
+                return strm->Write(result.data(), (ULONG)result.size(), 0);
             }
             return E_FAIL;
         }
@@ -236,18 +237,19 @@ namespace MTL {
 
 
     class serializable {};
+
     namespace details
     {
         template< class T, class ... Args>
-        class derives<T(serializable, Args...)> : public PersistFile<T>, public derives<T(Args...)>
+        class derives<T(serializable, Args...)> : public ::mtl::persist_file<T>, public derives<T(Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(serializable, Args...)> : public interfaces<T(PersistFile<T>, Args...)>
+        class interfaces<T(serializable, Args...)> : public interfaces<T(persist_file<T>, Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(PersistFile<T>, Args...)>
+        class interfaces<T(persist_file<T>, Args...)>
         {
         public:
 
@@ -273,7 +275,7 @@ namespace MTL {
     }
 
     template<class T>
-    class PersistStorage : public IPersistStorage
+    class persist_storage : public IPersistStorage
     {
     public:
 
@@ -351,15 +353,15 @@ namespace MTL {
     {
 
         template< class T, class ... Args>
-        class derives<T(storable, Args...)> : public PersistStorage<T>, public derives<T(Args...)>
+        class derives<T(storable, Args...)> : public persist_storage<T>, public derives<T(Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(storable, Args...)> : public interfaces<T(PersistStorage<T>, Args...)>
+        class interfaces<T(storable, Args...)> : public interfaces<T(persist_storage<T>, Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(PersistStorage<T>, Args...)>
+        class interfaces<T(persist_storage<T>, Args...)>
         {
         public:
 
@@ -386,7 +388,7 @@ namespace MTL {
 
 
     template<class T>
-    class Persistent : public PersistStream<T>, public PersistFile<T>, public PersistStorage<T>
+    class persistent : public persist_stream<T>, public persist_file<T>, public persist_storage<T>
     {
     public:
 
@@ -406,7 +408,7 @@ namespace MTL {
 
         virtual HRESULT __stdcall Save(IStream* pStm, BOOL fClearDirty) override
         {
-            HRESULT hr = PersistStream<T>::Save(pStm, fClearDirty);
+            HRESULT hr = persist_stream<T>::Save(pStm, fClearDirty);
             if (hr != S_OK)
             {
                 return hr;
@@ -433,15 +435,15 @@ namespace MTL {
     {
 
         template< class T, class ... Args>
-        class derives<T(persistable, Args...)> : public Persistent<T>, public derives<T(Args...)>
+        class derives<T(persistable, Args...)> : public persistent<T>, public derives<T(Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(persistable, Args...)> : public interfaces<T(Persistent<T>, Args...)>
+        class interfaces<T(persistable, Args...)> : public interfaces<T(persistent<T>, Args...)>
         {};
 
         template<class T, class ... Args>
-        class interfaces<T(Persistent<T>, Args...)>
+        class interfaces<T(persistent<T>, Args...)>
         {
         public:
 

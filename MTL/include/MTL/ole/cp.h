@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MTL/obj/impl.h"
-#include "MTL/disp/aut.h"
-#include "MTL/punk.h"
+#include "mtl/punk.h"
+#include "mtl/obj/impl.h"
+#include "mtl/disp/aut.h"
 #include <ocidl.h>
 #include <OleCtl.h>
 
-namespace MTL {
+namespace mtl {
 
 
-	class Cookies
+	class cookies
 	{
 	public:
 		DWORD get()
@@ -45,11 +45,11 @@ namespace MTL {
 
 	};
 
-	class ConnectionPoint: public implements< ConnectionPoint(IConnectionPoint)>
+	class connection_point: public implements< connection_point(IConnectionPoint)>
 	{
 	public:
 
-		ConnectionPoint(IConnectionPointContainer* cpc)
+		connection_point(IConnectionPointContainer* cpc)
 			: cpc_(cpc)
 		{}
 		
@@ -106,23 +106,23 @@ namespace MTL {
 	protected:
 		IConnectionPointContainer* cpc_;
 		std::map<DWORD, punk<IUnknown>> sinks_;
-		Cookies cookies_;
+		cookies cookies_;
 	};
 
 
 	template<class I>
-	class ConnectionPointImpl : public ConnectionPoint
+	class connection_point_impl : public connection_point
 	{
 	public:
 
-		ConnectionPointImpl()
+		connection_point_impl()
 		{}
 
-		ConnectionPointImpl(IConnectionPointContainer* cpc)
-			: ConnectionPoint(cpc)
+		connection_point_impl(IConnectionPointContainer* cpc)
+			: connection_point(cpc)
 		{}
 
-		~ConnectionPointImpl()
+		~connection_point_impl()
 		{}
 
 		virtual HRESULT __stdcall GetConnectionInterface(IID* pIID) override
@@ -134,11 +134,11 @@ namespace MTL {
 	};
 
 
-	class EnumConnectionPoint : public implements<EnumConnectionPoint(IEnumConnectionPoints)>
+	class enum_connection_point : public implements<enum_connection_point(IEnumConnectionPoints)>
 	{
 	public:
 
-		EnumConnectionPoint(const std::vector<punk<IConnectionPoint>>& v)
+		enum_connection_point(const std::vector<punk<IConnectionPoint>>& v)
 			: unks_(v)
 		{}
 
@@ -163,7 +163,7 @@ namespace MTL {
 				return S_FALSE;
 			}
 
-			HRESULT hr = unks_[pos_].queryInterface(&(rgelt[0]));
+			HRESULT hr = unks_[pos_].query_interface(&(rgelt[0]));
 			if (hr != S_OK)
 				return hr;
 
@@ -190,8 +190,8 @@ namespace MTL {
 
 		virtual HRESULT __stdcall Clone(IEnumConnectionPoints** ppenum) override
 		{
-			punk<IEnumConnectionPoints> unk(new EnumConnectionPoint(unks_));
-			return unk.queryInterface(ppenum);
+			punk<IEnumConnectionPoints> unk(new enum_connection_point(unks_));
+			return unk.query_interface(ppenum);
 		}
 
 	private:
@@ -200,16 +200,16 @@ namespace MTL {
 	};
 
 	template<class T>
-	class ConnectionPointContainer;
+	class connection_point_container;
 
 	template<class T, class ... Args>
-	class ConnectionPointContainer<T(Args...)> : public IConnectionPointContainer
+	class connection_point_container<T(Args...)> : public IConnectionPointContainer
 	{
 	public:
 
-		ConnectionPointContainer()
+		connection_point_container()
 		{
-			connection_point<Args...>();
+			connection_points<Args...>();
 		}
 
 		template<class I>
@@ -229,8 +229,8 @@ namespace MTL {
 
 		virtual HRESULT __stdcall EnumConnectionPoints(IEnumConnectionPoints** ppEnum) override
 		{
-			punk<EnumConnectionPoint> cps(new EnumConnectionPoint(cps_));
-			return cps.queryInterface(ppEnum);
+			punk<enum_connection_point> cps(new enum_connection_point(cps_));
+			return cps.query_interface(ppEnum);
 		}
 
 		virtual HRESULT __stdcall FindConnectionPoint(REFIID riid, IConnectionPoint** ppCP) override
@@ -241,7 +241,7 @@ namespace MTL {
 				it->GetConnectionInterface(&iid);
 				if (::IsEqualIID(riid, iid))
 				{
-					return it.queryInterface(ppCP);
+					return it.query_interface(ppCP);
 				}
 			}
 			return CONNECT_E_NOCONNECTION;
@@ -252,12 +252,12 @@ namespace MTL {
 		std::vector<punk<IConnectionPoint>> cps_;
 
 		template<class I, class ...Args>
-		void connection_point()
+		void connection_points()
 		{
 			make_connection_point<I>();
 			if constexpr (sizeof...(Args) != 0)
 			{
-				connection_point<Args...>();
+				connection_points<Args...>();
 			}
 		}
 
@@ -265,7 +265,7 @@ namespace MTL {
 		void make_connection_point()
 		{
 			IConnectionPointContainer* cpc = (IConnectionPointContainer*)this;
-			punk<IConnectionPoint> cp(new ConnectionPointImpl<I>(cpc));
+			punk<IConnectionPoint> cp(new connection_point_impl<I>(cpc));
 			cps_.push_back(cp);
 		}
 
@@ -275,7 +275,7 @@ namespace MTL {
 	namespace details
 	{
 		template<class T, class I, class ... Args>
-		class interfaces<T(ConnectionPointContainer<I>, Args...)>
+		class interfaces<T(connection_point_container<I>, Args...)>
 		{
 		public:
 

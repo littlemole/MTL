@@ -1,10 +1,10 @@
 #pragma once
 
-#include "MTL/obj/obj.h"
+#include "mtl/obj/obj.h"
 
-extern MTL::ComDLL& inprocServer();
+extern mtl::com_dll& inproc_server();
 
-namespace MTL {
+namespace mtl {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Class Factory implementations
@@ -13,10 +13,10 @@ namespace MTL {
 	namespace details {
 
 		template<class T>
-		class GetClassObject;
+		class get_class_object;
 
 		template<>
-		class GetClassObject<void()>
+		class get_class_object<void()>
 		{
 		public:
 
@@ -27,7 +27,7 @@ namespace MTL {
 		};
 
 		template<class T, class ...Args>
-		class GetClassObject<void(T, Args...)>
+		class get_class_object<void(T, Args...)>
 		{
 		public:
 
@@ -35,10 +35,10 @@ namespace MTL {
 			{
 				if (::IsEqualCLSID(rclsid, __uuidof(T)))
 				{
-					static ClassObject<T> classObject;
+					static class_object<T> classObject;
 					return classObject.QueryInterface(riid, ppv);
 				}
-				return GetClassObject<void(Args...)>::DllGetClassObject(rclsid, riid, ppv);
+				return get_class_object<void(Args...)>::DllGetClassObject(rclsid, riid, ppv);
 			}
 		};
 
@@ -50,7 +50,7 @@ namespace MTL {
 	//////////////////////////////////////////////////////////////////////////////
 
 	template<class ... Args>
-	class InprocServer : public ComDLL
+	class inproc_server : public com_dll
 	{
 	public:
 
@@ -70,12 +70,12 @@ namespace MTL {
 
 			*ppv = 0;
 
-			return details::GetClassObject<void(Args...)>::DllGetClassObject(rclsid, riid, ppv);
+			return details::get_class_object<void(Args...)>::DllGetClassObject(rclsid, riid, ppv);
 		}
 
 		HRESULT __stdcall DllCanUnloadNow(void) override
 		{
-			if (comModule().canUnload())
+			if (the_com_module().can_unload())
 				return S_OK;
 
 			return S_FALSE;
@@ -99,25 +99,25 @@ namespace MTL {
 //////////////////////////////////////////////////////////////////////////////////
 
 #define DLL_COCLASS_EXPORTS(...)																		\
-MTL::ComDLL& inprocServer()																				\
+mtl::com_dll& inproc_Server()																			\
 {																										\
-	static MTL::InprocServer<__VA_ARGS__> dll;															\
+	static mtl::inproc_server<__VA_ARGS__> dll;															\
 	return dll;																							\
 }																										\
 																										\
 EXTERN_C BOOL __stdcall DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)				\
 {																										\
-	return inprocServer().DllMain(hinstDLL,fdwReason,lpvReserved );										\
+	return inproc_server().DllMain(hinstDLL,fdwReason,lpvReserved );									\
 }																										\
 																										\
 EXTERN_C HRESULT __stdcall DllGetClassObject( const CLSID & rclsid, const IID & riid, void ** ppv)		\
 {																										\
-	return inprocServer().DllGetClassObject(rclsid,riid,ppv);											\
+	return inproc_server().DllGetClassObject(rclsid,riid,ppv);											\
 }																										\
 																										\
 EXTERN_C HRESULT __stdcall DllCanUnloadNow(void)														\
 {																										\
-	return inprocServer().DllCanUnloadNow();															\
+	return inproc_server().DllCanUnloadNow();															\
 }																										\
 
 #define INPROC_SERVER_EXPORTS(...)																		\

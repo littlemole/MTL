@@ -4,17 +4,17 @@
 #define _MOL_DEF_GUARD_DEFINE_META_SERIALIZER_MSXML_XXX_DEF_GUARD_
 
 
-#include "MTL/punk.h"
-#include "MTL/disp/disp.h"
-#include "MTL/disp/bstr.h"
-#include "MTL/disp/variant.h"
-#include "MTL/util/base64.h"
-#include "MTL/persist/stream.h"
+#include "mtl/punk.h"
+#include "mtl/disp/disp.h"
+#include "mtl/disp/bstr.h"
+#include "mtl/disp/variant.h"
+#include "mtl/util/base64.h"
+#include "mtl/persist/stream.h"
 
 #include "metacpp/meta.h"
 #include <msxml6.h>
 
-namespace MTL {
+namespace mtl {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +46,7 @@ namespace MTL {
 
 		void create(const CLSID& clsid = CLSID_DOMDocument60)
 		{
-			HR hr = doc_.createObject(clsid);
+			HR hr = doc_.create_object(clsid);
 			hr = doc_->put_async(VARIANT_FALSE);
 		}
 
@@ -617,7 +617,7 @@ namespace MTL {
 
 				if (from.vt == VT_DISPATCH || from.vt == VT_UNKNOWN)
 				{
-					::MTL::punk<IUnknown> unk(from.punkVal);
+					punk<IUnknown> unk(from.punkVal);
 					toXml("object", unk, el);
 					return;
 				}
@@ -641,7 +641,7 @@ namespace MTL {
 			if (el)
 			{
 
-				::MTL::punk<IPersistStream> ps(from);
+				punk<IPersistStream> ps(from);
 
 				CLSID clsid;
 				ps->GetClassID(&clsid);
@@ -649,7 +649,7 @@ namespace MTL {
 				std::wstring uuid = guid_to_string(clsid);
 				el->setAttribute(*bstr("clsid"), variant(ole_char(uuid.c_str())));
 
-				Stream stream;
+				mtl::stream stream;
 				ps->Save(*stream, FALSE);
 
 				stream.reset();
@@ -703,10 +703,10 @@ namespace MTL {
 				el->getAttribute(*bstr("clsid"), &attr);
 
 				std::wstring uuid = attr.to_wstring();
-				CLSID clsid = ::MTL::string_to_guid(uuid);
+				CLSID clsid = ::mtl::string_to_guid(uuid);
 
-				::MTL::punk<IUnknown> unk;
-				HRESULT hr = unk.createObject(clsid);
+				::mtl::punk<IUnknown> unk;
+				HRESULT hr = unk.create_object(clsid);
 				if (hr != S_OK)
 				{
 					return;
@@ -719,7 +719,7 @@ namespace MTL {
 				el->getAttribute(*bstr("data"), &vdata);
 				if ( !(vdata.vt == VT_EMPTY || vdata.vt == VT_NULL) )
 				{
-					data = MTL::base64_decode(vdata.to_string());
+					data = mtl::base64_decode(vdata.to_string());
 					if (data.empty())
 					{
 						return;
@@ -737,9 +737,9 @@ namespace MTL {
 					}
 				}
 
-				::MTL::Stream stream(data);
+				::mtl::stream stream(data);
 
-				::MTL::punk<IPersistStream> ps(unk);
+				::mtl::punk<IPersistStream> ps(unk);
 				if (ps)
 				{
 					ps->Load(*stream);
@@ -747,9 +747,9 @@ namespace MTL {
 			}
 		}
 	
-		inline void fromXml(const meta::EntityName& name, ElementPtr from, ::MTL::variant& to)
+		inline void fromXml(const meta::EntityName& name, ElementPtr from, variant& to)
 		{
-			to = ::MTL::variant();
+			to = variant();
 
 			ElementPtr el;
 
@@ -771,16 +771,16 @@ namespace MTL {
 					{
 						variant attr;
 						obj->getAttribute(*bstr("clsid"), &attr);
-						CLSID clsid = ::MTL::string_to_guid(attr.to_wstring());
+						CLSID clsid = string_to_guid(attr.to_wstring());
 
-						::MTL::punk<IUnknown> unk;
-						HRESULT hr = unk.createObject(clsid);
+						punk<IUnknown> unk;
+						HRESULT hr = unk.create_object(clsid);
 						if (hr != S_OK)
 						{
 							return;
 						}
 
-						::MTL::punk<IPersistStream> ps(unk);
+						punk<IPersistStream> ps(unk);
 						if (ps)
 						{
 							std::string data;
@@ -789,7 +789,7 @@ namespace MTL {
 							obj->getAttribute(*bstr("data"), &vdata);
 							if( !( vdata.vt == VT_EMPTY || vdata.vt == VT_NULL))
 							{
-								data = MTL::base64_decode(vdata.to_string());
+								data = base64_decode(vdata.to_string());
 							}
 							else
 							{
@@ -798,17 +798,17 @@ namespace MTL {
 								child->get_xml(&xml);
 								data = xml.to_string();
 							}
-							::MTL::Stream stream(data);
-							ps->Load(*stream);
+							stream strm(data);
+							ps->Load(*strm);
 						}
 						if (vt == VT_UNKNOWN)
 						{
-							to = ::MTL::variant(*unk);
+							to = variant(*unk);
 						}
 						if (vt == VT_DISPATCH)
 						{
-							::MTL::punk<IDispatch> disp;
-							to = ::MTL::variant(*disp);
+							punk<IDispatch> disp;
+							to = variant(*disp);
 						}
 						return;
 
@@ -830,7 +830,7 @@ namespace MTL {
 					}
 					case VT_BSTR:
 					{
-						to.bstrVal = ::SysAllocStringLen(::MTL::to_wstring(val).c_str(), (ULONG)val.size());
+						to.bstrVal = ::SysAllocStringLen(to_wstring(val).c_str(), (ULONG)val.size());
 						break;
 					}
 					case VT_I4:

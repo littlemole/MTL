@@ -1,42 +1,42 @@
 #pragma once
 
+#include "mtl/punk.h"
+#include "mtl/win32/mem.h"
 #include <Objbase.h>
-#include "MTL/punk.h"
-#include "MTL/win32/mem.h"
 
 
-namespace MTL {
+namespace mtl {
 
 
 
 	template<class I>
-	class Proxy
+	class proxy
 	{
 	public:
 
-		Proxy(Proxy&& rhs)
+		proxy(proxy&& rhs)
 			:  stream_(rhs.stream_),cookie_(rhs.cookie_)
 		{
 			rhs.stream_ = nullptr;
 			rhs.cookie_ = 0;
 		}
 
-		Proxy(const Proxy& rhs)
+		proxy(const proxy& rhs)
 			: stream_(rhs.stream_), cookie_(rhs.cookie_)
 		{
 		}
 
-		explicit Proxy(I* i, DWORD flags = MSHLFLAGS_NORMAL, DWORD ctx = MSHCTX_LOCAL)
+		explicit proxy(I* i, DWORD flags = MSHLFLAGS_NORMAL, DWORD ctx = MSHCTX_LOCAL)
 		{
 			HR hr = ::CoMarshalInterThreadInterfaceInStream(__uuidof(I), i, &stream_);
 		}
 
-		explicit Proxy( punk<I>& i, DWORD flags = MSHLFLAGS_NORMAL, DWORD ctx = MSHCTX_LOCAL)
+		explicit proxy( punk<I>& i, DWORD flags = MSHLFLAGS_NORMAL, DWORD ctx = MSHCTX_LOCAL)
 		{
 			HR hr = ::CoMarshalInterThreadInterfaceInStream(__uuidof(I), *i, &stream_);
 		}
 
-		explicit Proxy(DWORD cookie)
+		explicit proxy(DWORD cookie)
 			: cookie_(cookie)
 		{}
 
@@ -57,36 +57,36 @@ namespace MTL {
 
 	private:
 
-		Proxy<I>& operator=(const Proxy& rhs) = delete;
-		Proxy<I>& operator=(Proxy&& rhs) = delete;
+		proxy<I>& operator=(const proxy& rhs) = delete;
+		proxy<I>& operator=(proxy&& rhs) = delete;
 
 		IStream* stream_ = nullptr;
 		DWORD cookie_ = 0;
 	};
 
-	class GIT
+	class git
 	{
 	public:
-		GIT()
+		git()
 		{
-			HRESULT hr = git_.createObject(CLSID_StdGlobalInterfaceTable);
+			HRESULT hr = git_.create_object(CLSID_StdGlobalInterfaceTable);
 		}
 
-		~GIT()
+		~git()
 		{
 
 		}
 
 		template<class I>
-		Proxy<I> proxy(I* p)
+		proxy<I> proxy(I* p)
 		{
 			DWORD cookie = registerInterface(p);
-			return Proxy<I>(cookie);
+			return proxy<I>(cookie);
 		}
 
 
 		template<class T>
-		DWORD registerInterface(T* t)
+		DWORD register_interface(T* t)
 		{
 			if (!git_)
 				return E_FAIL;
@@ -100,7 +100,7 @@ namespace MTL {
 			return cookie;
 		}
 
-		HRESULT revokeInterface(DWORD cookie)
+		HRESULT revoke_interface(DWORD cookie)
 		{
 			if (!git_)
 				return E_FAIL;
@@ -109,7 +109,7 @@ namespace MTL {
 		}
 
 		template<class I>
-		HRESULT revokeInterface(Proxy<I>& p)
+		HRESULT revoke_interface( mtl::proxy<I>& p)
 		{
 			if (!git_)
 				return E_FAIL;
@@ -121,7 +121,7 @@ namespace MTL {
 		}
 
 		template<class T>
-		HRESULT getInterface(DWORD cookie, T** t)
+		HRESULT get_interface(DWORD cookie, T** t)
 		{
 			if (!git_)
 				return E_FAIL;
@@ -146,19 +146,19 @@ namespace MTL {
 	};
 
 	template<class I>
-	void Proxy<I>::unwrap(I** i)
+	void proxy<I>::unwrap(I** i)
 	{
 		if (cookie_)
 		{
-			GIT git;
-			HR hr = git.getInterface<I>(cookie_, i);
+			git gt;
+			HR hr = gt.get_interface<I>(cookie_, i);
 			return;
 		}
 		HR hr = ::CoGetInterfaceAndReleaseStream(stream_, __uuidof(I), (void**)i);
 	}
 
 	template<class I>
-	punk<I> Proxy<I>::unwrap()
+	punk<I> proxy<I>::unwrap()
 	{
 		punk<I> p;
 		unwrap(&p);
@@ -166,31 +166,31 @@ namespace MTL {
 	}
 
 	template<class I>
-	void Proxy<I>::revoke()
+	void proxy<I>::revoke()
 	{
 		if (!cookie_)
 		{
 			return;
 		}
-		GIT git;
-		git.revokeInterface(*this);
+		git gt;
+		gt.revoke_interface(*this);
 		cookie_ = 0;
 	}
 
-	class ROT
+	class rot
 	{
 	public:
 		
-		static DWORD registerObject( const std::wstring& id, IUnknown* unk, DWORD flags = ROTFLAGS_REGISTRATIONKEEPSALIVE)
+		static DWORD register_object( const std::wstring& id, IUnknown* unk, DWORD flags = ROTFLAGS_REGISTRATIONKEEPSALIVE)
 		{
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
 				return 0;
 			}
 
-			MTL::punk<IMoniker> moniker;
+			mtl::punk<IMoniker> moniker;
 			::CreateItemMoniker(L"!", id.c_str(), &moniker);
 			if (!moniker) return 0;
 
@@ -203,24 +203,24 @@ namespace MTL {
 			return cookie;
 		}
 
-		static DWORD registerObject(const CLSID& clsid, const std::wstring& id, IUnknown* unk, DWORD flags = ROTFLAGS_REGISTRATIONKEEPSALIVE)
+		static DWORD register_object(const CLSID& clsid, const std::wstring& id, IUnknown* unk, DWORD flags = ROTFLAGS_REGISTRATIONKEEPSALIVE)
 		{
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
 				return 0;
 			}
 
-			MTL::punk<IMoniker> classMoniker;
+			mtl::punk<IMoniker> classMoniker;
 			::CreateClassMoniker(clsid, &classMoniker);
 			if (!classMoniker) return 0;
 
-			MTL::punk<IMoniker> itemMoniker;
+			mtl::punk<IMoniker> itemMoniker;
 			::CreateItemMoniker(L"!", id.c_str(), &itemMoniker);
 			if (!itemMoniker) return 0;
 
-			MTL::punk<IMoniker> moniker;
+			mtl::punk<IMoniker> moniker;
 			classMoniker->ComposeWith(*itemMoniker, FALSE, &moniker);
 			if (!moniker) return 0;
 
@@ -233,17 +233,17 @@ namespace MTL {
 			return cookie;
 		}
 
-		static MTL::punk<IUnknown> getObject(const std::wstring& id)
+		static mtl::punk<IUnknown> getObject(const std::wstring& id)
 		{
-			MTL::punk<IUnknown> result;
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IUnknown> result;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
 				return result;
 			}
 
-			MTL::punk<IMoniker> moniker;
+			mtl::punk<IMoniker> moniker;
 			::CreateItemMoniker(L"!", id.c_str(), &moniker);
 			if (hr != S_OK)
 			{
@@ -259,25 +259,25 @@ namespace MTL {
 		}
 
 
-		static MTL::punk<IUnknown> getObject(const CLSID& clsid, const std::wstring& id)
+		static mtl::punk<IUnknown> getObject(const CLSID& clsid, const std::wstring& id)
 		{
-			MTL::punk<IUnknown> result;
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IUnknown> result;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
 				return result;
 			}
 
-			MTL::punk<IMoniker> classMoniker;
+			mtl::punk<IMoniker> classMoniker;
 			::CreateClassMoniker(clsid, &classMoniker);
 			if (!classMoniker) return result;
 
-			MTL::punk<IMoniker> itemMoniker;
+			mtl::punk<IMoniker> itemMoniker;
 			::CreateItemMoniker(L"!", id.c_str(), &itemMoniker);
 			if (!itemMoniker) return result;
 
-			MTL::punk<IMoniker> moniker;
+			mtl::punk<IMoniker> moniker;
 			classMoniker->ComposeWith(*itemMoniker, FALSE, &moniker);
 			if (!moniker) return result;
 
@@ -290,29 +290,29 @@ namespace MTL {
 		}
 
 		template<class T>
-		static MTL::punk<T> object(const std::wstring& id)
+		static mtl::punk<T> object(const std::wstring& id)
 		{
-			MTL::punk<IUnknown> obj = getObject(id);
+			mtl::punk<IUnknown> obj = getObject(id);
 			if (!obj) return obj;
-			MTL::punk<T> result(obj);
+			mtl::punk<T> result(obj);
 			return result;
 		}
 
 
 		template<class T>
-		static MTL::punk<T> object(const CLSID& clsid, const std::wstring& id)
+		static mtl::punk<T> object(const CLSID& clsid, const std::wstring& id)
 		{
-			MTL::punk<IUnknown> obj = getObject(clsid,id);
+			mtl::punk<IUnknown> obj = getObject(clsid,id);
 			if (!obj) return obj;
-			MTL::punk<T> result(obj);
+			mtl::punk<T> result(obj);
 			return result;
 		}
 
-		static void revokeObject(DWORD cookie)
+		static void revoke_object(DWORD cookie)
 		{
 			if (!cookie) return;
 
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
@@ -326,14 +326,14 @@ namespace MTL {
 		{
 			std::vector<std::wstring> result;
 
-			MTL::punk<IRunningObjectTable> rot;
+			mtl::punk<IRunningObjectTable> rot;
 			HRESULT hr = ::GetRunningObjectTable(0, &rot);
 			if (hr != S_OK)
 			{
 				return result;
 			}
 
-			MTL::punk<IEnumMoniker> enumMoniker;
+			mtl::punk<IEnumMoniker> enumMoniker;
 			hr = rot->EnumRunning(&enumMoniker);
 			if (hr != S_OK)
 			{
@@ -344,13 +344,13 @@ namespace MTL {
 
 			while (true)
 			{
-				MTL::punk<IMoniker> moniker;
+				mtl::punk<IMoniker> moniker;
 				hr = enumMoniker->Next(1, &moniker, &fetched);
 				if (hr != S_OK) break;
 
-				MTL::punk<IBindCtx> ctx;
+				mtl::punk<IBindCtx> ctx;
 				::CreateBindCtx(0, &ctx);
-				MTL::co_str str;
+				mtl::co_str str;
 				hr = moniker->GetDisplayName( *ctx, NULL, &str);
 				if (hr == S_OK)
 				{
@@ -367,7 +367,7 @@ namespace MTL {
 			std::vector<std::wstring> running = enumerate();
 			
 			std::wostringstream woss;
-			std::wstring guid = MTL::guid_to_string(clsid);
+			std::wstring guid = mtl::guid_to_string(clsid);
 			guid = guid.substr(1, guid.size() - 2);
 			woss << L"clsid:" << guid << L":";
 			std::wstring prefix = woss.str();
@@ -385,54 +385,54 @@ namespace MTL {
 	};
 
 	template<class T>
-	class Rotten
+	class rotten
 	{
 	public:
 
 		DWORD flags = ROTFLAGS_REGISTRATIONKEEPSALIVE;
 
-		Rotten()
+		rotten()
 		{
-			uid = MTL::new_guid();
+			uid = new_guid();
 		}
 
-		Rotten(const std::wstring& id)
+		rotten(const std::wstring& id)
 			: uid(id)
 		{}
 
-		Rotten(const CLSID& c, const std::wstring& id)
+		rotten(const CLSID& c, const std::wstring& id)
 			: uid(id), clsid(c)
 		{}
 
-		Rotten(const CLSID& c)
+		rotten(const CLSID& c)
 			: clsid(c)
 		{
-			uid = MTL::new_guid();
+			uid = new_guid();
 		}
 
-		Rotten<T>& operator=(MTL::punk<T>& rhs)
+		rotten<T>& operator=(punk<T>& rhs)
 		{
 			obj = rhs;
 			if (cookie)
 			{
-				ROT::revokeObject(cookie);
+				rot::revokeObject(cookie);
 				cookie = 0;
 			}
-			MTL::punk<IUnknown> unk(obj);
+			punk<IUnknown> unk(obj);
 			if (::IsEqualCLSID(clsid, CLSID_NULL))
 			{
-				cookie = ROT::registerObject(uid, *unk, flags);
+				cookie = rot::registerObject(uid, *unk, flags);
 			}
 			else
 			{
-				cookie = ROT::registerObject(clsid, uid, *unk, flags);
+				cookie = rot::registerObject(clsid, uid, *unk, flags);
 			}
 			return *this;
 		}
 
-		~Rotten()
+		~rotten()
 		{
-			ROT::revokeObject(cookie);
+			rot::revokeObject(cookie);
 		}
 
 		std::wstring id()
@@ -447,7 +447,7 @@ namespace MTL {
 
 	private:
 		std::wstring uid;
-		MTL::punk<T> obj;
+		mtl::punk<T> obj;
 		DWORD cookie = 0;
 		const CLSID& clsid = CLSID_NULL;
 	};

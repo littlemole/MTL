@@ -1,28 +1,28 @@
 #pragma once
 
-#include "MTL/persist/stream.h"
-#include "MTL/disp/bstr.h"
-#include "MTL/disp/disp.h"
-#include "MTL/disp/variant.h"
-#include "MTL/disp/sf_array.h"
-#include "MTL/util/base64.h"
+#include "mtl/persist/stream.h"
+#include "mtl/disp/bstr.h"
+#include "mtl/disp/disp.h"
+#include "mtl/disp/variant.h"
+#include "mtl/disp/sf_array.h"
+#include "mtl/util/base64.h"
 #include "metacpp/meta.h"
 #include <patex/document.h>
 
 namespace meta {
     namespace impl {
 
-        inline void toXml(const ::meta::EntityName& n, ::MTL::bstr from, patex::xml::ElementPtr to);
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::bstr& to);
+        inline void toXml(const ::meta::EntityName& n, ::mtl::bstr from, patex::xml::ElementPtr to);
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::bstr& to);
 
-        inline void toXml(const ::meta::EntityName& n, ::MTL::variant from, patex::xml::ElementPtr to);
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::variant& to);
+        inline void toXml(const ::meta::EntityName& n, ::mtl::variant from, patex::xml::ElementPtr to);
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::variant& to);
 
-        inline void toXml(const ::meta::EntityName& n, ::MTL::punk<IDispatch> from, patex::xml::ElementPtr to);
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::punk<IDispatch>& to);
+        inline void toXml(const ::meta::EntityName& n, ::mtl::punk<IDispatch> from, patex::xml::ElementPtr to);
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::punk<IDispatch>& to);
 
-        inline void toXml(const ::meta::EntityName& n, ::MTL::punk<IUnknown> from, patex::xml::ElementPtr to);
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::punk<IUnknown>& to);
+        inline void toXml(const ::meta::EntityName& n, ::mtl::punk<IUnknown> from, patex::xml::ElementPtr to);
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::punk<IUnknown>& to);
     }
 }
 
@@ -32,12 +32,12 @@ namespace meta {
 namespace meta {
     namespace impl {
 
-        inline void toXml(const meta::EntityName& n, ::MTL::bstr from, patex::xml::ElementPtr to)
+        inline void toXml(const meta::EntityName& n, ::mtl::bstr from, patex::xml::ElementPtr to)
         {
             string2Xml(n, from.to_string(), to);
         }
 
-        inline void toXml(const meta::EntityName& n, ::MTL::variant from, patex::xml::ElementPtr to)
+        inline void toXml(const meta::EntityName& n, ::mtl::variant from, patex::xml::ElementPtr to)
         {
             if (!n.name) return;
 
@@ -56,7 +56,7 @@ namespace meta {
 
                 if (from.vt == VT_DISPATCH || from.vt == VT_UNKNOWN)
                 {
-                    ::MTL::punk<IUnknown> unk(from.punkVal);
+                    ::mtl::punk<IUnknown> unk(from.punkVal);
                     toXml("object", unk, el);
                     return;
                 }
@@ -73,13 +73,13 @@ namespace meta {
             }
         }
 
-        inline void toXml(const meta::EntityName& n, ::MTL::punk<IDispatch> from, patex::xml::ElementPtr to)
+        inline void toXml(const meta::EntityName& n, ::mtl::punk<IDispatch> from, patex::xml::ElementPtr to)
         {
-            ::MTL::punk<IUnknown> unk(from);
+            ::mtl::punk<IUnknown> unk(from);
             toXml(n, unk, to);
         }
 
-        inline void toXml(const meta::EntityName& n, ::MTL::punk<IUnknown> from, patex::xml::ElementPtr to)
+        inline void toXml(const meta::EntityName& n, ::mtl::punk<IUnknown> from, patex::xml::ElementPtr to)
         {
             if (!n.name) return;
             if (!from) return;
@@ -90,36 +90,36 @@ namespace meta {
                 to->appendChild(el);
 
                 CLSID clsid;
-                ::MTL::punk<IPersistStream> ps(from);
+                ::mtl::punk<IPersistStream> ps(from);
                 ps->GetClassID(&clsid);
 
-                std::wstring uuid = ::MTL::guid_to_string(clsid);
-                el->setAttribute("clsid", ::MTL::to_string(uuid));
+                std::wstring uuid = ::mtl::guid_to_string(clsid);
+                el->setAttribute("clsid", ::mtl::to_string(uuid));
 
-                ::MTL::Stream stream;
-                ps->Save(*stream, FALSE);
+                ::mtl::stream strm;
+                ps->Save(*strm, FALSE);
 
-                stream.reset();
-                std::string data = MTL::base64_encode(stream.read());
+                strm.reset();
+                std::string data = mtl::base64_encode(strm.read());
                 el->setAttribute("data", data);
             }
         }
 
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::bstr& to)
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::bstr& to)
         {
             to = fromXml(name, from);
         }
 
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::punk<IDispatch>& to)
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::punk<IDispatch>& to)
         {
-            ::MTL::punk<IUnknown> unk;
+            ::mtl::punk<IUnknown> unk;
             fromXml(name, from, unk);
 
-            ::MTL::punk<IDispatch> disp(unk);
+            ::mtl::punk<IDispatch> disp(unk);
             to = disp;
         }
 
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::punk<IUnknown>& to)
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::punk<IUnknown>& to)
         {
             to.release();
 
@@ -136,10 +136,10 @@ namespace meta {
             if (el)
             {
                 std::string uuid = el->attr("clsid");
-                CLSID clsid = ::MTL::string_to_guid(::MTL::to_wstring(uuid));
+                CLSID clsid = ::mtl::string_to_guid(::mtl::to_wstring(uuid));
 
-                ::MTL::punk<IUnknown> unk;
-                HRESULT hr = unk.createObject(clsid);
+                ::mtl::punk<IUnknown> unk;
+                HRESULT hr = unk.create_object(clsid);
                 if (hr != S_OK)
                 {
                     return;
@@ -147,15 +147,15 @@ namespace meta {
 
                 to = unk;
 
-                std::string data = MTL::base64_decode(el->attr("data"));
+                std::string data = mtl::base64_decode(el->attr("data"));
                 if (data.empty())
                 {
                     return;
                 }
 
-                ::MTL::Stream stream(data);
+                ::mtl::stream stream(data);
 
-                ::MTL::punk<IPersistStream> ps(unk);
+                ::mtl::punk<IPersistStream> ps(unk);
                 if (ps)
                 {
                     ps->Load(*stream);
@@ -163,9 +163,9 @@ namespace meta {
             }
         }
 
-        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::MTL::variant& to)
+        inline void fromXml(const meta::EntityName& name, patex::xml::ElementPtr from, ::mtl::variant& to)
         {
-            to = ::MTL::variant();
+            to = ::mtl::variant();
 
             patex::xml::ElementPtr el;
             if (name.ns_uri())
@@ -189,30 +189,30 @@ namespace meta {
                 {
                     auto obj = el->getElementByTagName("object");
                     std::string uuid = obj->attr("clsid");
-                    CLSID clsid = ::MTL::string_to_guid(::MTL::to_wstring(uuid));
+                    CLSID clsid = ::mtl::string_to_guid(::mtl::to_wstring(uuid));
 
-                    ::MTL::punk<IUnknown> unk;
-                    HRESULT hr = unk.createObject(clsid);
+                    ::mtl::punk<IUnknown> unk;
+                    HRESULT hr = unk.create_object(clsid);
                     if (hr != S_OK)
                     {
                         return;
                     }
 
-                    ::MTL::punk<IPersistStream> ps(unk);
+                    ::mtl::punk<IPersistStream> ps(unk);
                     if (ps)
                     {
-                        std::string data = MTL::base64_decode(obj->attr("data"));
-                        ::MTL::Stream stream(data);
-                        ps->Load(*stream);
+                        std::string data = mtl::base64_decode(obj->attr("data"));
+                        ::mtl::stream strm(data);
+                        ps->Load(*strm);
                     }
                     if (vt == VT_UNKNOWN)
                     {
-                        to = ::MTL::variant(*unk);
+                        to = ::mtl::variant(*unk);
                     }
                     if (vt == VT_DISPATCH)
                     {
-                        ::MTL::punk<IDispatch> disp;
-                        to = ::MTL::variant(*disp);
+                        ::mtl::punk<IDispatch> disp;
+                        to = ::mtl::variant(*disp);
                     }
                     return;
                 }
@@ -229,7 +229,7 @@ namespace meta {
                 }
                 case VT_BSTR:
                 {
-                    to.bstrVal = ::SysAllocStringLen(::MTL::to_wstring(val).c_str(), (ULONG)val.size());
+                    to.bstrVal = ::SysAllocStringLen(::mtl::to_wstring(val).c_str(), (ULONG)val.size());
                     break;
                 }
                 case VT_I4:

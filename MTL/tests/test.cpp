@@ -83,7 +83,7 @@ TEST_F(BstrTest, testIt) {
 
 TEST_F(BstrTest, construct_bstr_from_olechar) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     bstr b(ole_char(L"using a bstr constructed from OLECHAR"));
     HRESULT hr = api_taking_BSTR_by_value(*b);
@@ -94,7 +94,7 @@ TEST_F(BstrTest, construct_bstr_from_olechar) {
 
 TEST_F(BstrTest, construct_bstr_from_bstr) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     bstr b(ole_char(L"using a bstr copy constructed from other bstr"));
 
@@ -107,7 +107,7 @@ TEST_F(BstrTest, construct_bstr_from_bstr) {
 
 TEST_F(BstrTest, construct_bstr_from_BSTR) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     BSTR b = ::SysAllocString(L"using a bstr copy constructed from other BSTR");
 
@@ -122,7 +122,7 @@ TEST_F(BstrTest, construct_bstr_from_BSTR) {
 
 TEST_F(BstrTest, construct_bstr_from_moved_bstr) {
      
-    using namespace MTL;
+    using namespace mtl;
 
     bstr b(ole_char(L"using a bstr move constructed from moved bstr"));
 
@@ -134,7 +134,7 @@ TEST_F(BstrTest, construct_bstr_from_moved_bstr) {
 
 TEST_F(BstrTest, construct_bstr_from_moved_BSTR) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     BSTR b = ::SysAllocString(L"using a bstr move constructed from moved BSTR");
     bstr c(std::move(b_move(b)));
@@ -151,7 +151,7 @@ TEST_F(BstrTest, construct_bstr_from_moved_BSTR) {
 
 TEST_F(BstrTest, assign_some_bstrs) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     bstr b(ole_char(L"INIT"));
 

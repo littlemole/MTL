@@ -1,10 +1,10 @@
 #pragma once
 
-#include "MTL/ole/control.h"
+#include "mtl/ole/control.h"
 
-namespace MTL {
+namespace mtl {
 
-	inline HRESULT copyStorageTemp(IStorage* src, IStorage** copy)
+	inline HRESULT copy_storage_temp(IStorage* src, IStorage** copy)
 	{
 		if (!src || !copy)
 			return E_POINTER;
@@ -24,7 +24,7 @@ namespace MTL {
 		)
 		{
 			HRESULT hr = src->CopyTo(0, 0, 0, *store);
-			return store.queryInterface(copy);
+			return store.query_interface(copy);
 		}
 		return E_FAIL;
 	}
@@ -32,7 +32,7 @@ namespace MTL {
 
 	///////////////////////////////////////////////////////////////////////////////
 
-	class InplaceFrame : public implements<InplaceFrame(IOleInPlaceFrame, of<IOleInPlaceFrame, IOleWindow>)>
+	class inplace_frame : public implements<inplace_frame(IOleInPlaceFrame, of<IOleInPlaceFrame, IOleWindow>)>
 	{
 	private:
 
@@ -42,14 +42,14 @@ namespace MTL {
 
 		punk<IOleInPlaceActiveObject> activeObject;
 
-		static punk<InplaceFrame> CreateInstance(HWND w)
+		static punk<inplace_frame> create_instance(HWND w)
 		{
-			InplaceFrame* instance = new InplaceFrame;
+			inplace_frame* instance = new inplace_frame;
 			instance->hWnd_ = w;
-			return punk<InplaceFrame>(instance);
+			return punk<inplace_frame>(instance);
 		}
 
-		~InplaceFrame()
+		~inplace_frame()
 		{
 			activeObject.release();
 		}
@@ -114,7 +114,7 @@ namespace MTL {
 
 	///////////////////////////////////////////////////////////////////////////////
 
-	class ClientSite : public implements< ClientSite(IOleInPlaceSite, IOleClientSite, of<IOleInPlaceSite, IOleWindow>)>
+	class client_site : public implements< client_site(IOleInPlaceSite, IOleClientSite, of<IOleInPlaceSite, IOleWindow>)>
 	{
 	private:
 
@@ -124,15 +124,15 @@ namespace MTL {
 
 	public:
 
-		static punk<ClientSite> CreateInstance(HWND w, IOleInPlaceFrame* f)
+		static punk<client_site> create_instance(HWND w, IOleInPlaceFrame* f)
 		{
-			ClientSite* instance = new ClientSite;
+			client_site* instance = new client_site;
 			instance->hWnd_ = w;
 			instance->frame_ = f;
-			return punk<ClientSite>(instance);
+			return punk<client_site>(instance);
 		}
 
-		~ClientSite()
+		~client_site()
 		{
 			frame_.release();
 		}
@@ -255,14 +255,14 @@ namespace MTL {
 	};
 
 	template<class C>
-	class OleHost : public C
+	class ole_host : public C
 	{
 	public:
 
-		OleHost()
+		ole_host()
 		{}
 
-		virtual LRESULT wmEraseBackground(WPARAM wParam) override
+		virtual LRESULT wm_erase_background(WPARAM wParam) override
 		{
 			// prevent bkgrnd erase
 			return 1;
@@ -295,9 +295,9 @@ namespace MTL {
 			{
 			case WM_CREATE:
 			{
-				frame = InplaceFrame::CreateInstance(this->handle);
+				frame = inplace_frame::create_instance(this->handle);
 				punk<IOleInPlaceFrame> opf(frame);
-				clientSite = ClientSite::CreateInstance(this->handle, *opf);
+				clientSite = client_site::create_instance(this->handle, *opf);
 				break;
 			}
 			case WM_DESTROY:
@@ -318,7 +318,7 @@ namespace MTL {
 				if (oleObject)
 				{
 					SIZEL s = { clientRect.right, clientRect.bottom };
-					PixeltoHIMETRIC(&s);
+					pixel_to_himetric(&s);
 
 					HRESULT hr = oleObject->SetExtent(DVASPECT_CONTENT, &s);
 
@@ -336,9 +336,9 @@ namespace MTL {
 
 	protected:
 
-		bool initObject(REFCLSID clsid, IStorage* store)
+		bool init_object(REFCLSID clsid, IStorage* store)
 		{
-			HRESULT hr = createEmbeddedObject(clsid, store);
+			HRESULT hr = create_embedded_object(clsid, store);
 			if (hr != S_OK)
 				return false;
 
@@ -350,15 +350,15 @@ namespace MTL {
 					return false;
 			}
 
-			hr = showEmbeddedObject(clsid, store);
+			hr = show_embedded_object(clsid, store);
 			if (hr != S_OK)
 				return false;
 			return true;
 		}
 
-		bool loadObject(REFCLSID clsid, IStorage* store)
+		bool load_object(REFCLSID clsid, IStorage* store)
 		{
-			HRESULT hr = createEmbeddedObject(clsid, store);
+			HRESULT hr = create_embedded_object(clsid, store);
 			if (hr != S_OK)
 				return false;
 
@@ -367,7 +367,7 @@ namespace MTL {
 				return false;
 
 			punk<IStorage> s;
-			hr = copyStorageTemp(store, &s);
+			hr = copy_storage_temp(store, &s);
 			if (hr != S_OK)
 				return false;
 
@@ -375,7 +375,7 @@ namespace MTL {
 			if (hr != S_OK)
 				return false;
 
-			hr = showEmbeddedObject(clsid, store);
+			hr = show_embedded_object(clsid, store);
 			if (hr != S_OK)
 				return false;
 			return true;
@@ -384,10 +384,10 @@ namespace MTL {
 	protected:
 
 		punk<IOleObject>	oleObject;
-		punk<ClientSite>	clientSite;
-		punk<InplaceFrame>	frame;
+		punk<client_site>	clientSite;
+		punk<inplace_frame>	frame;
 
-		HRESULT createEmbeddedObject(REFCLSID clsid, IStorage* store)
+		HRESULT create_embedded_object(REFCLSID clsid, IStorage* store)
 		{
 			if (oleObject)
 			{
@@ -395,7 +395,7 @@ namespace MTL {
 				oleObject.release();
 			}
 
-			HRESULT hr = oleObject.createObject(clsid);
+			HRESULT hr = oleObject.create_object(clsid);
 			if (hr != S_OK)
 				return hr;
 
@@ -412,7 +412,7 @@ namespace MTL {
 			return hr;
 		}
 
-		HRESULT showEmbeddedObject(REFCLSID clsid, IStorage* store)
+		HRESULT show_embedded_object(REFCLSID clsid, IStorage* store)
 		{
 			HRESULT hr = oleObject->SetHostNames(L"My Host Name", 0);
 			if (hr != S_OK)

@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace MTL {
+namespace mtl {
 
     namespace details {
         inline const std::string& base64_chars()

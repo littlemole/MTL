@@ -1,15 +1,15 @@
 #pragma once
 
-#include <MTL/sdk.h>
-#include <MTL/punk.h>
-#include <MTL/obj/impl.h>
+#include <mtl/sdk.h>
+#include <mtl/punk.h>
+#include <mtl/obj/impl.h>
 
-namespace MTL {
+namespace mtl {
 
     namespace details {
 
         template<class I>
-        class CallObject : public implements<CallObject<I>(ISynchronize)>
+        class call_object : public implements<call_object<I>(ISynchronize)>
         {
         public:
 
@@ -20,7 +20,7 @@ namespace MTL {
 
             bool signaled = false;
 
-            CallObject(IUnknown* unk)
+            call_object(IUnknown* unk)
             {
                 punk<ICallFactory> cf(unk);
                 punk<IUnknown> ua;
@@ -36,7 +36,7 @@ namespace MTL {
                 sync = s;
             }
 
-            ~CallObject()
+            ~call_object()
             {}
 
             HRESULT __stdcall QueryInterface(REFIID riid, void** ppvObject) override
@@ -90,7 +90,7 @@ namespace MTL {
                 return sync->Reset();
             }
 
-            void then(std::function<void(AsyncITestComExe*)> cb)
+            void then(std::function<void(I*)> cb)
             {
                 callback = cb;
                 if (signaled)
@@ -112,7 +112,7 @@ namespace MTL {
         class async_com_holder
         {
         public:
-            async_com_holder(CallObject<I>* c)
+            async_com_holder(call_object<I>* c)
                 : co(c)
             {}
 
@@ -128,7 +128,7 @@ namespace MTL {
             }
 
         private:
-            CallObject<I>* co;
+            call_object<I>* co;
         };
 
     } // end namespace details
@@ -136,7 +136,7 @@ namespace MTL {
     template<class I>
     details::async_com_holder<I> async_com(IUnknown* unk)
     {
-        details::CallObject<I>* co = new details::CallObject<I>(unk);
+        details::call_object<I>* co = new details::call_object<I>(unk);
         return co;
     }
 

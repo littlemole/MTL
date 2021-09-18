@@ -1,25 +1,25 @@
 #pragma once
 
-#include <MTL/win/wind.h>
+#include <mtl/win/wind.h>
 #include <sstream>
 
-namespace MTL {
+namespace mtl {
 
-    class Dialog;
+    class dialog;
 
 
     template<int ID, class T>
-    class Bind
+    class dlg_value
     {
     public:
         int id = ID;
         T val_;
-        Dialog* dlg = nullptr;
+        dialog* dlg = nullptr;
 
-        Bind()
+        dlg_value()
         {}
 
-        Bind(const T& t)
+        dlg_value(const T& t)
             : val_(t)
         {}
 
@@ -31,7 +31,7 @@ namespace MTL {
             return value();
         }
 
-        Bind& operator=(const T& rhs)
+        dlg_value& operator=(const T& rhs)
         {
             value(rhs);
             return *this;
@@ -39,17 +39,17 @@ namespace MTL {
     };
 
     template<int ID, class T>
-    class Selection
+    class dlg_selection
     {
     public:
         int id = ID;
         T val_;
-        Dialog* dlg = nullptr;
+        dialog* dlg = nullptr;
 
-        Selection()
+        dlg_selection()
         {}
 
-        Selection(const T& t)
+        dlg_selection(const T& t)
             : val_(t)
         {}
 
@@ -61,7 +61,7 @@ namespace MTL {
             return value();
         }
 
-        Selection& operator=(const int& rhs)
+        dlg_selection& operator=(const int& rhs)
         {
             value(rhs);
             return *this;
@@ -72,56 +72,56 @@ namespace MTL {
     namespace details {
 
         template<int ID>
-        void dlg_bind(Bind<ID, bool>& b)
+        void dlg_bind(dlg_value<ID, bool>& b)
         {
             if (!b.dlg) return;
-            b.dlg->setDlgItemChecked(b.id, b.val_);
+            b.dlg->set_dlg_item_checked(b.id, b.val_);
         }
 
         template<int ID>
-        void dlg_bind(Bind<ID, int>& b)
+        void dlg_bind(dlg_value<ID, int>& b)
         {
             if (!b.dlg) return;
-            b.dlg->setDlgItemInt(b.id, b.val_);
+            b.dlg->set_dlg_item_int(b.id, b.val_);
         }
 
         template<int ID>
-        void dlg_bind(Selection<ID, int>& s)
+        void dlg_bind(dlg_selection<ID, int>& s)
         {
             if (!s.dlg) return;
-            s.dlg->setDlgItemIndex(s.id, s.val_);
+            s.dlg->set_dlg_item_index(s.id, s.val_);
         }
 
         template<int ID>
-        void dlg_bind(Selection<ID, std::vector<int>>& s)
+        void dlg_bind(dlg_selection<ID, std::vector<int>>& s)
         {
             if (!s.dlg) return;
-            s.dlg->setDlgItemMultiSelectIndex(s.id, s.val_);
+            s.dlg->set_dlg_item_multi_select_index(s.id, s.val_);
         }
 
         template<int ID>
-        void dlg_bind(Selection<ID, std::vector<std::wstring>>& s)
+        void dlg_bind(dlg_selection<ID, std::vector<std::wstring>>& s)
         {
             if (!s.dlg) return;
-            s.dlg->setDlgItemMultiSelectIndex(s.id, s.val_);
+            s.dlg->set_dlg_item_multi_select_index(s.id, s.val_);
         }
 
         template<int ID>
-        void dlg_bind(Bind<ID, std::wstring>& b)
+        void dlg_bind(dlg_value<ID, std::wstring>& b)
         {
             if (!b.dlg) return;
-            b.dlg->setDlgItemText(b.id, b.val_);
+            b.dlg->set_dlg_item_text(b.id, b.val_);
         }
 
         template<int ID>
-        void dlg_bind(Bind<ID, std::vector<std::wstring>>& b)
+        void dlg_bind(dlg_value<ID, std::vector<std::wstring>>& b)
         {
             if (!b.dlg) return;
             auto v = b.val_;
-            b.dlg->clearDlgItemList(b.id);
+            b.dlg->clear_dlg_item_list(b.id);
             for (auto& i : v)
             {
-                b.dlg->addDlgItemText(b.id, i);
+                b.dlg->add_dlg_item_text(b.id, i);
             }
         }
 
@@ -136,72 +136,72 @@ namespace MTL {
         }
         */
         template<int ID>
-        void dlg_sync(Bind<ID, bool>& b)
+        void dlg_sync(dlg_value<ID, bool>& b)
         {
             if (!b.dlg) return;
-            b.val_ = b.dlg->getDlgItemChecked(b.id);
+            b.val_ = b.dlg->get_dlg_item_checked(b.id);
         }
 
         template<int ID>
-        void dlg_sync(Bind<ID, int>& b)
+        void dlg_sync(dlg_value<ID, int>& b)
         {
             if (!b.dlg) return;
-            b.val_ = b.dlg->getDlgItemInt(b.id);
+            b.val_ = b.dlg->get_dlg_item_int(b.id);
         }
 
         template<int ID>
-        void dlg_sync(Selection<ID, int>& s)
+        void dlg_sync(dlg_selection<ID, int>& s)
         {
             if (!s.dlg) return;
-            s.val_ = s.dlg->getDlgItemIndex(s.id);
+            s.val_ = s.dlg->get_dlg_item_index(s.id);
         }
 
         template<int ID>
-        void dlg_sync(Selection<ID, std::vector<int>>& s)
+        void dlg_sync(dlg_selection<ID, std::vector<int>>& s)
         {
             if (!s.dlg) return;
-            s.val_ = s.dlg->getDlgItemMultiSelectIndex(s.id);
+            s.val_ = s.dlg->get_dlg_item_multi_select_index(s.id);
         }
 
         template<int ID>
-        void dlg_sync(Selection<ID, std::vector<std::wstring>>& s)
+        void dlg_sync(dlg_selection<ID, std::vector<std::wstring>>& s)
         {
             if (!s.dlg) return;
-            s.val_ = s.dlg->getDlgItemMultiSelectText(s.id);
+            s.val_ = s.dlg->get_dlg_item_multi_Select_text(s.id);
         }
 
         template<int ID>
-        void dlg_sync(Bind<ID, std::wstring>& b)
+        void dlg_sync(dlg_value<ID, std::wstring>& b)
         {
             if (!b.dlg) return;
-            b.val_ = b.dlg->getDlgItemText(b.id);
+            b.val_ = b.dlg->get_dlg_item_text(b.id);
         }
 
         template<int ID>
-        void dlg_sync(Bind<ID, std::vector<std::wstring>>& b)
+        void dlg_sync(dlg_value<ID, std::vector<std::wstring>>& b)
         {
             if (!b.dlg) return;
             b.val_.clear();
 
-            int cnt = b.dlg->getDlgItemCount(b.id);
+            int cnt = b.dlg->get_dlg_item_count(b.id);
             for (int i = 0; i < cnt; i++)
             {
-                std::wstring s = b.dlg->getDlgItemText(b.id, i);
+                std::wstring s = b.dlg->get_dlg_item_text(b.id, i);
                 b.val_.push_back(s);
             }
         }
     }
 
     template<int I, class T>
-    void Bind<I, T>::value(const T& t)
+    void dlg_value<I, T>::value(const T& t)
     {
         val_ = t;
         if (!dlg) return;
-        dlg_bind(*this);
+        details::dlg_bind(*this);
     }
 
     template<int I, class T>
-    T& Bind<I, T>::value()
+    T& dlg_value<I, T>::value()
     {
         //if (!dlg) return val_;
         //dlg_sync(*this);
@@ -209,7 +209,7 @@ namespace MTL {
     }
 
     template<int I, class T>
-    void Selection<I, T>::value(const T& t)
+    void dlg_selection<I, T>::value(const T& t)
     {
         val_ = t;
         if (!dlg) return;
@@ -217,7 +217,7 @@ namespace MTL {
     }
 
     template<int I, class T>
-    T& Selection<I, T>::value()
+    T& dlg_selection<I, T>::value()
     {
         //if (!dlg) return val_;
         //dlg_sync(*this);
@@ -231,7 +231,7 @@ namespace MTL {
         public:
             virtual ~Binding() {}
 
-            virtual void bind(Dialog& dlg) = 0;
+            virtual void bind(dialog& dlg) = 0;
             virtual void sync() = 0;
         };
 
@@ -247,7 +247,7 @@ namespace MTL {
                 : bound(args ...)
             {}
 
-            void bind(Dialog& dlg) override
+            void bind(dialog& dlg) override
             {
                 bind(dlg, bound);
             }
@@ -260,11 +260,11 @@ namespace MTL {
         private:
 
             template<std::size_t I = 0, typename... Tp>
-            typename std::enable_if<I == sizeof...(Tp), void>::type bind(Dialog& dlg, std::tuple<Tp...>& t)
+            typename std::enable_if<I == sizeof...(Tp), void>::type bind(dialog& dlg, std::tuple<Tp...>& t)
             {}
 
             template<std::size_t I = 0, typename... Tp>
-            typename std::enable_if < I < sizeof...(Tp), void>::type bind(Dialog& dlg, std::tuple<Tp...>& t)
+            typename std::enable_if < I < sizeof...(Tp), void>::type bind(dialog& dlg, std::tuple<Tp...>& t)
             {
                 auto& b = std::get<I>(t);
                 b.dlg = &dlg;
@@ -293,7 +293,7 @@ namespace MTL {
         {
         public:
 
-            Binder(Dialog* dlg)
+            Binder(dialog* dlg)
                 : dlg_(*dlg)
             {}
 
@@ -320,32 +320,32 @@ namespace MTL {
             Binder(const Binder& rhs) = delete;
             Binder& operator=(const Binder& rhs) = delete;
 
-            Dialog& dlg_;
+            dialog& dlg_;
             std::unique_ptr<Binding> binding_;
         };
 
     } // end namespace details
 
-    class Dialog : public Wnd
+    class dialog : public wnd
     {
     public:
 
         details::Binder binding;
 
-        Dialog()
+        dialog()
             : binding(this)
         {}
 
-        std::wstring className(int id)
+        std::wstring class_name(int id)
         {
             wchar_t buf[1024];
-            ::GetClassName(getDlgItem(id), buf, 1024);
+            ::GetClassName(get_dlg_item(id), buf, 1024);
         }
 
-        bool isClass(int id, const wchar_t* className)
+        bool is_class(int id, const wchar_t* className)
         {
             wchar_t buf[1024];
-            ::GetClassName(getDlgItem(id), buf, 1024);
+            ::GetClassName(get_dlg_item(id), buf, 1024);
             if (_wcsicmp(buf, className) == 0)
             {
                 return true;
@@ -353,163 +353,163 @@ namespace MTL {
             return false;
         }
 
-        HWND showModeless(int lpTemplate, HWND hWndParent)
+        HWND show_modeless(int lpTemplate, HWND hWndParent)
         {
             isModal_ = false;
-            HWND hWnd = ::CreateDialogParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &Dialog::dialogProcedure, (LPARAM)(this));
+            HWND hWnd = ::CreateDialogParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &dialog::dialogProcedure, (LPARAM)(this));
 
-            modelessDialogs().add(hWnd);
+            modeless_dlg().add(hWnd);
             return hWnd;
         }
 
         LRESULT showModal(int lpTemplate, HWND hWndParent)
         {
-            return ::DialogBoxParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &Dialog::dialogProcedure, (LPARAM)(this));
+            return ::DialogBoxParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &dialog::dialogProcedure, (LPARAM)(this));
         }
 
-        LRESULT sendDlgItemMsg(int id, UINT msg, WPARAM wParam, LPARAM lParam)
+        LRESULT send_dlg_item_msg(int id, UINT msg, WPARAM wParam, LPARAM lParam)
         {
-            return (::SendMessage(dialogItem(id), msg, wParam, lParam));
+            return (::SendMessage(dialog_item(id), msg, wParam, lParam));
         }
 
-        LRESULT setDlgItemText(int id, const std::wstring& s)
+        LRESULT set_dlg_item_text(int id, const std::wstring& s)
         {
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
-                LRESULT r = sendDlgItemMsg(id, LB_FINDSTRINGEXACT, -1, (LPARAM)(s.c_str()));
+                LRESULT r = send_dlg_item_msg(id, LB_FINDSTRINGEXACT, -1, (LPARAM)(s.c_str()));
                 if (r != LB_ERR)
                 {
-                    return sendDlgItemMsg(id, LB_SETCURSEL, r, 0);
+                    return send_dlg_item_msg(id, LB_SETCURSEL, r, 0);
                 }
             }
             else
             {
-                return sendDlgItemMsg(id, WM_SETTEXT, 0, (LPARAM)(s.c_str()));
+                return send_dlg_item_msg(id, WM_SETTEXT, 0, (LPARAM)(s.c_str()));
             }
             return 0;
         }
 
-        LRESULT setDlgItemFont(int id, HFONT hfont)
+        LRESULT set_dlg_item_font(int id, HFONT hfont)
         {
-            return sendDlgItemMsg(id, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+            return send_dlg_item_msg(id, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
         }
 
-        LRESULT setDlgButtonIcon(int id, HICON hicon)
+        LRESULT set_dlg_button_icon(int id, HICON hicon)
         {
-            return sendDlgItemMsg(id, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)(hicon));
+            return send_dlg_item_msg(id, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)(hicon));
         }
 
-        LRESULT setDlgButtonImg(int id, HBITMAP bmp)
+        LRESULT set_dlg_button_img(int id, HBITMAP bmp)
         {
-            return sendDlgItemMsg(id, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)(bmp));
+            return send_dlg_item_msg(id, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)(bmp));
         }
 
-        LRESULT setDlgStaticIcon(int id, HICON hicon)
+        LRESULT set_dlg_static_icon(int id, HICON hicon)
         {
-            return sendDlgItemMsg(id, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)(hicon));
+            return send_dlg_item_msg(id, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)(hicon));
         }
 
-        LRESULT setDlgItemInt(int id, int value)
+        LRESULT set_dlg_item_int(int id, int value)
         {
             std::wstring s = std::to_wstring(value);
-            return setDlgItemText(id, s);
+            return set_dlg_item_text(id, s);
         }
 
-        void  setDlgItemChecked(int id, int state = BST_CHECKED)
+        void  set_dlg_item_checked(int id, int state = BST_CHECKED)
         {
-            sendDlgItemMsg(id, BM_SETCHECK, state, 0);
+            send_dlg_item_msg(id, BM_SETCHECK, state, 0);
         }
 
-        void addDlgItemText(int id, const std::wstring& s)
+        void add_dlg_item_text(int id, const std::wstring& s)
         {
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
-                sendDlgItemMsg(id, CB_ADDSTRING, 0, (LPARAM)(s.c_str()));
+                send_dlg_item_msg(id, CB_ADDSTRING, 0, (LPARAM)(s.c_str()));
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
-                    sendDlgItemMsg(id, LB_ADDSTRING, 0, (LPARAM)(s.c_str()));
+                    send_dlg_item_msg(id, LB_ADDSTRING, 0, (LPARAM)(s.c_str()));
                 }
 
         }
 
-        void addDlgItemText(int id, const std::vector<std::wstring>& v)
+        void add_dlg_item_text(int id, const std::vector<std::wstring>& v)
         {
             for (auto& s : v)
             {
-                addDlgItemText(id, s);
+                add_dlg_item_text(id, s);
             }
         }
 
-        void clearDlgItemList(int id)
+        void clear_dlg_item_list(int id)
         {
-            LRESULT r = getDlgItemCount(id);
+            LRESULT r = get_dlg_item_count(id);
 
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
                 while (r > 0)
                 {
-                    r = sendDlgItemMsg(id, CB_DELETESTRING, 0, 0);
+                    r = send_dlg_item_msg(id, CB_DELETESTRING, 0, 0);
                 }
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
                     while (r > 0)
                     {
-                        r = sendDlgItemMsg(id, LB_DELETESTRING, 0, 0);
+                        r = send_dlg_item_msg(id, LB_DELETESTRING, 0, 0);
                     }
                 }
         }
 
-        void setDlgItemIndex(int id, int index)
+        void set_dlg_item_index(int id, int index)
         {
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
-                sendDlgItemMsg(id, CB_SETCURSEL, (WPARAM)index, 0);
+                send_dlg_item_msg(id, CB_SETCURSEL, (WPARAM)index, 0);
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
-                    sendDlgItemMsg(id, LB_SETCURSEL, (WPARAM)index, 0);
+                    send_dlg_item_msg(id, LB_SETCURSEL, (WPARAM)index, 0);
                 }
         }
 
-        void setDlgItemMultiSelectIndex(int id, const std::vector<int>& v)
+        void set_dlg_item_multi_select_index(int id, const std::vector<int>& v)
         {
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
                 for (auto& i : v)
                 {
-                    sendDlgItemMsg(id, LB_SETSEL, TRUE, i);
+                    send_dlg_item_msg(id, LB_SETSEL, TRUE, i);
                 }
             }
         }
 
-        void setDlgItemMultiSelectIndex(int id, const std::vector<std::wstring>& v)
+        void set_dlg_item_multi_select_index(int id, const std::vector<std::wstring>& v)
         {
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
                 for (auto& i : v)
                 {
-                    LRESULT r = sendDlgItemMsg(id, LB_FINDSTRINGEXACT, 0, (LPARAM)i.c_str());
+                    LRESULT r = send_dlg_item_msg(id, LB_FINDSTRINGEXACT, 0, (LPARAM)i.c_str());
                     if (r != LB_ERR)
                     {
-                        sendDlgItemMsg(id, LB_SETSEL, TRUE, r);
+                        send_dlg_item_msg(id, LB_SETSEL, TRUE, r);
                     }
                 }
             }
         }
 
-        std::wstring getDlgItemText(int id)
+        std::wstring get_dlg_item_text(int id)
         {
             wchar_t  buf[4096];
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
-                int r = getDlgItemIndex(id);
+                int r = get_dlg_item_index(id);
                 if (r == LB_ERR) return L"";
-                sendDlgItemMsg(id, LB_GETTEXT, r, (LPARAM)buf);
+                send_dlg_item_msg(id, LB_GETTEXT, r, (LPARAM)buf);
             }
             else
             {
@@ -519,80 +519,80 @@ namespace MTL {
             return std::wstring(buf);
         }
 
-        std::wstring getDlgItemText(int id, int index)
+        std::wstring get_dlg_item_text(int id, int index)
         {
             wchar_t  buf[4096];
 
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
-                sendDlgItemMsg(id, CB_GETLBTEXT, index, (LPARAM)buf);
+                send_dlg_item_msg(id, CB_GETLBTEXT, index, (LPARAM)buf);
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
-                    sendDlgItemMsg(id, LB_GETTEXT, index, (LPARAM)buf);
+                    send_dlg_item_msg(id, LB_GETTEXT, index, (LPARAM)buf);
                 }
 
             return std::wstring(buf);
         }
 
-        int getDlgItemInt(int id)
+        int get_dlg_item_int(int id)
         {
-            std::wstring s = getDlgItemText(id);
+            std::wstring s = get_dlg_item_text(id);
             std::wistringstream iss(s);
             int i = 0;
             iss >> i;
             return i;
         }
 
-        int getDlgItemCount(int id)
+        int get_dlg_item_count(int id)
         {
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
-                return (int)sendDlgItemMsg(id, CB_GETCOUNT, 0, 0);
+                return (int)send_dlg_item_msg(id, CB_GETCOUNT, 0, 0);
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
-                    return (int)sendDlgItemMsg(id, LB_GETCOUNT, 0, 0);
+                    return (int)send_dlg_item_msg(id, LB_GETCOUNT, 0, 0);
                 }
             return 0;
         }
 
-        HWND getDlgItem(int id)
+        HWND get_dlg_item(int id)
         {
             return (::GetDlgItem(handle, id));
         }
 
-        bool  getDlgItemChecked(int id)
+        bool  get_dlg_item_checked(int id)
         {
-            return (BST_CHECKED == sendDlgItemMsg(id, BM_GETCHECK, 0, 0));
+            return (BST_CHECKED == send_dlg_item_msg(id, BM_GETCHECK, 0, 0));
         }
 
 
-        int getDlgItemIndex(int id)
+        int get_dlg_item_index(int id)
         {
-            if (isClass(id, L"COMBOBOX"))
+            if (is_class(id, L"COMBOBOX"))
             {
-                return (int)sendDlgItemMsg(id, CB_GETCURSEL, 0, 0);
+                return (int)send_dlg_item_msg(id, CB_GETCURSEL, 0, 0);
             }
             else
-                if (isClass(id, L"LISTBOX"))
+                if (is_class(id, L"LISTBOX"))
                 {
-                    return (int)sendDlgItemMsg(id, LB_GETCURSEL, 0, 0);
+                    return (int)send_dlg_item_msg(id, LB_GETCURSEL, 0, 0);
                 }
             return 0;
         }
 
-        std::vector<int> getDlgItemMultiSelectIndex(int id)
+        std::vector<int> get_dlg_item_multi_select_index(int id)
         {
             std::vector<int> result;
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
-                int n = (int)sendDlgItemMsg(id, LB_GETSELCOUNT, 0, 0);
+                int n = (int)send_dlg_item_msg(id, LB_GETSELCOUNT, 0, 0);
 
                 int* a = new int[n];
-                sendDlgItemMsg(id, LB_GETSELITEMS, n, (LPARAM)a);
+                send_dlg_item_msg(id, LB_GETSELITEMS, n, (LPARAM)a);
                 for (int i = 0; i < n; i++)
                 {
                     result.push_back(a[i]);
@@ -602,18 +602,18 @@ namespace MTL {
             return result;
         }
 
-        std::vector<std::wstring> getDlgItemMultiSelectText(int id)
+        std::vector<std::wstring> get_dlg_item_multi_select_text(int id)
         {
             std::vector<std::wstring> result;
-            if (isClass(id, L"LISTBOX"))
+            if (is_class(id, L"LISTBOX"))
             {
-                int n = (int)sendDlgItemMsg(id, LB_GETSELCOUNT, 0, 0);
+                int n = (int)send_dlg_item_msg(id, LB_GETSELCOUNT, 0, 0);
 
                 int* a = new int[n];
-                sendDlgItemMsg(id, LB_GETSELITEMS, n, (LPARAM)a);
+                send_dlg_item_msg(id, LB_GETSELITEMS, n, (LPARAM)a);
                 for (int i = 0; i < n; i++)
                 {
-                    std::wstring s = getDlgItemText(id, a[i]);
+                    std::wstring s = get_dlg_item_text(id, a[i]);
                     result.push_back(s);
                 }
                 delete[] a;
@@ -641,8 +641,8 @@ namespace MTL {
 
         }
 
-        Event<int()> onClick;
-        Event<int()> onEndDlg;
+        event<int()> onClick;
+        event<int()> onEndDlg;
 
         LRESULT wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
@@ -670,7 +670,7 @@ namespace MTL {
                 }
                 case IDCANCEL:
                 {
-                    endDlg((int)wParam);
+                    end((int)wParam);
                     return TRUE;
                 }
                 default:
@@ -691,7 +691,7 @@ namespace MTL {
         {
             if (message == WM_INITDIALOG)
             {
-                Dialog* that = (Dialog*)lParam;
+                dialog* that = (dialog*)lParam;
                 ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)that);
             }
 
@@ -701,7 +701,7 @@ namespace MTL {
                 return FALSE;
             }
 
-            Dialog* that = (Dialog*)l;
+            dialog* that = (dialog*)l;
             return (LRESULT)(that->wndProc(hwnd, message, wParam, lParam));
         }
 #else
@@ -709,7 +709,7 @@ namespace MTL {
         {
             if (message == WM_INITDIALOG)
             {
-                Dialog* that = (Dialog*)lParam;
+                dialog* that = (dialog*)lParam;
                 ::SetWindowLongPtrW(hwnd, GWL_USERDATA, (LONG)that);
             }
 
@@ -719,19 +719,19 @@ namespace MTL {
                 return FALSE;
             }
 
-            Dialog* that = (Dialog*)l;
+            dialog* that = (dialog*)l;
             return (BOOL)(that->wndProc(hwnd, message, wParam, lParam));
         }
 #endif
 
-        LRESULT endDlg(int n)
+        LRESULT end(int n)
         {
             onEndDlg.fire(n);
             if (isModal_)
             {
                 return ::EndDialog(handle, n);
             }
-            modelessDialogs().remove(handle);
+            modeless_dlg().remove(handle);
             ::DestroyWindow(handle);
             return n;
         }
@@ -740,7 +740,7 @@ namespace MTL {
 
         bool isModal_ = true;
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
             return 0;
         }

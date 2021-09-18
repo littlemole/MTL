@@ -283,12 +283,12 @@ public:
         MSXML::IXMLDOMNamedNodeMapPtr atts;
         node->get_attributes(&atts);
 
-        MSXML::IXMLDOMNodePtr att = atts->getNamedItem(*MTL::bstr(MTL::ole_char(n)));
+        MSXML::IXMLDOMNodePtr att = atts->getNamedItem(*mtl::bstr(mtl::ole_char(n)));
 
         if (!att)
             return L"";
 
-        MTL::variant v;
+        mtl::variant v;
         att->get_nodeValue(&v);
 
         return v.to_wstring();
@@ -304,7 +304,7 @@ public:
         }
 
         xmlDoc->put_async(VARIANT_FALSE);
-        if (xmlDoc->load(MTL::to_wstring(manifest).c_str()) != VARIANT_TRUE)
+        if (xmlDoc->load(mtl::to_wstring(manifest).c_str()) != VARIANT_TRUE)
         {
             //std::cout << "load manifest " << manifest << " failed" << std::endl;
             return E_FAIL;
@@ -373,7 +373,7 @@ public:
         }
 
         xmlDoc->put_async(VARIANT_FALSE);
-        if (xmlDoc->load(MTL::to_wstring(manifest).c_str()) != VARIANT_TRUE)
+        if (xmlDoc->load(mtl::to_wstring(manifest).c_str()) != VARIANT_TRUE)
         {
             std::cout << "load manifest " << manifest << " failed" << std::endl;
             return;
@@ -388,13 +388,13 @@ public:
         for_each(xmlDoc, "/ms:assembly/ms:file", [this,file,&ext,&psv](MSXML::IXMLDOMNodePtr& n) 
         {
             std::wstring fn = get_attr(n, L"name");
-            if (fn == MTL::to_wstring(file) + L".dll")
+            if (fn == mtl::to_wstring(file) + L".dll")
             {
                 ext = ".dll";
             }
             else
             {
-                MTL::bstr b;
+                mtl::bstr b;
                 n->get_xml(&b);
                 psv.push_back(b.str());
             }
@@ -411,7 +411,7 @@ public:
             files->get_item(j, &n);
 
             std::wstring fn = get_attr(n, L"name");
-            if (fn == MTL::to_wstring(file) + L".dll")
+            if (fn == mtl::to_wstring(file) + L".dll")
             {
                 ext = ".dll";
             }
@@ -453,12 +453,12 @@ public:
                 }
 
 
-                std::cout << "  <comInterfaceExternalProxyStub iid='" << MTL::to_string(iid) << "' "
-                    << "name='" << MTL::to_string(psname) << "'  "
-                    << "proxyStubClsid32='" << MTL::to_string(ps) << "' ";
+                std::cout << "  <comInterfaceExternalProxyStub iid='" << mtl::to_string(iid) << "' "
+                    << "name='" << mtl::to_string(psname) << "'  "
+                    << "proxyStubClsid32='" << mtl::to_string(ps) << "' ";
                 if (!tlbid.empty())
                 {
-                    std::cout << "tlbid='" << MTL::to_string(tlbid) << "' ";
+                    std::cout << "tlbid='" << mtl::to_string(tlbid) << "' ";
                 }
 // NO ACTUALLY NOT          << "threadingModel='Both' />"
                 std::cout << " /> " << std::endl;
@@ -482,9 +482,9 @@ public:
                     std::wstring version = get_attr(tl, L"version");
 
                     std::cout << " <file name='" << server << "'> " << std::endl 
-                              << "  <typelib tlbid='" << MTL::to_string(tlbid) << "' "
-                              << "version='" << MTL::to_string(version) << "' "
-                              << "helpdir='" << MTL::to_string(helpdir) << "' /> " << std::endl
+                              << "  <typelib tlbid='" << mtl::to_string(tlbid) << "' "
+                              << "version='" << mtl::to_string(version) << "' "
+                              << "helpdir='" << mtl::to_string(helpdir) << "' /> " << std::endl
                               << " </file>" << std::endl;
                 }
             }
@@ -509,9 +509,9 @@ public:
                     continue;
                 }
 
-                std::cout << "  <comInterfaceProxyStub iid='" << MTL::to_string(iid) << "' "
-                    << "name='" << MTL::to_string(psname) << "'  "
-                    << "proxyStubClsid32='" << MTL::to_string(ps) << "' "
+                std::cout << "  <comInterfaceProxyStub iid='" << mtl::to_string(iid) << "' "
+                    << "name='" << mtl::to_string(psname) << "'  "
+                    << "proxyStubClsid32='" << mtl::to_string(ps) << "' "
                     << "threadingModel='Both' />"
                     << std::endl;
             }
@@ -541,9 +541,9 @@ public:
 
                 std::cout << " <dependency>" << std::endl
                     << "  <dependentAssembly>" << std::endl
-                    << "   <assemblyIdentity type=\"win32\" name=\"" << MTL::to_string(depname)
-                    << "\" processorArchitecture=\"" << MTL::to_string(arch)
-                    << "\" version=\"" << MTL::to_string(version) << "\" /> " << std::endl
+                    << "   <assemblyIdentity type=\"win32\" name=\"" << mtl::to_string(depname)
+                    << "\" processorArchitecture=\"" << mtl::to_string(arch)
+                    << "\" version=\"" << mtl::to_string(version) << "\" /> " << std::endl
                     << "  </dependentAssembly>" << std::endl
                     << " </dependency>" << std::endl;
                 std::cout << "" << std::endl;

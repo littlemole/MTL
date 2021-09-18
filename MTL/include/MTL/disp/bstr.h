@@ -4,7 +4,7 @@
 
 #include <oleauto.h>
 
-namespace MTL {
+namespace mtl {
 
 	///////////////////////////////////////////////////////////////////////
 	// these BSTRs, oh boy
@@ -15,6 +15,7 @@ namespace MTL {
 
 	class bstr_view
 	{
+	friend class variant;
 	public:
 		bstr_view()
 			: str_(0)
@@ -341,7 +342,7 @@ namespace MTL {
 		{
 			if (!bstr_)
 				return "";
-			return MTL::to_string(bstr_,len(),cp);
+			return mtl::to_string(bstr_,len(),cp);
 		}
 
 

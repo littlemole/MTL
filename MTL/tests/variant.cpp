@@ -68,7 +68,7 @@ protected:
 
 TEST_F(VariantTest, test_bstr_variants) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     variant v(ole_char(L"a variant str"));
     variant v2(v);
@@ -91,7 +91,7 @@ TEST_F(VariantTest, test_bstr_variants) {
 
 TEST_F(VariantTest, test_long_variants) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     long value = 42;
 
@@ -117,7 +117,7 @@ TEST_F(VariantTest, test_long_variants) {
 
 TEST_F(VariantTest, test_long_ref_variants) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     long value = 42;
 
@@ -152,7 +152,7 @@ TEST_F(VariantTest, test_long_ref_variants) {
 
 TEST_F(VariantTest, test_modify_ref_variants) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     long value = 42;
 
@@ -171,7 +171,7 @@ TEST_F(VariantTest, test_modify_ref_variants) {
 
 TEST_F(VariantTest, test_change_variant_type) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     long value = 42;
 
@@ -210,7 +210,7 @@ public:
 
 TEST_F(VariantTest, test_assign_variants) {
 
-    using namespace MTL;
+    using namespace mtl;
 
     long value = 42;
 

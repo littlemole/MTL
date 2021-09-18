@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MTL/disp/bstr.h"
+#include "mtl/disp/bstr.h"
 
-namespace MTL {
+namespace mtl {
 
 	namespace details {
 
@@ -456,7 +456,7 @@ namespace MTL {
 			return v_.vt & VT_BYREF;
 		}
 
-		void copyTo(variant& v) const;
+		void copyTo(mtl::variant& v) const;
 
 		void copyTo(VARIANT* v) const
 		{
@@ -566,7 +566,7 @@ namespace MTL {
 		{
 			::VariantInit(this);
 			vt = VT_BSTR;
-			bstrVal = ::SysAllocString(MTL::to_wstring(c,(int)strlen(c), cp).c_str());
+			bstrVal = ::SysAllocString(mtl::to_wstring(c,(int)strlen(c), cp).c_str());
 		}
 
 		template<size_t N>
@@ -574,7 +574,7 @@ namespace MTL {
 		{
 			::VariantInit(this);
 			vt = VT_BSTR;
-			std::wstring ws = MTL::to_wstring(c, N-1, cp);
+			std::wstring ws = mtl::to_wstring(c, N-1, cp);
 			bstrVal = ::SysAllocStringLen(ws.c_str(), ws.size());
 		}
 
@@ -1002,11 +1002,11 @@ namespace MTL {
 		{
 			if (vt == VT_BSTR)
 			{
-				return MTL::to_string(bstrVal,::SysStringLen(bstrVal),cp);
+				return mtl::to_string(bstrVal,::SysStringLen(bstrVal),cp);
 			}
 			if (vt == (VT_BSTR | VT_BYREF))
 			{
-				return MTL::to_string(*pbstrVal, ::SysStringLen(bstrVal), cp);
+				return mtl::to_string(*pbstrVal, ::SysStringLen(bstrVal), cp);
 			}
 
 			variant tmp(*this);
@@ -1089,11 +1089,11 @@ namespace MTL {
 	{
 		if (v_.vt == VT_BSTR)
 		{
-			return MTL::to_string(v_.bstrVal, ::SysStringLen(v_.bstrVal), cp);
+			return mtl::to_string(v_.bstrVal, ::SysStringLen(v_.bstrVal), cp);
 		}
 		if (v_.vt == (VT_BSTR | VT_BYREF))
 		{
-			return MTL::to_string(*(v_.pbstrVal), ::SysStringLen(v_.bstrVal), cp);
+			return mtl::to_string(*(v_.pbstrVal), ::SysStringLen(v_.bstrVal), cp);
 		}
 
 		variant tmp(v_);

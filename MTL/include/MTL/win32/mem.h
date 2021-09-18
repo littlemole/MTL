@@ -1,12 +1,14 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
+
 #include <Objbase.h>
+
 #include <string.h>
 #include <iomanip>
 #include <sstream>
 
-namespace MTL {
+namespace mtl {
 
 
     template<class T>
@@ -205,6 +207,7 @@ namespace MTL {
         wchar_t* str_ = nullptr;
     };
 
+    /*
     class CoStr
     {
     public:
@@ -312,22 +315,22 @@ namespace MTL {
 
         wchar_t* str_ = nullptr;
     };
-
-    class Global
+    */
+    class global
     {
     public:
 
         template<class T>
-        class Lock
+        class lock
         {
         public:
-            Lock(HGLOBAL global)
+            lock(HGLOBAL global)
                 : global_(global)
             {
                 t_ = (T) ::GlobalLock(global);
             }
 
-            ~Lock()
+            ~lock()
             {
                 ::GlobalUnlock(global_);
             }
@@ -352,36 +355,36 @@ namespace MTL {
             HGLOBAL global_;
         };
 
-        Global()
+        global()
         {}
 
-        Global(HGLOBAL glob)
+        global(HGLOBAL glob)
             : global_(glob)
         {}
 
-        Global(void* t, size_t s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
+        global(void* t, size_t s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
         {
             alloc(s,flags);
-            Lock<void*> lock(**this);
+            lock<void*> lock(**this);
             memcpy(lock.get(), t, s);
         }
 
-        Global(const std::string& s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
+        global(const std::string& s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
         {
             alloc(s.size()+1, flags);
-            Lock<void*> lock(**this);
+            lock<void*> lock(**this);
             memcpy(lock.get(), s.c_str(), s.size()+1);
         }
 
-        Global(const std::wstring& s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
+        global(const std::wstring& s, int flags = GMEM_MOVEABLE | GMEM_NODISCARD)
         {
             alloc( (s.size()+1)*sizeof(wchar_t), flags);
-            Lock<void*> lock(**this);
+            lock<void*> lock(**this);
             memcpy(lock.get(), s.c_str(), (s.size()+1)*sizeof(wchar_t));
         }
 
 
-        ~Global()
+        ~global()
         {
             dispose();
         }
@@ -414,13 +417,13 @@ namespace MTL {
 
         std::string to_string()
         {
-            Lock<char*> lock(**this);
+            lock<char*> lock(**this);
             return std::string(lock.get());
         }
 
         std::wstring to_wstring()
         {
-            Lock<wchar_t*> lock(**this);
+            lock<wchar_t*> lock(**this);
             return std::wstring(lock.get());
         }
 
@@ -434,7 +437,7 @@ namespace MTL {
     };
 
 
-    class FileInfo : public BY_HANDLE_FILE_INFORMATION
+    class file_info : public BY_HANDLE_FILE_INFORMATION
     {
     public:
 
@@ -443,42 +446,42 @@ namespace MTL {
             return dwFileAttributes;
         }
 
-        FILETIME& creationTime()
+        FILETIME& creation_time()
         {
             return ftCreationTime;
         }
 
         std::wstring created()
         {
-            return SysTime(creationTime());
+            return sys_time(creation_time());
         }
 
-        FILETIME& lastAccessTime()
+        FILETIME& last_access_time()
         {
             return ftLastAccessTime;
         }
 
-        std::wstring lastAccessed()
+        std::wstring last_accessed()
         {
-            return SysTime(lastAccessTime());
+            return sys_time(last_access_time());
         }
 
-        FILETIME& lastWriteTime()
+        FILETIME& last_write_time()
         {
             return ftLastWriteTime;
         }
 
-        std::wstring lastWritten()
+        std::wstring last_written()
         {
-            return SysTime(lastWriteTime());
+            return sys_time(last_write_time());
         }
 
-        DWORD fileSizeHigh()
+        DWORD file_size_high()
         {
             return nFileSizeHigh;
         }
 
-        DWORD fileSizeLow()
+        DWORD file_size_low()
         {
             return nFileSizeLow;
         }
@@ -491,25 +494,25 @@ namespace MTL {
             return uli.QuadPart;
         }
 
-        std::wstring fileSize()
+        std::wstring file_size()
         {
             LARGE_INTEGER li;
             li.HighPart = nFileSizeHigh;
             li.LowPart = nFileSizeLow;
-            return fileSize(li);
+            return file_size(li);
         }
 
-        static SYSTEMTIME FileTimeToSysTime(FILETIME& FileTime)
+        static SYSTEMTIME file_time_to_sys_time(FILETIME& FileTime)
         {
             SYSTEMTIME st;
-            FileTimeToSystemTime(&FileTime, &st);
+            ::FileTimeToSystemTime(&FileTime, &st);
             return st;
         }
 
-        static std::wstring SysTime(FILETIME& FileTime)
+        static std::wstring sys_time(FILETIME& FileTime)
         {
             SYSTEMTIME st;
-            if (!FileTimeToSystemTime(&FileTime, &st))
+            if (!::FileTimeToSystemTime(&FileTime, &st))
                 return L"";
 
             std::wostringstream oss;
@@ -517,15 +520,15 @@ namespace MTL {
             return oss.str();
         }
 
-        static std::wstring fileSize(DWORD hi, DWORD lo)
+        static std::wstring file_size(DWORD hi, DWORD lo)
         {
             LARGE_INTEGER li;
             li.HighPart = hi;
             li.LowPart = lo;
-            return fileSize(li);
+            return file_size(li);
         }
 
-        static std::wstring fileSize(LARGE_INTEGER li)
+        static std::wstring file_size(LARGE_INTEGER li)
         {
             std::wostringstream oss;
             oss << std::setprecision(4);
@@ -557,16 +560,16 @@ namespace MTL {
 
 
 
-    class MemoryMappedFile
+    class memory_mapped_file
     {
     public:
-        MemoryMappedFile()
+        memory_mapped_file()
             : file_(INVALID_HANDLE_VALUE),
             mapping_(0),
             view_(0)
         {}
 
-        ~MemoryMappedFile()
+        ~memory_mapped_file()
         {
             close();
         }
@@ -590,7 +593,7 @@ namespace MTL {
             if (file_ == INVALID_HANDLE_VALUE)
                 return false;
 
-            FileInfo fi;
+            file_info fi;
             ::GetFileInformationByHandle(file_, &fi);
 
             fsize_ = fi.size();
@@ -649,7 +652,7 @@ namespace MTL {
             }
             else
             {
-                if (index >= offset_ + pageSize()) //upperbound_ )
+                if (index >= offset_ + page_size()) //upperbound_ )
                 {
                     remap(index);
                 }
@@ -666,7 +669,7 @@ namespace MTL {
                 ::FlushViewOfFile(view_, NULL);
         }
 
-        static unsigned long pageSize()
+        static unsigned long page_size()
         {
             static unsigned long l = getPageSize();
             return l;
@@ -696,7 +699,7 @@ namespace MTL {
 
             view_ = 0;
 
-            int s = pageSize();
+            int s = page_size();
 
             offset_ = (offset / s) * s;
 

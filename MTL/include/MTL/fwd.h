@@ -1,16 +1,16 @@
 #pragma once
 
-#include "MTL/sdk.h"
+#include "mtl/sdk.h"
 
-namespace MTL {
+namespace mtl {
 
 	template<class T>
-	class ClassObject;
+	class class_object;
 
 	namespace detail {
 
 		template<class T>
-		class GetClassObject;
+		class get_class_object;
 
 		template< class T>
 		class derives;
@@ -19,14 +19,14 @@ namespace MTL {
 		class interfaces;
 
 		template<class T>
-		class Registrar;
+		class registrar;
 	}
 
 	template<class T>
 	class implements;
 
-	template<class T>
-	class dispatch;
+//	template<class T>
+//	class dispatch;
 
 	template<class T>
 	class aggregate;
@@ -35,11 +35,11 @@ namespace MTL {
 	// ComDLL base class that exposes class factories
 	//////////////////////////////////////////////////////////////////////////////
 
-	class ComDLL
+	class com_dll
 	{
 	public:
 
-		virtual BOOL __stdcall DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) = 0;
+		virtual BOOL    __stdcall DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) = 0;
 		virtual HRESULT __stdcall DllGetClassObject(const CLSID& rclsid, const IID& riid, void** ppv) = 0;
 		virtual HRESULT __stdcall DllRegisterServer(void) = 0;
 		virtual HRESULT __stdcall DllUnregisterServer(void) = 0;

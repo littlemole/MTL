@@ -1,20 +1,20 @@
 #pragma once
 
-#include "MTL/sdk.h"
-#include "MTL/win32/module.h"
+#include "mtl/sdk.h"
+#include "mtl/win32/module.h"
 
-namespace MTL {
+namespace mtl {
 
     template<class T>
-    class WindowClass : public WNDCLASSEXW
+    class window_class : public WNDCLASSEXW
     {
     public:
 
-        WindowClass()
+        window_class()
         {
             cbSize = sizeof(WNDCLASSEX);
             style = CS_HREDRAW | CS_VREDRAW;
-            lpfnWndProc = &WndProc;
+            lpfnWndProc = &windowProc;
             cbClsExtra = 0;
             cbWndExtra = 0;
             hInstance = module_instance();
@@ -33,7 +33,7 @@ namespace MTL {
 
         }
 
-        ~WindowClass()
+        ~window_class()
         {
             delete[] lpszClassName;
         }
@@ -47,7 +47,7 @@ namespace MTL {
             return lpszClassName;
         }
 
-        void setMenu(int id)
+        void set_menu(int id)
         {
            this->lpszMenuName = (LPCWSTR)MAKEINTRESOURCE(id);
         }
@@ -56,38 +56,38 @@ namespace MTL {
 
         ATOM atom = 0;
 
-        static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+        static LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             switch (message)
             {
-            case WM_NCCREATE:
-            {
-                CREATESTRUCTW* cs = (CREATESTRUCTW*)lParam;
-                T* that = (T*)(cs->lpCreateParams);
-                that->handle = hWnd;
-                ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)that);
-                // fallthru
-            }
-            default:
-            {
-                LONG_PTR l = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
-                if (!l)
+                case WM_NCCREATE:
                 {
-                    return DefWindowProc(hWnd, message, wParam, lParam);
+                    CREATESTRUCTW* cs = (CREATESTRUCTW*)lParam;
+                    T* that = (T*)(cs->lpCreateParams);
+                    that->handle = hWnd;
+                    ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)that);
+                    // fallthru
                 }
+                default:
+                {
+                    LONG_PTR l = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+                    if (!l)
+                    {
+                        return DefWindowProc(hWnd, message, wParam, lParam);
+                    }
 
-                T* that = (T*)l;
-                return that->wndProc(hWnd, message, wParam, lParam);
-            }
+                    T* that = (T*)l;
+                    return that->wndProc(hWnd, message, wParam, lParam);
+                }
             }
             return 0;
         }
     };
 
     template<class T>
-    WindowClass<T>& windowClass()
+    window_class<T>& windowclass()
     {
-        static WindowClass<T> clazz;
+        static window_class<T> clazz;
         return clazz;
     }
 

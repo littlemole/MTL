@@ -1,24 +1,20 @@
 #pragma once
 
-#include "MTL/obj/impl.h"
-#include "MTL/punk.h"
+#include "mtl/obj/impl.h"
+#include "mtl/punk.h"
 #include "MTL/win32/uni.h"
 #include "ocidl.h"
 #include <map>
 #include <iostream>
 
-namespace MTL {
-
-
-
-
+namespace mtl {
 
 	template<class T, class I, REFGUID LIBID= GUID_NULL, int MAJOR = 1, int MINOR = 0>
-	class Dispatch : public I
+	class dispatch : public I
 	{
 	public:
 
-		Dispatch()
+		dispatch()
 		{
 			load_typelib();
 		}
@@ -31,7 +27,7 @@ namespace MTL {
 				return;
 			}
 
-			std::wstring selfPath = pathToSelf();
+			std::wstring selfPath = path_to_self();
 			HRESULT hr = ::LoadTypeLibEx(selfPath.c_str(), REGKIND_NONE, &typeLib_);
 			if (hr == S_OK)
 			{
@@ -56,7 +52,7 @@ namespace MTL {
 			}
 		}
 
-		~Dispatch()
+		~dispatch()
 		{
 			if (typeInfo_)
 			{
@@ -102,22 +98,22 @@ namespace MTL {
 };
 
 template<class T>
-class SupportErrorInfo;
+class support_error_info;
 
 template<class ... Args>
-class SupportErrorInfo<void(Args...)> : public ISupportErrorInfo
+class support_error_info<void(Args...)> : public ISupportErrorInfo
 {
 public:
 
 	virtual HRESULT __stdcall InterfaceSupportsErrorInfo(REFIID riid) override
 	{
-		return supportsErrorInfo<Args...>(riid);
+		return supports_error_info<Args...>(riid);
 	}
 
 private:
 
 	template<class T, class ... VArgs>
-	HRESULT supportsErrorInfo(REFIID riid)
+	HRESULT supports_error_info(REFIID riid)
 	{
 		if (::IsEqualIID(riid, __uuidof(T)))
 		{
@@ -125,14 +121,14 @@ private:
 		}
 		if constexpr (sizeof...(VArgs) != 0)
 		{
-			return supportsErrorInfo<VArgs...>(riid);
+			return supports_error_info<VArgs...>(riid);
 		}
 		return S_FALSE;
 	}
 };
 
 template<class T>
-class ProvideClassInfo : public IProvideClassInfo2
+class provide_class_info : public IProvideClassInfo2
 {
 public:
 
@@ -207,7 +203,7 @@ public:
 	namespace details
 	{
 		template<class T, class I, class ... Args>
-		class interfaces<T(Dispatch<T,I>, Args...)>
+		class interfaces<T(dispatch<T,I>, Args...)>
 		{
 		public:
 
@@ -232,7 +228,7 @@ public:
 		};
 
 		template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-		class interfaces<T(Dispatch<T, I, LIBID, MAJOR, MINOR>, Args...)>
+		class interfaces<T(dispatch<T, I, LIBID, MAJOR, MINOR>, Args...)>
 		{
 		public:
 
@@ -258,15 +254,15 @@ public:
 
 
 		template< class T, class ... Args>
-		class derives<T(class_info, Args...)> : public ProvideClassInfo<T>, public derives<T(Args...)>
+		class derives<T(class_info, Args...)> : public provide_class_info<T>, public derives<T(Args...)>
 		{};
 
 		template<class T, class ... Args>
-		class interfaces<T(class_info, Args...)> : public interfaces<T(ProvideClassInfo<T>, Args...)>
+		class interfaces<T(class_info, Args...)> : public interfaces<T(provide_class_info<T>, Args...)>
 		{};
 
 		template<class T,  class ... Args>
-		class interfaces<T(ProvideClassInfo<T>, Args...)>
+		class interfaces<T(provide_class_info<T>, Args...)>
 		{
 		public:
 
@@ -292,15 +288,15 @@ public:
 		};
 
 		template< class T, class I, class ... Args>
-		class derives<T(error_info<I>, Args...)> : public SupportErrorInfo<I>, public derives<T(Args...)>
+		class derives<T(error_info<I>, Args...)> : public support_error_info<I>, public derives<T(Args...)>
 		{};
 
 		template<class T, class I, class ... Args>
-		class interfaces<T(error_info<I>, Args...)> : public interfaces<T(SupportErrorInfo<I>, Args...)>
+		class interfaces<T(error_info<I>, Args...)> : public interfaces<T(support_error_info<I>, Args...)>
 		{};
 
 		template<class T, class I, class ... Args>
-		class interfaces<T(SupportErrorInfo<I>, Args...)>
+		class interfaces<T(support_error_info<I>, Args...)>
 		{
 		public:
 
@@ -332,19 +328,19 @@ public:
 	{
 
 		template< class T, class I, class ... Args>
-		class derives<T(dual<I>, Args...)> : public Dispatch<T,I>, public derives<T(Args...)>
+		class derives<T(dual<I>, Args...)> : public dispatch<T,I>, public derives<T(Args...)>
 		{};
 
 		template< class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-		class derives<T(dual<I,LIBID,MAJOR,MINOR>, Args...)> : public Dispatch<T, I, LIBID, MAJOR, MINOR>, public derives<T(Args...)>
+		class derives<T(dual<I,LIBID,MAJOR,MINOR>, Args...)> : public dispatch<T, I, LIBID, MAJOR, MINOR>, public derives<T(Args...)>
 		{};
 
 		template<class T, class I, class ... Args>
-		class interfaces<T(dual<I>, Args...)> : public interfaces<T(Dispatch<T,I>, Args...)>
+		class interfaces<T(dual<I>, Args...)> : public interfaces<T(dispatch<T,I>, Args...)>
 		{};
 
 		template<class T, class I, REFGUID LIBID, int MAJOR, int MINOR, class ... Args>
-		class interfaces<T(dual<I,LIBID,MAJOR,MINOR>, Args...)> : public interfaces<T(Dispatch<T, I, LIBID, MAJOR, MINOR>, Args...)>
+		class interfaces<T(dual<I,LIBID,MAJOR,MINOR>, Args...)> : public interfaces<T(dispatch<T, I, LIBID, MAJOR, MINOR>, Args...)>
 		{};
 
 	}

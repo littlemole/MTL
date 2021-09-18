@@ -1,20 +1,20 @@
 #pragma once
 
-#include "MTL/punk.h"
-#include "MTL/win/gdi.h"
-#include "MTL/obj/impl.h"
-#include "MTL/persist/stream.h"
+#include "mtl/punk.h"
+#include "mtl/win/gdi.h"
+#include "mtl/obj/impl.h"
+#include "mtl/persist/stream.h"
 #include <wincodec.h>
 
-namespace MTL {
+namespace mtl {
 
     namespace detail {
-        inline MTL::punk<IWICBitmapSource> LoadBitmapSourceFromPath(const std::wstring& path)
+        inline mtl::punk<IWICBitmapSource> load_bitmap_source_from_path(const std::wstring& path)
         {
             punk<IWICBitmapSource> ipBitmap;
 
             punk<IWICImagingFactory> wic;
-            HR hr = wic.createObject(CLSID_WICImagingFactory);
+            HR hr = wic.create_object(CLSID_WICImagingFactory);
 
             punk<IWICBitmapDecoder> ipDecoder;
             hr = wic->CreateDecoderFromFilename(path.c_str(), 0, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &ipDecoder);
@@ -40,12 +40,12 @@ namespace MTL {
             return ipBitmap;
         }
 
-        inline MTL::punk<IWICBitmapSource> LoadBitmapSourceFromStream(IStream* stream, CLSID decoder)
+        inline punk<IWICBitmapSource> load_bitmap_source_from_stream(IStream* stream, CLSID decoder)
         {
             punk<IWICBitmapSource> ipBitmap;
 
             punk<IWICBitmapDecoder> ipDecoder;
-            HR hr = ipDecoder.createObject(decoder);
+            HR hr = ipDecoder.create_object(decoder);
 
             hr = ipDecoder->Initialize(stream, WICDecodeMetadataCacheOnLoad);
 
@@ -64,9 +64,9 @@ namespace MTL {
         }
 
 
-        inline HBITMAP CreateHBITMAPfromSource(IWICBitmapSource* ipBitmap);
+//        inline HBITMAP create_bitmap_from_source(IWICBitmapSource* ipBitmap);
 
-        inline HBITMAP CreateHBITMAPfromSource(IWICBitmapSource* ipBitmap)
+        inline HBITMAP create_bitmap_from_source(IWICBitmapSource* ipBitmap)
         {
             HBITMAP hbmp = NULL;
 
@@ -92,7 +92,7 @@ namespace MTL {
             // create a DIB section that can hold the image
             void* pvImageBits = NULL;
             //HDC hdcScreen = ::GetDC(NULL);
-            MTL::DC hdcScreen(NULL);
+            dc hdcScreen(NULL);
             hbmp = ::CreateDIBSection(*hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, NULL, 0);
             // ::ReleaseDC(NULL, hdcScreen);
             if (hbmp == NULL)
@@ -117,28 +117,28 @@ namespace MTL {
 
     } // end namespace detail
 
-    class Bitmap
+    class bitmap
     {
     public:
-        Bitmap()
+        bitmap()
         {}
 
-        Bitmap(HBITMAP b)
+        bitmap(HBITMAP b)
             : hBitmap_(b)
         {}
 
-        Bitmap(const Bitmap& rhs) = delete;
-        Bitmap(Bitmap&& rhs)
+        bitmap(const bitmap& rhs) = delete;
+        bitmap(bitmap&& rhs)
             : hBitmap_(rhs.hBitmap_)
         {
             rhs.hBitmap_ = nullptr;
         }
 
-        Bitmap& operator=(const Bitmap& rhs) = delete;
+        bitmap& operator=(const bitmap& rhs) = delete;
 
-        Bitmap& operator=(Bitmap&& rhs)
+        bitmap& operator=(bitmap&& rhs)
         {
-            if (this == rhs.addressOf())
+            if (this == rhs.address_of())
             {
                 return *this;
             }
@@ -149,7 +149,7 @@ namespace MTL {
             return *this;
         }
 
-        ~Bitmap()
+        ~bitmap()
         {
             if (hBitmap_)
             {
@@ -167,15 +167,15 @@ namespace MTL {
             return hBitmap_;
         }
 
-        const Bitmap* addressOf() const
+        const bitmap* address_of() const
         {
             return this;
         }
 
-        static Bitmap makeTransparentDIBSection(int w, int h, UINT32 col = 0x00000000)
+        static bitmap make_transparent_dib_section(int w, int h, UINT32 col = 0x00000000)
         {
-            DC desktopDC;
-            CompatibleDC cdc_dest(*desktopDC);
+            dc desktopDC;
+            compatible_dc cdc_dest(*desktopDC);
 
             BITMAPINFO bmi;
             ::ZeroMemory(&bmi, sizeof(BITMAPINFO));
@@ -215,70 +215,70 @@ namespace MTL {
         HBITMAP hBitmap_ = nullptr;
     };
 
-    inline Bitmap LoadPicture(const std::wstring& path)
+    inline bitmap load_picture(const std::wstring& path)
     {
         HBITMAP hbmpSplash = NULL;
 
-        punk<IWICBitmapSource> ipBitmap = MTL::detail::LoadBitmapSourceFromPath(path);
+        punk<IWICBitmapSource> ipBitmap = mtl::detail::load_bitmap_source_from_path(path);
         if (!ipBitmap)
             throw E_FAIL;
 
-        hbmpSplash = MTL::detail::CreateHBITMAPfromSource(*ipBitmap);
+        hbmpSplash = mtl::detail::create_bitmap_from_source(*ipBitmap);
 
         return hbmpSplash;
     }
 
-    inline Bitmap LoadPicture(IStream* stream, CLSID decoder = CLSID_WICPngDecoder)
+    inline bitmap load_picture(IStream* stream, CLSID decoder = CLSID_WICPngDecoder)
     {
         HBITMAP hbmpSplash = NULL;
 
-        punk<IWICBitmapSource> ipBitmap = MTL::detail::LoadBitmapSourceFromStream(stream,decoder);
+        punk<IWICBitmapSource> ipBitmap = mtl::detail::load_bitmap_source_from_stream(stream,decoder);
         if (!ipBitmap)
             throw E_FAIL;
 
-        hbmpSplash = MTL::detail::CreateHBITMAPfromSource(*ipBitmap);
+        hbmpSplash = mtl::detail::create_bitmap_from_source(*ipBitmap);
 
         return hbmpSplash;
     }
 
-    inline Bitmap LoadPictureFromResource(int resId, const wchar_t* type = L"PNG", CLSID decoder = CLSID_WICPngDecoder)
+    inline bitmap load_picture_from_resource(int resId, const wchar_t* type = L"PNG", CLSID decoder = CLSID_WICPngDecoder)
     {
         HBITMAP hbmpSplash = NULL;
 
-        HRSRC hrsrc = ::FindResource(MTL::module_instance(), MAKEINTRESOURCE(resId), type);
+        HRSRC hrsrc = ::FindResource(mtl::module_instance(), MAKEINTRESOURCE(resId), type);
         if (!hrsrc)
         {
             return hbmpSplash;
         }
 
-        size_t s = s = ::SizeofResource(MTL::module_instance(), hrsrc);
-        HGLOBAL hglob = ::LoadResource(MTL::module_instance(), hrsrc);
+        size_t s = s = ::SizeofResource(mtl::module_instance(), hrsrc);
+        HGLOBAL hglob = ::LoadResource(mtl::module_instance(), hrsrc);
         void* pvoid = ::LockResource(hglob);
 
         std::string data((char*)pvoid, s);
-        Stream stream(data);
+        stream strm(data);
 
-        return LoadPicture(*stream, decoder);
+        return load_picture(*strm, decoder);
     }
 
-    class BitmapCache
+    class bitmap_cache
     {
     public:
 
-        BitmapCache()
+        bitmap_cache()
         {
-            imgPath_ = pathToSelfDirectory();
+            imgPath_ = path_to_self_directory();
         }
 
 
-        void imgPath(const std::wstring& path)
+        void img_path(const std::wstring& path)
         {
             imgPath_ = path;
         }
 
         void load(int resourceId)
         {
-            MTL::Bitmap bmp = MTL::LoadPictureFromResource(resourceId);
+            mtl::bitmap bmp = mtl::load_picture_from_resource(resourceId);
 
             if (!*bmp) return;
 
@@ -294,7 +294,7 @@ namespace MTL {
         {
             std::wostringstream woss;
             woss << imgPath_ << L"\\" << path;
-            MTL::Bitmap bmp = MTL::LoadPicture(woss.str());
+            mtl::bitmap bmp = mtl::load_picture(woss.str());
             if (!*bmp) return;
 
             BITMAP bm;
@@ -308,7 +308,7 @@ namespace MTL {
         {
             std::wostringstream woss;
             woss << imgPath_ << L"\\" << path;
-            MTL::Bitmap bmp = MTL::LoadPicture(woss.str());
+            bitmap bmp = load_picture(woss.str());
             if (!*bmp) return;
 
             BITMAP bm;
@@ -370,13 +370,13 @@ namespace MTL {
                 return nullptr;
             }
 
-            MTL::Bitmap dest = Bitmap::makeTransparentDIBSection(w, h);
+            bitmap dest = bitmap::make_transparent_dib_section(w, h);
             pathSize2bitmap_[path][w][h] = *dest;
 
-            CompatibleDC cdc_dest;            
+            compatible_dc cdc_dest;            
             dc_view dcvd(*cdc_dest);
             dcvd.select(*dest);
-            dcvd.alphaBlend(bmp, 0, 0, w, h, 0xff);
+            dcvd.alpha_blend(bmp, 0, 0, w, h, 0xff);
             
             HBITMAP result = *dest;
             bitmaps_.push_back(std::move(dest));
@@ -403,13 +403,13 @@ namespace MTL {
                 return nullptr;
             }
 
-            MTL::Bitmap dest = Bitmap::makeTransparentDIBSection(w, h);
+            bitmap dest = bitmap::make_transparent_dib_section(w, h);
             idSize2bitmap_[id][w][h] = *dest;
 
-            CompatibleDC cdc_dest;
+            compatible_dc cdc_dest;
             dc_view dcvd(*cdc_dest);
             dcvd.select(*dest);
-            dcvd.alphaBlend(bmp, 0, 0, w, h, 0xff);
+            dcvd.alpha_blend(bmp, 0, 0, w, h, 0xff);
 
             HBITMAP result = *dest;
             bitmaps_.push_back(std::move(dest));
@@ -419,7 +419,7 @@ namespace MTL {
     private:
 
         std::wstring imgPath_;
-        std::vector<MTL::Bitmap> bitmaps_;
+        std::vector<bitmap> bitmaps_;
         std::map<std::wstring, HBITMAP> path2bitmap_;
         std::map<int, HBITMAP> id2bitmap_;
         std::map<int, std::map<int, std::map<int, HBITMAP>>> idSize2bitmap_;
@@ -428,19 +428,19 @@ namespace MTL {
 
 
 
-    inline MTL::BitmapCache& bitmapCache()
+    inline bitmap_cache& the_bitmap_cache()
     {
-        static MTL::BitmapCache bmp;
+        static bitmap_cache bmp;
         return bmp;
     }
 
 
 
-    class UI
+    class ui
     {
     public:
 
-        struct Item
+        struct item
         {
             int id;
             std::string str; 
@@ -448,53 +448,53 @@ namespace MTL {
             std::wstring img;
         };
 
-        void add( const std::vector<Item>& items)
+        void add( const std::vector<item>& new_items)
         {
-            for (auto& item : items)
+            for (auto& it : new_items)
             {
-                id2string[item.id] = MTL::to_wstring(item.str);
-                string2id[MTL::to_wstring(item.str)] = item.id;
+                id2string[it.id] = to_wstring(it.str);
+                string2id[to_wstring(it.str)] = it.id;
 
-                if (!item.label.empty())
+                if (!it.label.empty())
                 {
-                    id2label[item.id] = item.label;
+                    id2label[it.id] = it.label;
                 }
 
-                if (item.img.empty())
+                if (it.img.empty())
                 {
-                    MTL::bitmapCache().load(item.id);
+                    the_bitmap_cache().load(it.id);
                 }
                 else
                 {
-                    MTL::bitmapCache().load(item.id, item.img.c_str());
+                    the_bitmap_cache().load(it.id, it.img.c_str());
                 }
             }
         }
 
         void add(int id, const std::string& str)
         {
-            id2string[id] = MTL::to_wstring(str);
-            string2id[MTL::to_wstring(str)] = id;
+            id2string[id] = to_wstring(str);
+            string2id[to_wstring(str)] = id;
 
-            MTL::bitmapCache().load(id);
+            the_bitmap_cache().load(id);
         }
 
         void add(int id, const std::string& str, const std::wstring& label, const std::wstring& img)
         {
-            id2string[id] = MTL::to_wstring(str);
+            id2string[id] = to_wstring(str);
             id2label[id] = label;
-            string2id[MTL::to_wstring(str)] = id;
+            string2id[to_wstring(str)] = id;
 
-            MTL::bitmapCache().load(id, img.c_str());
+            the_bitmap_cache().load(id, img.c_str());
         }
 
         void add(int id, const std::string& str, const std::wstring& label)
         {
-            id2string[id] = MTL::to_wstring(str);
+            id2string[id] = to_wstring(str);
             id2label[id] = label;
-            string2id[MTL::to_wstring(str)] = id;
+            string2id[to_wstring(str)] = id;
 
-            MTL::bitmapCache().load(id);
+            the_bitmap_cache().load(id);
         }
 
         const std::wstring& idString(int id) 
@@ -518,12 +518,12 @@ namespace MTL {
 
         HBITMAP bitmap(int id)
         {
-            return bitmapCache().getById(id);
+            return the_bitmap_cache().getById(id);
         }
 
         HBITMAP bitmap(int id, int w, int h)
         {
-            return bitmapCache().get(id,w,h);
+            return the_bitmap_cache().get(id,w,h);
         }
 
     private:
@@ -533,128 +533,128 @@ namespace MTL {
         std::map<std::wstring, int> string2id;
     };
 
-    inline UI& ui()
+    inline ui& gui()
     {
-        static UI gui;
-        return gui;
+        static ui the_gui;
+        return the_gui;
     }
 
-    class MenuBuilder
+    class menu_builder
     {
     public:
 
-        std::shared_ptr<ColorTheme> colorTheme;
+        std::shared_ptr<color_theme> theme;
 
-        struct Item
+        struct item
         {
-            Item(int i)
+            item(int i)
                 : id(i), label(ui().label(id).c_str())
             {} 
 
-            Item(int i, bool check)
+            item(int i, bool check)
                 : id(i), label(ui().label(id).c_str()),checked(check)
             {}
 
-            Item(int i, const wchar_t* l)
+            item(int i, const wchar_t* l)
                 : id(i), label(l)
             {}
 
-            Item(int i, bool check, const wchar_t* l)
+            item(int i, bool check, const wchar_t* l)
                 : id(i), label(l), checked(check)
             {}
 
-            Item(int i, const wchar_t* l, const std::vector<Item>& subMenu)
+            item(int i, const wchar_t* l, const std::vector<item>& subMenu)
                 : id(i), label(l), items(subMenu)
             {}
 
-            Item(int i, const std::vector<Item>& subMenu)
+            item(int i, const std::vector<item>& subMenu)
                 : id(i), label(ui().label(id).c_str()), items(subMenu)
             {}
 
             int id;
             const wchar_t* label;
-            std::vector<Item> items;
+            std::vector<item> items;
             bool enabled = true;
             bool checked = false;
         };
 
-        MenuBuilder(Menu& m, int w = 32, int h = 32)
+        menu_builder(menu& m, int w = 32, int h = 32)
             : menu_(m), w_(w), h_(h)
         {
         }
 
-        void add(const std::vector<Item>& items, bool toplevel = true)
+        void add(const std::vector<item>& items, bool toplevel = true)
         {
             if (!toplevel)
             {
-                menu_.colorTheme_ = colorTheme;
+                menu_.colorTheme_ = theme;
             }
             else
             {
-                menu_.hookColorTheme(colorTheme);
+                menu_.hook_color_theme(theme);
             }
 
-            for (auto& item : items)
+            for (auto& it : items)
             {
-                HBITMAP bmp = MTL::bitmapCache().get(item.id, w_, h_);
+                HBITMAP bmp = the_bitmap_cache().get(it.id, w_, h_);
 
-                if (item.items.empty())
+                if (it.items.empty())
                 {
-                    auto smi = std::make_shared<MenuItem>(item.id, item.label, true, false, nullptr, bmp);
+                    auto smi = std::make_shared<menu_item>(it.id, it.label, true, false, nullptr, bmp);
                     menu_.add(smi);
-                    if (item.checked) 
+                    if (it.checked)
                     {
-                        menu_.item(item.id).check(true);
+                        menu_.item(it.id).check(true);
                     }
                 }
                 else
                 {
-                    Menu popUp;
-                    popUp.createPopUp();
+                    menu popUp;
+                    popUp.create_popup();
 
-                    MenuBuilder mb(popUp, w_, h_);
-                    mb.colorTheme = colorTheme;
-                    mb.add(item.items, false);
+                    menu_builder mb(popUp, w_, h_);
+                    mb.theme = theme;
+                    mb.add(it.items, false);
 
-                    auto smi = std::make_shared<MenuItem>(item.id, item.label, true, false, *popUp, bmp);
+                    auto smi = std::make_shared<menu_item>(it.id, it.label, true, false, *popUp, bmp);
                     menu_.add(smi);
                     popUp.detach();
-                    menu_.subMenus[item.id] = std::move(popUp);
+                    menu_.subMenus[it.id] = std::move(popUp);
                 }
             }
         }
 
-        void addBitmaps()
+        void add_bitmaps()
         {
             bitmapify(*menu_, w_, h_);
         }
 
         static void bitmapify(HMENU hmenu, int w, int h)
         {
-            MTL::Menu menu(hmenu, false);
-            int c = menu.count();
+            menu m(hmenu, false);
+            int c = m.count();
             for (int i = 0; i < c; i++)
             {
-                MTL::MenuItem item = menu.item(i);
-                int id = item.id;
+                menu_item it = m.item(i);
+                int id = it.id;
 
-                if (item.subMenu)
+                if (it.subMenu)
                 {
-                    bitmapify(item.subMenu, w, h);
+                    bitmapify(it.subMenu, w, h);
                 }
                 else
                 {
-                    HBITMAP bmp = MTL::bitmapCache().get(id, w, h);
+                    HBITMAP bmp = the_bitmap_cache().get(id, w, h);
                     if (bmp)
                     {
-                        menu.addBitmap(i, bmp);
+                        m.add_bitmap(i, bmp);
                     }
                 }
             }
         }
 
     private:
-        Menu& menu_;
+        menu& menu_;
         int w_ = 32;
         int h_ = 32;
     };

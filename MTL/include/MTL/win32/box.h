@@ -1,14 +1,15 @@
 #pragma once
 
-#include "MTL/sdk.h"
-#include "MTL/win/wind.h"
+#include "mtl/sdk.h"
+#include "mtl/win/wind.h"
+
 #include <deque>
 #include <mutex>
 #include <thread>
 #include <condition_variable>
 #include <atomic>
 
-namespace MTL {
+namespace mtl {
 
 
     inline void sleep(int ms = 20)
@@ -17,21 +18,21 @@ namespace MTL {
     }
 
     template<class T>
-    class ThreadBox;
+    class thread_box;
 
     template<>
-    class ThreadBox<void()>
+    class thread_box<void()>
     {
     public:
 
         using task_t = std::function<void()>;
 
-        ThreadBox()
+        thread_box()
         {
             event_ = ::CreateEvent(NULL, FALSE, FALSE, NULL);
         }
 
-        ~ThreadBox()
+        ~thread_box()
         {
             ::CloseHandle(event_);
         }
@@ -142,7 +143,7 @@ namespace MTL {
                     break;
                 }
 
-                if (modelessDialogs().isDialogMessage(msg))
+                if (modeless_dlg().is_dialog_message(msg))
                 {
                     continue;
                 }
@@ -152,7 +153,7 @@ namespace MTL {
                     FINDREPLACE* fr = (FINDREPLACE*)msg.lParam;
                     if (fr->Flags & FR_DIALOGTERM)
                     {
-                        modelessDialogs().remove(fr->hwndOwner);
+                        modeless_dlg().remove(fr->hwndOwner);
                     }
                     continue;
                 }
@@ -199,18 +200,18 @@ namespace MTL {
     };
 
     template<class ... Args>
-    class ThreadBox<void(Args...)>
+    class thread_box<void(Args...)>
     {
     public:
 
         using task_t = std::function<void(Args...)>;
 
-        ThreadBox()
+        thread_box()
         {
             event_ = ::CreateEvent(NULL, FALSE, FALSE, NULL);
         }
 
-        ~ThreadBox()
+        ~thread_box()
         {
             ::CloseHandle(event_);
         }
@@ -317,9 +318,9 @@ namespace MTL {
         HANDLE event_;
     };
 
-    inline ThreadBox<void()>& ui_thread()
+    inline thread_box<void()>& ui_thread()
     {
-        static ThreadBox<void()> uithread;
+        static thread_box<void()> uithread;
         return uithread;
     }
 

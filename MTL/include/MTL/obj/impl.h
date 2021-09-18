@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MTL/win32/module.h"
+#include "mtl/win32/module.h"
 
-namespace MTL {
+namespace mtl {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// marker templates
@@ -159,7 +159,7 @@ namespace MTL {
 		virtual ULONG __stdcall AddRef(void) override
 		{
 			this->refCnt_++;
-			comModule().lock();
+			the_com_module().lock();
 
 			return refCnt_;
 		}
@@ -173,7 +173,7 @@ namespace MTL {
 				T* that = (T*)this;
 				delete that;
 			}
-			comModule().unlock();
+			the_com_module().unlock();
 			return cnt;
 		}
 
@@ -188,7 +188,7 @@ namespace MTL {
 	template<class T, class I, class ... Args>
 	class implements<aggregatable<T>(I, Args...)> :public details::derives<T(I, Args...)>
 	{
-		friend class ClassObject<aggregatable<T>>;
+		friend class class_object<aggregatable<T>>;
 
 	public:
 
@@ -224,7 +224,7 @@ namespace MTL {
 			virtual ULONG __stdcall AddRef(void) override
 			{
 				this->refCnt_++;
-				comModule().lock();
+				the_com_module().lock();
 
 				return refCnt_;
 			}
@@ -238,7 +238,7 @@ namespace MTL {
 					T* that = (T*)This;
 					delete that;
 				}
-				comModule().unlock();
+				the_com_module().unlock();
 				return cnt;
 			}
 
