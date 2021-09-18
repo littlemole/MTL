@@ -32,7 +32,7 @@ inline void init(const std::string& apartment)
     oss << "xcopy \"" << mtl_dir << "\\root\\" << "\" \".\" /s /e /y /q > NUL";
     std::string cmd = oss.str();
 
-    //    std::cout << cmd << std::endl;
+        std::cout << cmd << std::endl;
 
     system(cmd.c_str());
 

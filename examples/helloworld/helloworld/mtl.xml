@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project DefaultTargets='Build' ToolsVersion='4.0' xmlns='http://schemas.microsoft.com/developer/msbuild/2003'>
+ <PropertyGroup Label='Configuration'>
+
+  <!-- COM Apartment type to use for codegen -->
+  <apartment>Apartment</apartment>
+
+  <!-- project name to use, default is derived from projectname in vcxproj. -->
+  <projectName Condition="$(projectName)==''"></projectName>
+
+  <!-- manufacturer string. defaults to projectName. -->
+  <manufacturer Condition="$(manufacturer)==''"></manufacturer>
+  <!-- UUIDs for MSI packaging, if you want to override defaults. -->
+  <upgradeUuid Condition="$(upgradeUuid)==''"></upgradeUuid>
+  <vendorUuid Condition="$(vendorUuid)==''">*</vendorUuid>
+
+  <!-- detected path to project binary output dir root, usually the msbuild solution folder. -->
+  <installPrefix Condition="$(installPrefix)==''">..</installPrefix>
+
+  <!-- detected path to mtlgen.exe -->
+  <mtlgen Condition = "$(mtlgen)==''">C:\Users\mike\source\repos\vcpkg\installed\x64-windows\tools\mtl\mtlgen.exe</mtlgen>
+
+ </PropertyGroup>
+
+ <!-- import real mtl.xml - all msbuild targets can be found here. -->
+ <Import Project='\mtl.xml'/>
+
+ </Project>
