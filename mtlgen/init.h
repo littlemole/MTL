@@ -14,7 +14,7 @@ inline void init(const std::string& apartment)
 
     std::string self = pathToSelf();
     std::string mtl_dir;
-    size_t pos = self.find("\\bin\\");
+    size_t pos = self.find("\\tools\\mtl\\");
     if (pos != std::string::npos)
     {
         mtl_dir = self.substr(0, pos) + "\\share\\mtlgen\\msbuild";
