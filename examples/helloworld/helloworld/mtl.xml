@@ -23,6 +23,6 @@
  </PropertyGroup>
 
  <!-- import real mtl.xml - all msbuild targets can be found here. -->
- <Import Project='\mtl.xml'/>
+ <Import Project='C:\Users\mike\source\repos\vcpkg\installed\x64-windows\share\mtlgen\msbuild\mtl.xml'/>
 
  </Project>

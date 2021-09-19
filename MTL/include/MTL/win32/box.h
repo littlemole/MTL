@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mtl/sdk.h"
-#include "mtl/win/wind.h"
+#include "mtl/win/wnd.h"
 
 #include <deque>
 #include <mutex>
@@ -105,10 +105,27 @@ namespace mtl {
 
         int run()
         {
-            static auto msg_handler = [](MSG& msg)
+            auto msg_handler = [](MSG& msg)
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessage(&msg);
+            };
+
+            return run(msg_handler);
+        }
+
+        int run(HWND hWnd, HACCEL hAccelTable)
+        {
+            HACCEL accel = hAccelTable;
+            HWND wnd = hWnd;
+
+            auto msg_handler = [wnd, accel](MSG& msg)
+            {
+                if(!TranslateAccelerator(wnd, accel, &msg))
+                {
+                    ::TranslateMessage(&msg);
+                    ::DispatchMessage(&msg);
+                }
             };
 
             return run(msg_handler);

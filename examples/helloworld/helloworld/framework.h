@@ -5,3 +5,9 @@
 #pragma once
 
 #include "MTL/sdk.h"
+#include "mtl/win/app.h"
+#include "mtl/win/wnd.h"
+#include "mtl/win/ctrl.h"
+#include "mtl/win/dlg.h"
+#include "MTL/ole/img.h"
+

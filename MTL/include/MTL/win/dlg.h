@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mtl/win/wind.h>
+#include <mtl/win/wnd.h>
 #include <sstream>
 
 namespace mtl {
@@ -27,6 +27,11 @@ namespace mtl {
         T& value();
 
         T& operator*()
+        {
+            return value();
+        }
+
+        operator T()
         {
             return value();
         }
@@ -61,6 +66,11 @@ namespace mtl {
             return value();
         }
 
+        operator T()
+        {
+            return value();
+        }
+
         dlg_selection& operator=(const int& rhs)
         {
             value(rhs);
@@ -90,6 +100,13 @@ namespace mtl {
         {
             if (!s.dlg) return;
             s.dlg->set_dlg_item_index(s.id, s.val_);
+        }
+
+        template<int ID>
+        void dlg_bind(dlg_selection<ID, std::wstring>& s)
+        {
+            if (!s.dlg) return;
+            s.dlg->set_dlg_item_text(s.id, s.val_);
         }
 
         template<int ID>
@@ -154,6 +171,13 @@ namespace mtl {
         {
             if (!s.dlg) return;
             s.val_ = s.dlg->get_dlg_item_index(s.id);
+        }
+
+        template<int ID>
+        void dlg_sync(dlg_selection<ID, std::wstring>& s)
+        {
+            if (!s.dlg) return;
+            s.val_ = s.dlg->get_dlg_item_text(s.id);
         }
 
         template<int ID>
@@ -362,7 +386,7 @@ namespace mtl {
             return hWnd;
         }
 
-        LRESULT showModal(int lpTemplate, HWND hWndParent)
+        LRESULT show_modal(int lpTemplate, HWND hWndParent)
         {
             return ::DialogBoxParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &dialog::dialogProcedure, (LPARAM)(this));
         }
@@ -636,7 +660,7 @@ namespace mtl {
             move(x, y, w, h);
         }
 
-        virtual void onInit()
+        virtual void on_init()
         {
 
         }
@@ -652,7 +676,7 @@ namespace mtl {
             {
                 handle = hwnd;
                 binding.bind();
-                onInit();
+                on_init();
                 return 0;
             }
             case WM_ERASEBKGND:

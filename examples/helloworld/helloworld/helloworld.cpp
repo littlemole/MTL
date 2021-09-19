@@ -4,18 +4,111 @@
 #include "framework.h"
 #include "helloworld.h"
 
-#define MAX_LOADSTRING 100
+class AboutDlg : public mtl::dialog
+{
+public:
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+	mtl::dlg_value< IDC_CHECK_LOVE, bool> hasLove;
 
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+	mtl::dlg_value< IDC_LIST_LOVE, std::vector<std::wstring>> kindValues;
+	mtl::dlg_selection< IDC_LIST_LOVE, std::wstring> loveKind;
+
+	mtl::dlg_value< IDC_COMBO_LOVE, std::vector<std::wstring>> artValues;
+	mtl::dlg_selection< IDC_COMBO_LOVE, std::wstring> loveArt;
+
+	AboutDlg()
+	{
+		hasLove = true;
+		kindValues = { L"a bit", L"some what", L"yuh cool", L"ETERNAL LOVE" };
+		artValues = { L"Red", L"Green", L"Blue" };
+
+		binding(
+			hasLove,
+			kindValues,
+			artValues,
+			loveKind,
+			loveArt
+		);
+	}
+
+};
+
+class MainWindow : public mtl::window<MainWindow>
+{
+public:
+
+	mtl::button butt;
+
+	MainWindow()
+	{
+		mtl::the_bitmap_cache().load(IDI_JPEG, CLSID_WICJpegDecoder, L"JPEG" );
+	}
+
+	virtual LRESULT wm_create() override
+	{
+		RECT r = { 0,0,120,40 };
+		butt.create(IDC_BUTT,L"click me", handle, r,WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON);
+
+		butt.onCommand(IDC_BUTT, [this]()
+		{
+			::MessageBox(handle, L"click", L"clack", 0);
+		});
+		return 0;
+	}
+
+	virtual LRESULT wm_command(int id) override
+	{
+		switch (id)
+		{
+			case IDM_ABOUT:
+			{
+				AboutDlg dlg;
+				LRESULT r = dlg.show_modal(IDD_ABOUTBOX, handle);
+				if (r == IDOK)
+				{
+					if (dlg.hasLove)
+					{
+						std::wstring love = dlg.loveKind;
+						std::wstring art = dlg.loveArt;
+
+						std::wstringstream woss;
+						woss << "I love you " << art << L" you too";
+						::MessageBox(handle, woss.str().c_str(), love.c_str(),0);
+					}
+				}
+				break;
+			}
+			case IDM_EXIT:
+			{
+				destroy();
+				break;
+			}
+		}
+		return 0;
+	}
+
+	virtual LRESULT wm_draw(HDC hdc, RECT& bounds) override
+	{
+		mtl::dc_view dcv(hdc);
+
+		HBITMAP bmp = mtl::the_bitmap_cache().get(IDI_JPEG, 500, 314);
+		dcv.bit_blit(bmp, 0, 0);
+		return 0;
+	}
+
+	virtual LRESULT wm_size(RECT& clientRect) override
+	{
+		RECT r = { 0,0,0,0 };
+//		layout.do_layout(clientRect, r);
+		return 0;
+	}
+
+	virtual LRESULT wm_destroy() override
+	{
+		::PostQuitMessage(0);
+		return 0;
+	}
+};
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -25,156 +118,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: Place code here.
+    mtl::STA enter;
 
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_HELLOWORLD, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+    mtl::application app(hInstance);
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_HELLOWORLD));
+	MainWindow mainWnd;
 
-    MSG msg;
+	// set menu implicitly on window class
+	mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
 
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+	// specify menu explcitly:
+	// mtl::menu menu(IDC_HELLOWORLD);
+	
+	mainWnd.create(L"Hello Worls", WS_OVERLAPPEDWINDOW, 0, 0);// *menu);
+	mainWnd.show();
 
-    return (int) msg.wParam;
+	return app.run(*mainWnd, IDC_HELLOWORLD);
+
 }
 
 
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_HELLOWORLD));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_HELLOWORLD);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}

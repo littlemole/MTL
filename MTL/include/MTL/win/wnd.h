@@ -688,11 +688,11 @@ namespace mtl {
 
         virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = windowclass<W>();
+            auto& wndClass = wc<W>();
 
             handle = ::CreateWindowEx(
                 exStyle,
-                wc.name(),
+                wndClass.name(),
                 title,
                 style,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,

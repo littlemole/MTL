@@ -85,7 +85,7 @@ namespace mtl {
     };
 
     template<class T>
-    window_class<T>& windowclass()
+    window_class<T>& wc()
     {
         static window_class<T> clazz;
         return clazz;

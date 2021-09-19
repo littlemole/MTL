@@ -73,7 +73,7 @@
     <ClInclude Include="include\MTL\win\layout.h" />
     <ClInclude Include="include\MTL\win\mdi.h" />
     <ClInclude Include="include\MTL\win\wc.h" />
-    <ClInclude Include="include\MTL\win\wind.h" />
+    <ClInclude Include="include\MTL\win\wnd.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\MTL\ole\cp.cpp">

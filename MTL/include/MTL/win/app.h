@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mtl/win32/box.h" 
-#include "mtl/win/wind.h" 
+#include "mtl/win/wnd.h" 
 
 namespace mtl {
 
@@ -14,14 +14,13 @@ namespace mtl {
             UINT unused = WmReflect();
         }
 
-        HACCEL load_accelerators(int id)
+        int run(HWND acceleree = nullptr, int accelId = 0)
         {
-            hAccelTable_ = LoadAccelerators(module_instance(), MAKEINTRESOURCE(id));
-            return hAccelTable_;
-        }
-
-        int run()
-        {
+            if (::IsWindow(acceleree) && accelId)
+            {
+                hAccelTable_ = ::LoadAccelerators(module_instance(), MAKEINTRESOURCE(accelId));
+                return  ui_thread().run(acceleree, hAccelTable_);
+            }
             return  ui_thread().run();
         }
 

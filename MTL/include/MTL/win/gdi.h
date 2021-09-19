@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mtl/win/wind.h>
+#include <mtl/win/wnd.h>
 
 
 namespace mtl {

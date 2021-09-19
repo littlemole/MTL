@@ -1,13 +1,13 @@
 #pragma once
 
-#include "mtl/win/wind.h"
+#include "mtl/win/wnd.h"
 #include "mtl/ole/img.h"
 #include "mtl/ole/dataobj.h"
 
 #include <commctrl.h>
 #include <Uxtheme.h>
 
-namespace MTL {
+namespace mtl {
 
     class Win32CommonControls
     {
@@ -29,14 +29,14 @@ namespace MTL {
 
 
     template<class W>
-    class Ctrl : public Wnd
+    class ctrl : public wnd
     {
     public:
 
-        Event<int()> onCommand;
-        Event<UINT(NMHDR*)> onNotify;
+        event<int()> onCommand;
+        event<UINT(NMHDR*)> onNotify;
 
-        ~Ctrl()
+        ~ctrl()
         {}
 
         //default ctrl handling: pass back to windows
@@ -50,7 +50,7 @@ namespace MTL {
                     int code = HIWORD(msg->wParam);
                     int wmId = LOWORD(msg->wParam);
 
-                    return this->wmCommand(wmId, code);
+                    return this->wm_command(wmId, code);
                 }
                 if (msg->message == WM_NOTIFY)
                 {
@@ -59,15 +59,15 @@ namespace MTL {
                     if (colorTheme && colorTheme->enabled() && (nmhdr->code == NM_CUSTOMDRAW))
                     {
                         NMCUSTOMDRAW* cd = (NMCUSTOMDRAW*)nmhdr;
-                        return this->wmCustomDraw(cd);
+                        return this->wm_custom_draw(cd);
                     }
 
-                    return this->wmNotify((int)msg->wParam, nmhdr);
+                    return this->wm_notify((int)msg->wParam, nmhdr);
                 }
                 if (msg->message == WM_DRAWITEM)
                 {
                     LPDRAWITEMSTRUCT lpDIS = (LPDRAWITEMSTRUCT)msg->lParam;
-                    return this->wmDrawItem(lpDIS);
+                    return this->wm_draw_item(lpDIS);
                 }
                 return 0;
             }
@@ -76,8 +76,8 @@ namespace MTL {
             {
                 case WM_SIZE:
                 {
-                    RECT cr = getClientRect();
-                    wmSize(cr);
+                    RECT cr = client_rect();
+                    wm_size(cr);
                     break;
                 }
                 case WM_CTLCOLORLISTBOX:
@@ -89,7 +89,7 @@ namespace MTL {
                 {
                     if (colorTheme && colorTheme->enabled())
                     {
-                        return wmCtlColor((HDC)wParam, (HWND)lParam);
+                        return wm_ctl_color((HDC)wParam, (HWND)lParam);
                     }
                     break;
                 }
@@ -98,7 +98,7 @@ namespace MTL {
         }
          
         //  subclassing the def wndproc
-        void subClass()
+        void subclass()
         {
             ::SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR)dynamic_cast<void*>((W*)this));
             WNDPROC proc = (WNDPROC)(::SetWindowLongPtr(handle, GWLP_WNDPROC, (LONG_PTR)(windowProcedure)));
@@ -109,13 +109,13 @@ namespace MTL {
             }
         }
 
-        void subClass(HWND hwnd)
+        void subclass(HWND hwnd)
         {
             handle = hwnd;
-            subClass();
+            subclass();
         }
 
-        void deClass()
+        void declass()
         {
             if (oldProc_)
             {
@@ -125,45 +125,45 @@ namespace MTL {
 
     protected:
 
-        virtual LRESULT wmCommand(int id, int code)
+        virtual LRESULT wm_command(int id, int code)
         {
             onCommand.fire(code);
             return 0;
         }
 
-        virtual LRESULT wmNotify(int id, NMHDR* nmhdr)
+        virtual LRESULT wm_notify(int id, NMHDR* nmhdr)
         {
             onNotify.fire(nmhdr->code, nmhdr);
             return 0;
         }
 
-        virtual LRESULT wmCreate() override
+        virtual LRESULT wm_create() override
         {
             return 0;
         }
 
-        virtual LRESULT wmSize(RECT& rc) override
+        virtual LRESULT wm_size(RECT& rc) override
         {
             return 0;
         }
 
-        virtual LRESULT wmCustomDraw(NMCUSTOMDRAW* cd)
+        virtual LRESULT wm_custom_draw(NMCUSTOMDRAW* cd)
         {
             return 0;
         }
 
-        virtual LRESULT wmDrawItem(LPDRAWITEMSTRUCT dis)
+        virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis)
         {
             return 0;
         }
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = windowClass<W>();
+            auto& wndClass = wc<W>();
 
             handle = ::CreateWindowEx(
                 exStyle,
-                wc.name(),
+                wndClass.name(),
                 title,
                 style,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,
@@ -173,8 +173,8 @@ namespace MTL {
                 (LPVOID)(W*)this
             );
 
-            subClass();
-            wmCreate();
+            subclass();
+            wm_create();
             return handle;
         }
 
@@ -194,10 +194,10 @@ namespace MTL {
         WNDPROC	oldProc_ = nullptr;
     };
 
-    class Button;
+    class button;
 
     template<>
-    class WindowClass<Button>
+    class window_class<button>
     {
     public:
         const wchar_t* name()
@@ -206,28 +206,28 @@ namespace MTL {
         }
     };
 
-    class Button : public Ctrl<Button>
+    class button : public ctrl<button>
     {
     public:
 
-        void setBitmap(HBITMAP bmp)
+        void set_bitmap(HBITMAP bmp)
         {
-            sendMsg(BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp);
+            send_msg(BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp);
         }
 
         bool checked()
         {
-            return BST_CHECKED == sendMsg(BM_GETCHECK, 0, 0);
+            return BST_CHECKED == send_msg(BM_GETCHECK, 0, 0);
         }
 
         void check(bool b = true)
         {
-            sendMsg(BM_SETCHECK, b ? BST_CHECKED : BST_UNCHECKED, 0);
+            send_msg(BM_SETCHECK, b ? BST_CHECKED : BST_UNCHECKED, 0);
         }
 
     protected:
 
-        virtual LRESULT wmCommand(int id, int code) override
+        virtual LRESULT wm_command(int id, int code) override
         {
             onCommand.fire(id);
             return 0;
@@ -235,10 +235,10 @@ namespace MTL {
     };
 
 
-    class EditCtrl;
+    class edit_ctrl;
 
     template<>
-    class WindowClass<EditCtrl>
+    class window_class<edit_ctrl>
     {
     public:
         const wchar_t* name()
@@ -247,13 +247,13 @@ namespace MTL {
         }
     };
 
-    class EditCtrl : public Ctrl<EditCtrl>
+    class edit_ctrl : public ctrl<edit_ctrl>
     {};
 
-    class StatusBar;
+    class status_bar;
 
     template<>
-    class WindowClass<StatusBar>
+    class window_class<status_bar>
     {
     public:
         const wchar_t* name()
@@ -262,16 +262,16 @@ namespace MTL {
         }
     };
 
-    class StatusBar : public Ctrl<StatusBar>
+    class status_bar : public ctrl<status_bar>
     {
     public:
     };
 
 
-    class Tooltip;
+    class tool_tip;
 
     template<>
-    class WindowClass<Tooltip>
+    class window_class<tool_tip>
     {
     public:
         const wchar_t* name()
@@ -280,18 +280,18 @@ namespace MTL {
         }
     };
 
-    class Tooltip : public Ctrl<Tooltip> 
+    class tool_tip : public ctrl<tool_tip>
     {
     public:
 
         template<class T>
-        LRESULT addTool(T& ctrl, const std::wstring& txt)
+        LRESULT add(T& ctrl, const std::wstring& txt)
         {
             TOOLINFO ti;
             RECT r;
             ::GetClientRect(*ctrl, &r);
 
-           ctrl.deClass();
+           ctrl.declass();
 
             ti.cbSize = sizeof(TOOLINFO);
             ti.uFlags = TTF_SUBCLASS|TTF_IDISHWND;
@@ -306,19 +306,19 @@ namespace MTL {
             ti.lpReserved = 0;
             ti.lParam = 0;
 
-            LRESULT res = sendMsg(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
-            ctrl.subClass();
+            LRESULT res = send_msg(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+            ctrl.subclass();
             return res;
         }
 
         template<class T>
-        LRESULT addTool(HWND notifyParent, T& ctrl)
+        LRESULT add(HWND notifyParent, T& ctrl)
         {
             TOOLINFO ti;
             RECT r;
             ::GetClientRect(*ctrl, &r);
 
-            ctrl.deClass();
+            ctrl.declass();
 
             ti.cbSize = sizeof(TOOLINFO);
             ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
@@ -333,20 +333,20 @@ namespace MTL {
             ti.lpReserved = 0;
             ti.lParam = 0;
 
-            LRESULT res = sendMsg(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
-            ctrl.subClass();
+            LRESULT res = send_msg(TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+            ctrl.subclass();
             return res;
         }
 
     protected:
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = windowClass<Tooltip>();
+            auto& wndClass = wc<tool_tip>();
 
             handle = ::CreateWindowEx(
                 exStyle,
-                wc.name(),
+                wndClass.name(),
                 0,
                 style,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,
@@ -361,28 +361,28 @@ namespace MTL {
 
 
             DWORD e = ::GetLastError();
-            subClass();
+            subclass();
             return handle;
         }
     };
 
-    class ImageList
+    class image_list
     {
     public:
 
         int width = 24;
         int height = 24;
 
-        ImageList()
+        image_list()
         {}
 
-        ImageList(int w, int h, int style = ILC_COLOR32 | ILC_MASK, int n = 1, int max = 255)
+        image_list(int w, int h, int style = ILC_COLOR32 | ILC_MASK, int n = 1, int max = 255)
             : width(w), height(h)
         {
             create(w, h, style, n, max);
         }
 
-        ImageList& create(int w, int h, int style = ILC_COLOR32 | ILC_MASK, int n = 1, int max = 255)
+        image_list& create(int w, int h, int style = ILC_COLOR32 | ILC_MASK, int n = 1, int max = 255)
         {
             if (himl_)
             {
@@ -394,13 +394,13 @@ namespace MTL {
             return *this;
         }
 
-        ~ImageList()
+        ~image_list()
         {
             ::ImageList_Destroy(himl_);
             himl_ = nullptr;
         }
 
-        int addBitmap(HBITMAP bmp, COLORREF col = RGB(0, 0, 0))
+        int add_bitmap(HBITMAP bmp, COLORREF col = RGB(0, 0, 0))
         {
             return ::ImageList_AddMasked(
                 himl_,
@@ -409,7 +409,7 @@ namespace MTL {
             );
         }
 
-        int addIcon(HICON ico)
+        int add_icon(HICON ico)
         {
             return ::ImageList_AddIcon(himl_, ico);
         }
@@ -424,11 +424,11 @@ namespace MTL {
             return himl_;
         }
 
-        ImageList(const ImageList& rhs) = delete;
-        ImageList(ImageList&& rhs) = delete;
+        image_list(const image_list& rhs) = delete;
+        image_list(image_list&& rhs) = delete;
 
-        ImageList& operator=(const ImageList& rhs) = delete;
-        ImageList& operator=(ImageList&& rhs) = delete;
+        image_list& operator=(const image_list& rhs) = delete;
+        image_list& operator=(image_list&& rhs) = delete;
 
     private:
 
@@ -437,10 +437,10 @@ namespace MTL {
 
 
 
-    class TabControl;
+    class tab_ctrl;
 
     template<>
-    class WindowClass<TabControl>
+    class window_class<tab_ctrl>
     {
     public:
         const wchar_t* name()
@@ -449,26 +449,26 @@ namespace MTL {
         }
     };
 
-    class TabControl : public Ctrl<TabControl>
+    class tab_ctrl : public ctrl<tab_ctrl>
     {
     public:
 
-        class TabCtrlItem
+        class tab
         {
         public:
-            TabCtrlItem()
+            tab()
                 : title(L""), lparam(0)
             {}
 
-            TabCtrlItem(const std::wstring& t)
+            tab(const std::wstring& t)
                 : title(t), lparam(0)
             {}
 
-            TabCtrlItem(const std::wstring& t, const std::wstring& tt)
+            tab(const std::wstring& t, const std::wstring& tt)
                 : title(t), tooltip(tt), lparam(0)
             {}
 
-            TabCtrlItem(const std::wstring& t, const std::wstring& tt, const std::wstring& i, int idx = -1, LPARAM p = 0)
+            tab(const std::wstring& t, const std::wstring& tt, const std::wstring& i, int idx = -1, LPARAM p = 0)
                 : title(t), tooltip(tt), id(i), index(idx),lparam(p)
             {}
 
@@ -480,27 +480,27 @@ namespace MTL {
             LPARAM lparam = 0;
         };
 
-        MTL::Event<void(TabCtrlItem&)>                                  onSelect;
-        MTL::Event<void(MTL::TabControl::TabCtrlItem&, IDataObject*)>   onPopulateDataObj;
-        MTL::Event<void(MTL::TabControl::TabCtrlItem&)>                 onDrag;
-        MTL::Event<void(std::wstring)>                                  onDragOut;
-        MTL::Event<void(IDataObject*, DWORD, DWORD&)>                   onDrop;
-        MTL::Event<void(int, IDataObject*)>                             onDropExternal;
-        MTL::Event<void(std::wstring)>                                  onCloseTab;
+        event<void(tab&)>                                          onSelect;
+        event<void(tab&, IDataObject*)>                            onPopulateDataObj;
+        event<void(tab&)>                                          onDrag;
+        event<void(std::wstring)>                                  onDragOut;
+        event<void(IDataObject*, DWORD, DWORD&)>                   onDrop;
+        event<void(int, IDataObject*)>                             onDropExternal;
+        event<void(std::wstring)>                                  onCloseTab;
 
-        HWND                                                            activeChild = nullptr;
-        CLIPFORMAT			                                            dragTabFormat;
-        MTL::punk<DefaultDropTarget>                                    dropTarget;
-        MTL::Tooltip                                                    tooltip;
-        MTL::ImageList			                                        imageList;
+        HWND                                                       activeChild = nullptr;
+        CLIPFORMAT			                                       dragTabFormat;
+        punk<default_drop_target>                                  dropTarget;
+        tool_tip                                                  tooltip;
+        image_list			                                       imageList;
 
-        TabControl()
+        tab_ctrl()
         {
         }
 
-        virtual ~TabControl() {}
+        virtual ~tab_ctrl() {}
 
-        HWND setChild(HWND newChild)
+        HWND set_child(HWND newChild)
         {
             HWND old = activeChild;
             if (::IsWindow(old))
@@ -509,52 +509,52 @@ namespace MTL {
             }
             activeChild = newChild;
             ::ShowWindow(activeChild, SW_SHOW);
-            postMsg(WM_LAYOUT, 0, 0);
+            post_msg(WM_LAYOUT, 0, 0);
             return old;
         }
 
-        void enableIcon(HICON icon, int w = 16, int h = -1)
+        void enable_icon(HICON icon, int w = 16, int h = -1)
         {
             if (h == -1) h = w;
             imageList.create(w, h);
-            sendMsg(TCM_SETIMAGELIST, 0, (LPARAM)*imageList);
-            iconIndex = imageList.addIcon(icon);
+            send_msg(TCM_SETIMAGELIST, 0, (LPARAM)*imageList);
+            iconIndex = imageList.add_icon(icon);
 
         }
 
-        void enableDragDrop()
+        void enable_dragdrop()
         {
             dragTabFormat = ::RegisterClipboardFormat(L"MTLTabDragDropCustomClipBoardFormat");
-            dropTarget = MTL::dropTarget(dragTabFormat);
+            dropTarget = drop_target(dragTabFormat);
 
             dropTarget->onDrop([this](IDataObject* ido, DWORD keyState, DWORD& effect)
             {
                 onDrop.fire(ido, keyState, effect);
             });
 
-            sendMsg(TCM_SETEXTENDEDSTYLE, TCS_EX_REGISTERDROP, TCS_EX_REGISTERDROP);
+            send_msg(TCM_SETEXTENDEDSTYLE, TCS_EX_REGISTERDROP, TCS_EX_REGISTERDROP);
 
             onNotify(TCN_GETOBJECT, [this](NMHDR* nmhdr)
             {
-                wmObjectNotify((NMOBJECTNOTIFY*)nmhdr);
+                wm_object_notify((NMOBJECTNOTIFY*)nmhdr);
             });
 
-            onPopulateDataObj([this](MTL::TabControl::TabCtrlItem& c, IDataObject* ido)
+            onPopulateDataObj([this](tab& c, IDataObject* ido)
             {
             });
 
-            onDrag([this](MTL::TabControl::TabCtrlItem& c)
+            onDrag([this](tab& c)
             {
-                MTL::format_etc fe(dragTabFormat);
+                format_etc fe(dragTabFormat);
                 DWORD effect = 0;
 
-                auto obj = dataObject(fe, c.id);
+                auto obj = data_obj(fe, c.id);
 
                 onPopulateDataObj.fire(c, *obj);
 
                 HRESULT hr = ::DoDragDrop(
                     *obj,
-                    *MTL::dropSource(),
+                    *drop_source(),
                     //DROPEFFECT_COPY | 
                     DROPEFFECT_MOVE,
                     &effect
@@ -565,7 +565,7 @@ namespace MTL {
                     POINT pt;
                     ::GetCursorPos(&pt);
                     RECT r;
-                    ::GetWindowRect(getParent(), &r);
+                    ::GetWindowRect(parent(), &r);
                     if (!::PtInRect(&r, pt))
                     {
                         onDragOut.fire(c.id);
@@ -575,10 +575,10 @@ namespace MTL {
 
             onDrop([this](IDataObject* ido, DWORD keyState, DWORD& effect)
             {
-                MTL::dataobj_view dv(ido);
+                dataobj_view dv(ido);
                 std::wstring id = dv.wstring(dragTabFormat);
 
-                int index_to = hitTest();
+                int index_to = hit_test();
                 int cur = (int)selected();
 
                 if (index_to == -1)
@@ -600,18 +600,18 @@ namespace MTL {
                         }
                     }
                 }
-                int index_from = id2index(id);
+                int index_from = id_to_index(id);
                 if (index_from == -1)
                 {
                     onDropExternal.fire(index_to, ido);
                     effect = DROPEFFECT_MOVE;
                     return;
                 }
-                TabCtrlItem* tci = getTabCtrlItem(index_from);
+                tab* tci = getTabCtrlItem(index_from);
                 removeItem(index_from, false);
                 insertItem(tci, index_to);
 
-                clearHighlite();
+                clear_highlite();
                 select(index_to);
                 onSelect.fire(*tci);
                 //highlite(cur);
@@ -619,63 +619,63 @@ namespace MTL {
         }
 
 
-        void add(TabCtrlItem&& item, int index = -1)
+        void add(tab&& item, int index = -1)
         {
-            TabCtrlItem* tci = new TabCtrlItem(item);
+            tab* tci = new tab(item);
             int idx = (int) insertItem(tci, index);
             select(idx);
-            postMsg(WM_LAYOUT, 0, 0);
+            post_msg(WM_LAYOUT, 0, 0);
         }
 
-        void add(TabCtrlItem&& item, HWND child, int index = -1)
+        void add(tab&& item, HWND child, int index = -1)
         {
-            TabCtrlItem* tci = new TabCtrlItem(item);
+            tab* tci = new tab(item);
             tci->hWnd = child;
             int idx = (int)insertItem(tci, index);
             select(idx);
-            postMsg(WM_LAYOUT, 0, 0);
+            post_msg(WM_LAYOUT, 0, 0);
         }
 
-        TabCtrlItem& item(int index)
+        tab& item(int index)
         {
             return *getTabCtrlItem(index);
         }
 
-        TabCtrlItem& item(const std::wstring& id)
+        tab& item(const std::wstring& id)
         {
-            return *getTabCtrlItem(id2index(id));
+            return *getTabCtrlItem(id_to_index(id));
         }
 
-        void clearHighlite()
+        void clear_highlite()
         {
             // clear highlight bits from tabctrl
             for (int i = 0; i < count(); i++)
             {
-                postMsg(TCM_HIGHLIGHTITEM, i, FALSE);
+                post_msg(TCM_HIGHLIGHTITEM, i, FALSE);
             }
         }
 
         void highlite(int idx, bool bShow = true)
         {
-            postMsg(TCM_HIGHLIGHTITEM, idx, bShow);
+            post_msg(TCM_HIGHLIGHTITEM, idx, bShow);
         }
 
-        TabCtrlItem remove(int index = -1)
+        tab remove(int index = -1)
         {
-            TabCtrlItem result(*getTabCtrlItem(index));
+            tab result(*getTabCtrlItem(index));
             removeItem(index, true);
             return result;
         }
 
-        TabCtrlItem remove(const std::wstring& id)
+        tab remove(const std::wstring& id)
         {
-            int index = id2index(id);
+            int index = id_to_index(id);
             return remove(index);
         }
 
         int count()
         {
-            return (int)sendMsg(TCM_GETITEMCOUNT, 0, 0);
+            return (int)send_msg(TCM_GETITEMCOUNT, 0, 0);
         }
 
         LRESULT select(int i)
@@ -686,15 +686,15 @@ namespace MTL {
                 HWND hWnd = tci->hWnd;
                 if (::IsWindow(hWnd))
                 {
-                    setChild(hWnd);
+                    set_child(hWnd);
                 }
             }
-            return sendMsg(TCM_SETCURSEL, (WPARAM)i, 0);
+            return send_msg(TCM_SETCURSEL, (WPARAM)i, 0);
         }
 
         LRESULT select(const std::wstring& id)
         {
-            int index = id2index(id);
+            int index = id_to_index(id);
             return select(index);
         }
 
@@ -703,14 +703,14 @@ namespace MTL {
             return (int)TabCtrl_GetCurSel(handle);
         }
 
-        RECT displayRect()
+        RECT display_rect()
         {
-            RECT r = getWindowRect();
-            LRESULT res = sendMsg(TCM_ADJUSTRECT, FALSE, (LPARAM)&r);
+            RECT r = window_rect();
+            LRESULT res = send_msg(TCM_ADJUSTRECT, FALSE, (LPARAM)&r);
             return r;
         }
 
-        int hitTest()
+        int hit_test()
         {
             TCHITTESTINFO tchit;
             ::GetCursorPos(&(tchit.pt));
@@ -718,14 +718,14 @@ namespace MTL {
             return TabCtrl_HitTest(handle, &tchit);
         }
 
-        RECT getTabRect(int index)
+        RECT tab_rect(int index)
         {
             RECT r;
             TabCtrl_GetItemRect(handle, index, &r);
             return r;
         }
 
-        bool hitIconTest()
+        bool hit_icon_test()
         {
             TCHITTESTINFO tchit;
             ::GetCursorPos(&(tchit.pt));
@@ -743,7 +743,7 @@ namespace MTL {
                     return false;
                 }
 
-                RECT tr = getTabRect(selected());
+                RECT tr = tab_rect(selected());
 
                 tr.right = tr.left + imageList.width;
                 tr.bottom = tr.top + imageList.height;
@@ -756,12 +756,12 @@ namespace MTL {
             return false;
         }
 
-        int id2index(std::wstring id)
+        int id_to_index(std::wstring id)
         {
             int c = count();
             for (int i = 0; i < c; i++)
             {
-                TabCtrlItem* tci = getTabCtrlItem(i);
+                tab* tci = getTabCtrlItem(i);
                 if (tci)
                 {
                     if (tci->id == id)
@@ -790,7 +790,7 @@ namespace MTL {
 
                     RECT bounds;
                     ::GetClientRect(handle, &bounds);
-                    wmSize(bounds);
+                    wm_size(bounds);
                     break;
                 }
                 case WM_LBUTTONDOWN:
@@ -807,7 +807,7 @@ namespace MTL {
                 {
                     if (colorTheme && colorTheme->enabled())
                     {
-                        return wmPaintHandler();
+                        return wm_paint_handler();
                     }
                     break;
                 }
@@ -816,16 +816,16 @@ namespace MTL {
                     return 1;
                 }
             }
-            return Ctrl<TabControl>::wndProc(hwnd, message, wParam, lParam);
+            return ctrl<tab_ctrl>::wndProc(hwnd, message, wParam, lParam);
         }
 
     protected:
 
-        virtual LRESULT wmSize(RECT& clientRect) override
+        virtual LRESULT wm_size(RECT& clientRect) override
         {
             if (::IsWindow(activeChild))
             {
-                RECT tr = displayRect();
+                RECT tr = display_rect();
 
                 POINT p1{ tr.left, tr.top };
                 ::ScreenToClient(handle, &p1);
@@ -846,7 +846,7 @@ namespace MTL {
             return 0;
         }
 
-        virtual LRESULT wmNotify(int id, NMHDR* nmhdr) override
+        virtual LRESULT wm_notify(int id, NMHDR* nmhdr) override
         {
             if (nmhdr->code == TCN_SELCHANGE)
             {
@@ -855,26 +855,26 @@ namespace MTL {
                 {
                     return 0;
                 }
-                TabCtrlItem* tci = getTabCtrlItem(curSel);
+                tab* tci = getTabCtrlItem(curSel);
                 if (tci)
                 {
                     onSelect.fire(*tci);
                     if (::IsWindow(tci->hWnd))
                     {
-                        setChild(tci->hWnd);
+                        set_child(tci->hWnd);
                     }
                 }
             }
             if (nmhdr->code == TCN_SELCHANGING)
             {
-                return hitIconTest();
+                return hit_icon_test();
             }
 
             if (nmhdr->code == NM_CLICK)
             {
-                if (hitIconTest())
+                if (hit_icon_test())
                 {
-                    int idx = hitTest();
+                    int idx = hit_test();
                     if (idx != -1)
                     {
                         auto& it = item(idx);
@@ -887,7 +887,7 @@ namespace MTL {
             return 0;
         }
 
-        virtual LRESULT wmDrawItem(LPDRAWITEMSTRUCT dis) override
+        virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) override
         {
             if (!this->colorTheme) return 0;
 
@@ -897,13 +897,13 @@ namespace MTL {
             ::SetBkMode(dis->hDC, TRANSPARENT);
             if (!bSelected)
             {
-                ::SetTextColor(dis->hDC, this->colorTheme->textColor());
-                br = this->colorTheme->bkgBrush();
+                ::SetTextColor(dis->hDC, this->colorTheme->text_color());
+                br = this->colorTheme->bkg_brush();
             }
             else
             {
-                ::SetTextColor(dis->hDC, this->colorTheme->selectedTextColor());
-                br = this->colorTheme->selectedBkgBrush();
+                ::SetTextColor(dis->hDC, this->colorTheme->selected_text_color());
+                br = this->colorTheme->selected_bkg_brush();
             }
             ::FillRect(dis->hDC, &dis->rcItem, br);
 
@@ -922,7 +922,7 @@ namespace MTL {
             return 0;
         }
 
-        virtual void wmObjectNotify(NMOBJECTNOTIFY* notify)
+        virtual void wm_object_notify(NMOBJECTNOTIFY* notify)
         {
             notify->hResult = E_FAIL;
             IID iid = *(notify->piid);
@@ -935,7 +935,7 @@ namespace MTL {
             }
         }
 
-        INT_PTR wmPaintHandler()
+        INT_PTR wm_paint_handler()
         {
             PAINTSTRUCT ps;
             HDC hDC = ::BeginPaint(handle, &ps);
@@ -975,7 +975,7 @@ namespace MTL {
                         r.right -= 1;
                 }
 
-                ::FrameRect(hDC, &r, colorTheme->bkgBrush());
+                ::FrameRect(hDC, &r, colorTheme->bkg_brush());
                 r.bottom -= 2;
                 if (i == current_item)
                 {
@@ -984,7 +984,7 @@ namespace MTL {
                     tmp.top += 1;
                     tmp.bottom += 1;
 
-                    ::FrameRect(hDC, &tmp, colorTheme->selectedBkgBrush());
+                    ::FrameRect(hDC, &tmp, colorTheme->selected_bkg_brush());
                 }
 
                 if (xp_themed)
@@ -1035,7 +1035,7 @@ namespace MTL {
             ::CombineRgn(hFillRgn, hFillRgn, hRgn, RGN_DIFF);
             ::SelectClipRgn(hDC, hFillRgn);
  
-            ::FillRgn(hDC, hFillRgn, colorTheme->bkgBrush());
+            ::FillRgn(hDC, hFillRgn, colorTheme->bkg_brush());
 
             BOOL ok = DeleteObject(hFillRgn);
             ok = DeleteObject(hRgn);
@@ -1043,16 +1043,16 @@ namespace MTL {
             return 0;
         }
 
-        TabCtrlItem* getTabCtrlItem(int i)
+        tab* getTabCtrlItem(int i)
         {
             TCITEM item;
             ZeroMemory(&item, sizeof(item));
             item.mask = TCIF_PARAM;
-            sendMsg(TCM_GETITEM, (WPARAM)i, (LPARAM)(const LPTCITEM)(&item));
-            return (TabCtrlItem*)(item.lParam);
+            send_msg(TCM_GETITEM, (WPARAM)i, (LPARAM)(const LPTCITEM)(&item));
+            return (tab*)(item.lParam);
         }
 
-        LRESULT insertItem(TabCtrlItem* titem, int index = -1)
+        LRESULT insertItem(tab* titem, int index = -1)
         {
             int c = (int)count();
             //default: add to back
@@ -1072,15 +1072,15 @@ namespace MTL {
             item.iImage = iconIdx;
             item.lParam = (LPARAM)(titem);
 
-            LRESULT i = sendMsg(TCM_INSERTITEM, (WPARAM)index, (LPARAM)(const LPTCITEM)(&item));
+            LRESULT i = send_msg(TCM_INSERTITEM, (WPARAM)index, (LPARAM)(const LPTCITEM)(&item));
 
             return i;
         }
 
-        TabCtrlItem* removeItem(int index = -1, bool deleteItem = true)
+        tab* removeItem(int index = -1, bool deleteItem = true)
         {
-            TabCtrlItem* selectedItem = getTabCtrlItem(selected());
-            TabCtrlItem* tci = (TabCtrlItem*)getTabCtrlItem(index);
+            tab* selectedItem = getTabCtrlItem(selected());
+            tab* tci = (tab*)getTabCtrlItem(index);
             LRESULT lr = (LRESULT)TabCtrl_DeleteItem(handle, index);
 
             int c = count();
@@ -1117,7 +1117,7 @@ namespace MTL {
         {
             isMouseDown_ = false;
 
-            int i = hitTest();
+            int i = hit_test();
             if (i != -1)
             {
                 // wait a bit might be a drag-drop
@@ -1127,11 +1127,11 @@ namespace MTL {
                     if (isMouseDown_)
                     {
                         isMouseDown_ = false;
-                        int i = hitTest();
+                        int i = hit_test();
                         if (i != -1)
                         {
                             // do a simple dragDrop
-                            MTL::TabControl::TabCtrlItem* c = getTabCtrlItem(i);
+                            tab* c = getTabCtrlItem(i);
                             if (c)
                             {
                                 onDrag.fire(*c);
@@ -1143,12 +1143,12 @@ namespace MTL {
         }
 
 
-        void forEach(std::function<void(TabCtrlItem& tci)> visitor)
+        void forEach(std::function<void(tab& tci)> visitor)
         {
             int c = count();
             for (int i = 0; i < c; i++)
             {
-                TabCtrlItem* ptci = getTabCtrlItem(i);
+                tab* ptci = getTabCtrlItem(i);
                 if (ptci)
                 {
                     visitor(*ptci);
@@ -1158,8 +1158,8 @@ namespace MTL {
 
         virtual void onColorThemeChanged()
         {
-            MTL::Wnd::onColorThemeChanged();
-            tooltip.setColorTheme(colorTheme);
+            wnd::on_color_theme_changed();
+            tooltip.set_color_theme(colorTheme);
 
             LONG style = ::GetWindowLong(handle, GWL_STYLE);
 
@@ -1176,11 +1176,11 @@ namespace MTL {
 
         virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
         {
-            auto& wc = windowClass<TabControl>();
+            auto& wndClass = wc<tab_ctrl>();
 
             handle = ::CreateWindowEx(
                 exStyle,
-                wc.name(),
+                wndClass.name(),
                 title,
                 style,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,
@@ -1190,13 +1190,13 @@ namespace MTL {
                 (LPVOID)this
             );
 
-            subClass();
+            subclass();
 
             RECT rp;
             ::GetClientRect(parent, &r);
             tooltip.create(1, parent, rp, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP);
 
-            tooltip.addTool(parent, *this);
+            tooltip.add(parent, *this);
 
             tooltip.onNotify(TTN_GETDISPINFO, [this](NMHDR* nmhdr)
             {
@@ -1207,10 +1207,10 @@ namespace MTL {
                 di->hinst = 0;
                 di->szText[0] = 0;
 
-                int i = hitTest();
+                int i = hit_test();
                 if (i != -1)
                 {
-                    MTL::TabControl::TabCtrlItem* c = getTabCtrlItem(i);
+                    tab* c = getTabCtrlItem(i);
                     if (c)
                     {
                         di->lpszText = (wchar_t*)(c->tooltip.c_str());
@@ -1224,16 +1224,16 @@ namespace MTL {
         }
 
 
-        MTL::Timer                  timer_;
-        std::vector<TabCtrlItem>    items_;
+        timer                       timer_;
+        std::vector<tab>            items_;
         bool				        isMouseDown_ = false;
         int                         iconIndex = -1;
     };
 
-    class ComboBox;
+    class combo_box;
 
     template<>
-    class MTL::WindowClass<ComboBox>
+    class window_class<combo_box>
     {
     public:
         const wchar_t* name()
@@ -1242,59 +1242,59 @@ namespace MTL {
         }
     };
 
-    class ComboBox : public Ctrl<ComboBox>
+    class combo_box : public ctrl<combo_box>
     {
     public:
 
-        ComboBox& addString(const std::wstring& s, LPARAM param = 0 )
+        combo_box& add(const std::wstring& s, LPARAM param = 0 )
         {
-            int r = (int) sendMsg(CB_ADDSTRING, 0, (LPARAM)s.c_str());
+            int r = (int) send_msg(CB_ADDSTRING, 0, (LPARAM)s.c_str());
             if ( r != CB_ERR && param)
             {
-                sendMsg(CB_SETITEMDATA, r, param);
+                send_msg(CB_SETITEMDATA, r, param);
             }
             return *this;
         }
 
         void width(int w)
         {
-            sendMsg(CB_SETDROPPEDWIDTH, w, 0);
+            send_msg(CB_SETDROPPEDWIDTH, w, 0);
         }
 
         int count()
         {
-            return (int)sendMsg(CB_GETCOUNT, 0, 0);
+            return (int)send_msg(CB_GETCOUNT, 0, 0);
         }
 
-        LRESULT getItemData(int id)
+        LRESULT item_data(int id)
         {
-            return sendMsg(CB_GETITEMDATA, 0, 0);
+            return send_msg(CB_GETITEMDATA, 0, 0);
         }
 
-        std::wstring getItemText(int id)
+        std::wstring item_txt(int id)
         {
-            int n = (int) sendMsg(CB_GETLBTEXTLEN, id, 0);
-            MTL::wbuff wbuf(n);
-            n = (int) sendMsg(CB_GETLBTEXT, id, 0);
+            int n = (int)send_msg(CB_GETLBTEXTLEN, id, 0);
+            wbuff wbuf(n);
+            n = (int)send_msg(CB_GETLBTEXT, id, 0);
             return wbuf.toString(n);
         }
 
-        LRESULT curSel()
+        LRESULT selected()
         {
-            return sendMsg(CB_GETCURSEL, 0, 0);
+            return send_msg(CB_GETCURSEL, 0, 0);
         }
 
-        ComboBox& select(int idx)
+        combo_box& select(int idx)
         {
-            sendMsg(CB_SETCURSEL, idx, 0);
+            send_msg(CB_SETCURSEL, idx, 0);
             return *this;
         }
     };
 
-    class ComboBoxEx;
+    class combo_box_ex;
 
     template<>
-    class MTL::WindowClass<ComboBoxEx>
+    class window_class<combo_box_ex>
     {
     public:
         const wchar_t* name()
@@ -1303,25 +1303,25 @@ namespace MTL {
         }
     };
 
-    class ComboBoxEx : public Ctrl<ComboBoxEx>
+    class combo_box_ex : public ctrl<combo_box_ex>
     {
     public:
 
         std::map<std::wstring, int> path2index;
-        ImageList imageList;
+        image_list imageList;
         int w = 0;
         int h = 0;
 
-        ComboBoxEx()
+        combo_box_ex()
         {}
 
-        void setImgSize(int x, int y)
+        void img_size(int x, int y)
         {
             w = x;
             h = y;
         }
 
-        int loadImage(const wchar_t* path)
+        int load_image(const wchar_t* path)
         {
             if (path2index.count(path) != 0)
             {
@@ -1331,7 +1331,7 @@ namespace MTL {
             HBITMAP bmp = nullptr;
             if(w == 0)
             {
-                bmp = bitmapCache().get(path);
+                bmp = the_bitmap_cache().get(path);
                 BITMAP bm;
                 ::GetObject(bmp, sizeof(bm), &bm);
                 w = bm.bmWidth;
@@ -1339,21 +1339,21 @@ namespace MTL {
             }
             else
             {
-                bmp = bitmapCache().get(path,w,h);
+                bmp = the_bitmap_cache().get(path,w,h);
             }
 
             if (!*imageList)
             {
                 imageList.create(w, h);
-                sendMsg(CBEM_SETIMAGELIST, 0, (LPARAM)*imageList);
+                send_msg(CBEM_SETIMAGELIST, 0, (LPARAM)*imageList);
             }
 
-            int idx = imageList.addBitmap(bmp);
+            int idx = imageList.add_bitmap(bmp);
             path2index[path] = idx;
             return idx;
         }
 
-        void insertItem(int cmd, const std::wstring& label, const std::wstring& path, int index = -1)
+        void add(int cmd, const std::wstring& label, const std::wstring& path, int index = -1)
         {
             COMBOBOXEXITEM cbix;
             ::ZeroMemory(&cbix, sizeof(cbix));
@@ -1365,12 +1365,12 @@ namespace MTL {
             }
             cbix.iItem = index;
             cbix.lParam = cmd;
-            cbix.iImage = loadImage(path.c_str());
-            cbix.iSelectedImage = loadImage(path.c_str());
+            cbix.iImage = load_image(path.c_str());
+            cbix.iSelectedImage = load_image(path.c_str());
             
-            sendMsg(CBEM_INSERTITEM, 0,(LPARAM) &cbix);
+            send_msg(CBEM_INSERTITEM, 0,(LPARAM) &cbix);
 
-            HWND cb = (HWND) sendMsg(CBEM_GETCOMBOCONTROL, 0, 0);
+            HWND cb = (HWND)send_msg(CBEM_GETCOMBOCONTROL, 0, 0);
             
             RECT r;
             ::GetWindowRect(cb, &r);
@@ -1379,29 +1379,29 @@ namespace MTL {
             ::SetWindowPos(cb, 0, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
         }
 
-        LRESULT curSel()
+        LRESULT selected()
         {
-            return sendMsg(CB_GETCURSEL, 0, 0);
+            return send_msg(CB_GETCURSEL, 0, 0);
         }
 
-        ComboBoxEx& select(int idx)
+        combo_box_ex& select(int idx)
         {
-            sendMsg(CB_SETCURSEL, idx, 0);
+            send_msg(CB_SETCURSEL, idx, 0);
             return *this;
         }
 
         int count()
         {
-            return (int)sendMsg(CB_GETCOUNT, 0, 0);
+            return (int)send_msg(CB_GETCOUNT, 0, 0);
         }
 
     };
 
 
-    class ToolBar;
+    class tool_bar;
 
     template<>
-    class MTL::WindowClass<ToolBar>
+    class window_class<tool_bar>
     {
     public:
         const wchar_t* name()
@@ -1410,10 +1410,10 @@ namespace MTL {
         }
     };
 
-    class ToolBar : public Ctrl<ToolBar>
+    class tool_bar : public ctrl<tool_bar>
     {
     protected:
-        MTL::ImageList imageList_;
+        image_list imageList_;
         std::map<size_t, std::wstring> rindex_;
         std::map<std::wstring, size_t> index_;
         std::map<int, int> id2pos_;
@@ -1424,11 +1424,11 @@ namespace MTL {
 
     public:
 
-        MTL::Event<void(int cmd)> onBar;
-        MTL::Event<void(int id, NMTOOLBAR*)> onBarNotify;
-        MTL::Event<int()> onRightClick;
+        event<void(int cmd)> onBar;
+        event<void(int id, NMTOOLBAR*)> onBarNotify;
+        event<int()> onRightClick;
 
-        ToolBar& addButton(const std::wstring& path, int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
+        tool_bar& add_button(const std::wstring& path, int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
         {
             size_t index = getBitmapIndex(path);
             TBBUTTON tbButton;
@@ -1439,13 +1439,13 @@ namespace MTL {
             tbButton.idCommand = iCmd;
             tbButton.iString = (INT_PTR)label;
 
-            sendMsg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
+            send_msg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
             id2pos_[iCmd] = count() - 1;
             return *this;
         }
 
 
-        ToolBar& addTextButton(int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
+        tool_bar& add_text_button(int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
         {
             TBBUTTON tbButton;
             tbButton.dwData = data;
@@ -1455,12 +1455,12 @@ namespace MTL {
             tbButton.idCommand = iCmd;
             tbButton.iString = (INT_PTR)label;
 
-            sendMsg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
+            send_msg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
             id2pos_[iCmd] = count() - 1;
             return *this;
         }
 
-        ToolBar& addSeparator(int width, int iCmd = 0)
+        tool_bar& add_separator(int width, int iCmd = 0)
         {
             TBBUTTON tbButton;
             tbButton.dwData = 0;
@@ -1470,13 +1470,13 @@ namespace MTL {
             tbButton.idCommand = iCmd;
             tbButton.iString = (INT_PTR)0;
 
-            sendMsg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
+            send_msg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
             return *this;
         }
 
-        ToolBar& addControl(HWND child, RECT& r, int iCmd = 0)
+        tool_bar& add_control(HWND child, RECT& r, int iCmd = 0)
         {
-            addSeparator(r.right - r.left, iCmd);
+            add_separator(r.right - r.left, iCmd);
 
             ::SetParent(child, handle);
             ::SetWindowPos(
@@ -1493,7 +1493,7 @@ namespace MTL {
         }
 
 
-        ToolBar& setPadding(int w, int h)
+        tool_bar& padding(int w, int h)
         {
             wPadding = w;
             hPadding = h;
@@ -1508,12 +1508,12 @@ namespace MTL {
             tbm.cyPad = h;
             tbm.dwMask = TBMF_PAD;
 
-            sendMsg(TB_SETMETRICS, 0, (LPARAM)&tbm);
+            send_msg(TB_SETMETRICS, 0, (LPARAM)&tbm);
             return *this;
         }
 
 
-        ToolBar& setSpacing(int w, int h)
+        tool_bar& spacing(int w, int h)
         {
             TBMETRICS tbm;
             tbm.cbSize = sizeof(tbm);
@@ -1525,24 +1525,24 @@ namespace MTL {
             tbm.cyPad = 0;
             tbm.dwMask = TBMF_BUTTONSPACING;
 
-            sendMsg(TB_SETMETRICS, 0, (LPARAM)&tbm);
+            send_msg(TB_SETMETRICS, 0, (LPARAM)&tbm);
             return *this;
         }
 
-        ToolBar& setIndent(int w)
+        tool_bar& indent(int w)
         {
-            sendMsg(TB_SETINDENT, w, 0);
+            send_msg(TB_SETINDENT, w, 0);
             return *this;
         }
 
         LRESULT state(int cmd)
         {
-            return sendMsg(TB_GETSTATE, (WPARAM)cmd, 0);
+            return send_msg(TB_GETSTATE, (WPARAM)cmd, 0);
         }
 
         LRESULT state(int cmd, int state)
         {
-            return sendMsg(TB_SETSTATE, (WPARAM)cmd, (LPARAM)state);
+            return send_msg(TB_SETSTATE, (WPARAM)cmd, (LPARAM)state);
         }
 
 
@@ -1562,37 +1562,37 @@ namespace MTL {
             return old;
         }
 
-        BYTE buttonStyle(int id)
+        BYTE button_style(int id)
         {
             TBBUTTONINFO tbbi;
             ::ZeroMemory(&tbbi, sizeof(tbbi));
             tbbi.cbSize = sizeof(tbbi);
             tbbi.dwMask = TBIF_STYLE;
-            sendMsg(TB_GETBUTTONINFO, (WPARAM)id, (LPARAM)&tbbi);
+            send_msg(TB_GETBUTTONINFO, (WPARAM)id, (LPARAM)&tbbi);
             return tbbi.fsStyle;
         }
 
-        BYTE buttonStyle(int id, BYTE style)
+        BYTE button_style(int id, BYTE style)
         {
             TBBUTTONINFO tbbi;
             ::ZeroMemory(&tbbi, sizeof(tbbi));
             tbbi.cbSize = sizeof(tbbi);
             tbbi.dwMask = TBIF_STYLE;
             tbbi.fsStyle = style;
-            sendMsg(TB_SETBUTTONINFO, (WPARAM)id, (LPARAM)&tbbi);
+            send_msg(TB_SETBUTTONINFO, (WPARAM)id, (LPARAM)&tbbi);
             return tbbi.fsStyle;
         }
 
         int count()
         {
-            return (int)sendMsg(TB_BUTTONCOUNT, 0, 0);
+            return (int)send_msg(TB_BUTTONCOUNT, 0, 0);
         }
 
         void clear()
         {
             while (count())
             {
-                sendMsg(TB_DELETEBUTTON, 0, 0);
+                send_msg(TB_DELETEBUTTON, 0, 0);
             }
         }
 
@@ -1602,22 +1602,22 @@ namespace MTL {
             return (c * (wPadding + w));
         }
 
-        RECT getButtonRect(int iCmd)
+        RECT button_rect(int iCmd)
         {
             RECT r = { 0,0,0,0 };
-            sendMsg(TB_GETRECT, iCmd, (LPARAM)&r);
+            send_msg(TB_GETRECT, iCmd, (LPARAM)&r);
             return r;
         }
 
-        void getButton(int idx, TBBUTTON* tb)
+        void get_button(int idx, TBBUTTON* tb)
         {
-            sendMsg(TB_GETBUTTON, idx, (LPARAM)tb);
+            send_msg(TB_GETBUTTON, idx, (LPARAM)tb);
         }
 
-        void getButtonByCmd(int iCmd, TBBUTTON* tb)
+        void get_button_by_cmd(int iCmd, TBBUTTON* tb)
         {
             int pos = id2pos_[iCmd];
-            sendMsg(TB_GETBUTTON, pos, (LPARAM)tb);
+            send_msg(TB_GETBUTTON, pos, (LPARAM)tb);
         }
 
         std::wstring bmp(int idx)
@@ -1627,14 +1627,14 @@ namespace MTL {
 
     protected:
 
-        virtual LRESULT wmCommand(int id, int code) override
+        virtual LRESULT wm_command(int id, int code) override
         {
             onCommand.fire(id);
             onBar.fire(id);
             return 0;
         }
 
-        virtual LRESULT wmNotify(int id, NMHDR* nmhdr) override
+        virtual LRESULT wm_notify(int id, NMHDR* nmhdr) override
         {
             if (nmhdr->code == TBN_DROPDOWN)
             {
@@ -1658,17 +1658,17 @@ namespace MTL {
         }
 
 
-        virtual LRESULT wmCustomDraw(NMCUSTOMDRAW* cd) override
+        virtual LRESULT wm_custom_draw(NMCUSTOMDRAW* cd) override
         {
             NMTBCUSTOMDRAW* tbcd = (NMTBCUSTOMDRAW*)cd;
 
             if (tbcd->nmcd.dwDrawStage == CDDS_PREPAINT)
             {
                 HDC hdc = tbcd->nmcd.hdc;
-                MTL::dc_view dcv(hdc);
+                dc_view dcv(hdc);
                 if(colorTheme->font())
                     dcv.select(colorTheme->font());
-                dcv.fillRect(tbcd->nmcd.rc, colorTheme->bkgBrush());
+                dcv.fill_rect(tbcd->nmcd.rc, colorTheme->bkg_brush());
                 return TBCDRF_USECDCOLORS  //| TBCDRF_NOEDGES //TBCDRF_NOOFFSET | TBCDRF_NOBACKGROUND | TBCDRF_NOMARK
                     | CDRF_NEWFONT | CDRF_NOTIFYITEMDRAW; //| CDRF_NOTIFYSUBITEMDRAW
                     //| TBCDRF_HILITEHOTTRACK;
@@ -1677,7 +1677,7 @@ namespace MTL {
             if ((tbcd->nmcd.dwDrawStage == CDDS_ITEMPREPAINT))
             {
                 HDC hdc = tbcd->nmcd.hdc;
-                MTL::dc_view dcv(hdc);
+                dc_view dcv(hdc);
                 if (colorTheme->font())
                     dcv.select(colorTheme->font());
 
@@ -1685,21 +1685,21 @@ namespace MTL {
 
                 if (state & CDIS_CHECKED)
                 {
-                    dcv.fillRect(tbcd->nmcd.rc, colorTheme->selectedBkgBrush());
+                    dcv.fill_rect(tbcd->nmcd.rc, colorTheme->selected_bkg_brush());
                 }
                 else
                 {
-                    dcv.fillRect(tbcd->nmcd.rc, colorTheme->bkgBrush());
+                    dcv.fill_rect(tbcd->nmcd.rc, colorTheme->bkg_brush());
                 }
-                dcv.setTextColor(colorTheme->textColor());
-                tbcd->clrText = colorTheme->textColor();
-                tbcd->clrHighlightHotTrack = colorTheme->bkgColor();
-                tbcd->clrBtnHighlight = colorTheme->textColor();
-                tbcd->clrMark = colorTheme->bkgColor();
-                tbcd->clrBtnFace = colorTheme->bkgColor();
-                tbcd->clrTextHighlight = colorTheme->bkgColor();
-                tbcd->hbrMonoDither = colorTheme->bkgBrush();
-                tbcd->hbrLines = colorTheme->bkgBrush();
+                dcv.set_text_color(colorTheme->text_color());
+                tbcd->clrText = colorTheme->text_color();
+                tbcd->clrHighlightHotTrack = colorTheme->bkg_color();
+                tbcd->clrBtnHighlight = colorTheme->text_color();
+                tbcd->clrMark = colorTheme->bkg_color();
+                tbcd->clrBtnFace = colorTheme->bkg_color();
+                tbcd->clrTextHighlight = colorTheme->bkg_color();
+                tbcd->hbrMonoDither = colorTheme->bkg_brush();
+                tbcd->hbrLines = colorTheme->bkg_brush();
 
                 LRESULT result = //TBCDRF_NOOFFSET | TBCDRF_NOEDGES | TBCDRF_NOMARK 
                     CDRF_NEWFONT | TBCDRF_USECDCOLORS | TBCDRF_HILITEHOTTRACK;
@@ -1717,9 +1717,9 @@ namespace MTL {
         {
             if (index_.count(s) == 0)
             {
-                auto bmp = bitmapCache().get(s.c_str(), w, h);
+                auto bmp = the_bitmap_cache().get(s.c_str(), w, h);
 
-                int idx = imageList_.addBitmap(bmp);
+                int idx = imageList_.add_bitmap(bmp);
 
                 index_[s] = index_.size();
                 rindex_[idx] = s;
@@ -1732,49 +1732,49 @@ namespace MTL {
             return index_[s];
         }
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = MTL::windowClass<ToolBar>();
+            auto& wndClass = wc<tool_bar>();
 
             handle = ::CreateWindowEx(
                 0,
-                wc.name(),
+                wndClass.name(),
                 title,
                 WS_CHILD,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,
                 parent,
                 menu,
-                MTL::module_instance(),
+                module_instance(),
                 (LPVOID)this
             );
 
-            subClass();
+            subclass();
 
-            sendMsg(TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+            send_msg(TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 
             w = r.right - r.left;
             h = r.bottom - r.top;
 
-            sendMsg(TB_SETBITMAPSIZE, 0, MAKELPARAM(w, h));
+            send_msg(TB_SETBITMAPSIZE, 0, MAKELPARAM(w, h));
 
             imageList_.create(w, h);
-            sendMsg(TB_SETIMAGELIST,0,(LPARAM)*imageList_);
+            send_msg(TB_SETIMAGELIST,0,(LPARAM)*imageList_);
 
             show(SW_SHOW);
 
-            sendMsg(TB_SETSTYLE, 0, style);
-            sendMsg(TB_SETEXTENDEDSTYLE, 0, exStyle);
+            send_msg(TB_SETSTYLE, 0, style);
+            send_msg(TB_SETEXTENDEDSTYLE, 0, exStyle);
 
-            wmCreate();
+            wm_create();
             return handle;
         }
 
     };
 
-    class ReBar;
+    class rebar;
 
     template<>
-    class MTL::WindowClass<ReBar>
+    class window_class<rebar>
     {
     public:
         const wchar_t* name()
@@ -1783,18 +1783,18 @@ namespace MTL {
         }
     };
 
-    class ReBar : public MTL::Ctrl<ReBar>
+    class rebar : public ctrl<rebar>
     {
     public:
 
         int count()
         {
-            return (int) sendMsg(RB_GETBANDCOUNT, 0, 0);
+            return (int) send_msg(RB_GETBANDCOUNT, 0, 0);
         }
 
         void remove(int idx)
         {
-            sendMsg(RB_DELETEBAND, idx, 0);
+            send_msg(RB_DELETEBAND, idx, 0);
         }
 
         int id(int pos)
@@ -1821,12 +1821,12 @@ namespace MTL {
 
         void show(int idx, bool show = true)
         {
-            sendMsg(RB_SHOWBAND, idx, show);
+            send_msg(RB_SHOWBAND, idx, show);
         }
 
         void getBar(int idx, REBARBANDINFO* rbi)
         {
-            sendMsg(RB_GETBANDINFO, idx, (LPARAM)rbi);
+            send_msg(RB_GETBANDINFO, idx, (LPARAM)rbi);
         }
 
         void addBar(const wchar_t* label, int id, HWND child, int height = -1, int style = RBBS_CHILDEDGE | RBBS_GRIPPERALWAYS | RBBS_BREAK)
@@ -1855,7 +1855,7 @@ namespace MTL {
             {
                 height = r.bottom - r.top;
 
-                MTL::wbuff buf(1024);
+                wbuff buf(1024);
                 size_t n = ::GetClassName(child, buf, (int) buf.size());
                 std::wstring wcn = buf.toString(n);
                 if (wcn == TOOLBARCLASSNAME)
@@ -1873,13 +1873,13 @@ namespace MTL {
             rbBand.cx = r.right - r.left;
             rbBand.cxIdeal = r.right - r.left;
 
-            sendMsg(RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand);
+            send_msg(RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand);
         }
 
         void setColors(COLORREF clrBkg, COLORREF clrFore)
         {
-            sendMsg(RB_SETBKCOLOR, 0, (LPARAM)clrBkg);
-            sendMsg(RB_SETTEXTCOLOR, 0, (LPARAM)clrFore);
+            send_msg(RB_SETBKCOLOR, 0, (LPARAM)clrBkg);
+            send_msg(RB_SETTEXTCOLOR, 0, (LPARAM)clrFore);
         }
 
         void setShadowColors(COLORREF shadow, COLORREF highlite)
@@ -1889,7 +1889,7 @@ namespace MTL {
             cs.dwSize = sizeof(cs);
             cs.clrBtnHighlight = highlite;
             cs.clrBtnShadow = shadow;
-            sendMsg(RB_SETCOLORSCHEME, 0, (LPARAM)&cs);
+            send_msg(RB_SETCOLORSCHEME, 0, (LPARAM)&cs);
         }
 
         void setBarColors(int index, COLORREF clrBkg, COLORREF clrFore)
@@ -1901,7 +1901,7 @@ namespace MTL {
             rbBand.clrBack = clrBkg;
             rbBand.clrFore = clrFore;
 
-            LRESULT result = sendMsg(RB_SETBANDINFO, (WPARAM)index, (LPARAM)&rbBand);
+            LRESULT result = send_msg(RB_SETBANDINFO, (WPARAM)index, (LPARAM)&rbBand);
         }
 
     protected:
@@ -1915,30 +1915,30 @@ namespace MTL {
             }
 
             ::SetWindowTheme(handle, L"", L"");
-            setColors(colorTheme->bkgColor(), colorTheme->textColor());
-            setShadowColors(colorTheme->bkgColor(), colorTheme->bkgColor());
+            setColors(colorTheme->bkg_color(), colorTheme->text_color());
+            setShadowColors(colorTheme->bkg_color(), colorTheme->bkg_color());
         }
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
-            auto& wc = MTL::windowClass<ReBar>();
+            auto& wndClass = wc<rebar>();
 
             handle = ::CreateWindowEx(
                 exStyle,
-                wc.name(),
+                wndClass.name(),
                 title,
                 style,
                 r.left, r.top, r.right - r.left, r.bottom - r.top,
                 parent,
                 menu,
-                MTL::module_instance(),
+                module_instance(),
                 (LPVOID)this
             );
 
             // NO? 
-            subClass();
+            subclass();
             show(SW_SHOW);
-            wmCreate();
+            wm_create();
             return handle;
         }
     };

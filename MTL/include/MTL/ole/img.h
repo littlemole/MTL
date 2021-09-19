@@ -276,9 +276,9 @@ namespace mtl {
             imgPath_ = path;
         }
 
-        void load(int resourceId)
+        void load(int resourceId,  CLSID decoder = CLSID_WICPngDecoder, const wchar_t* type = L"PNG")
         {
-            mtl::bitmap bmp = mtl::load_picture_from_resource(resourceId);
+            mtl::bitmap bmp = mtl::load_picture_from_resource(resourceId,type,decoder);
 
             if (!*bmp) return;
 

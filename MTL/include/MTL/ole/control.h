@@ -2,7 +2,7 @@
 
 #include <mtl/punk.h>
 #include <mtl/win/gdi.h>
-#include <mtl/win/wind.h>
+#include <mtl/win/wnd.h>
 #include <mtl/obj/impl.h>
 #include <mtl/ole/dataobj.h>
 
