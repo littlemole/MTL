@@ -25,8 +25,8 @@ public:
 		binding(
 			hasLove,
 			kindValues,
-			artValues,
 			loveKind,
+			artValues,
 			loveArt
 		);
 	}
@@ -38,14 +38,26 @@ class MainWindow : public mtl::window<MainWindow>
 public:
 
 	mtl::button butt;
+	AboutDlg aboutDlg;
+
 
 	MainWindow()
 	{
+		// set menu implicitly on window class
+		mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
+
+		// peload jpeg image for display
 		mtl::the_bitmap_cache().load(IDI_JPEG, CLSID_WICJpegDecoder, L"JPEG" );
+
+		// create and show window
+		create(L"Hello Worls", WS_OVERLAPPEDWINDOW);
+		show();
+
 	}
 
 	virtual LRESULT wm_create() override
 	{
+		// create chld button
 		RECT r = { 0,0,120,40 };
 		butt.create(IDC_BUTT,L"click me", handle, r,WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON);
 
@@ -62,14 +74,14 @@ public:
 		{
 			case IDM_ABOUT:
 			{
-				AboutDlg dlg;
-				LRESULT r = dlg.show_modal(IDD_ABOUTBOX, handle);
+				// show about dialog
+				LRESULT r = aboutDlg.show_modal(IDD_ABOUTBOX, handle);
 				if (r == IDOK)
 				{
-					if (dlg.hasLove)
+					if (aboutDlg.hasLove)
 					{
-						std::wstring love = dlg.loveKind;
-						std::wstring art = dlg.loveArt;
+						std::wstring love = aboutDlg.loveKind;
+						std::wstring art = aboutDlg.loveArt;
 
 						std::wstringstream woss;
 						woss << "I love you " << art << L" you too";
@@ -80,32 +92,38 @@ public:
 			}
 			case IDM_EXIT:
 			{
+				// kill ourselves
 				destroy();
 				break;
 			}
 		}
+
 		return 0;
 	}
 
 	virtual LRESULT wm_draw(HDC hdc, RECT& bounds) override
 	{
-		mtl::dc_view dcv(hdc);
-
 		HBITMAP bmp = mtl::the_bitmap_cache().get(IDI_JPEG, 500, 314);
-		dcv.bit_blit(bmp, 0, 0);
+
+		mtl::dc dc(hdc);
+		dc.bit_blit(bmp, 0, 0);
+
 		return 0;
 	}
 
 	virtual LRESULT wm_size(RECT& clientRect) override
 	{
 		RECT r = { 0,0,0,0 };
+//		do nothing here
 //		layout.do_layout(clientRect, r);
 		return 0;
 	}
 
 	virtual LRESULT wm_destroy() override
 	{
+		// over and out
 		::PostQuitMessage(0);
+
 		return 0;
 	}
 };
@@ -122,17 +140,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     mtl::application app(hInstance);
 
-
 	MainWindow mainWnd;
-
-	// set menu implicitly on window class
-	mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
-
-	// specify menu explcitly:
-	// mtl::menu menu(IDC_HELLOWORLD);
-	
-	mainWnd.create(L"Hello Worls", WS_OVERLAPPEDWINDOW, 0, 0);// *menu);
-	mainWnd.show();
 
 	return app.run(*mainWnd, IDC_HELLOWORLD);
 

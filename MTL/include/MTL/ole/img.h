@@ -92,7 +92,7 @@ namespace mtl {
             // create a DIB section that can hold the image
             void* pvImageBits = NULL;
             //HDC hdcScreen = ::GetDC(NULL);
-            dc hdcScreen(NULL);
+            wnd_dc hdcScreen(NULL);
             hbmp = ::CreateDIBSection(*hdcScreen, &bminfo, DIB_RGB_COLORS, &pvImageBits, NULL, 0);
             // ::ReleaseDC(NULL, hdcScreen);
             if (hbmp == NULL)
@@ -174,7 +174,7 @@ namespace mtl {
 
         static bitmap make_transparent_dib_section(int w, int h, UINT32 col = 0x00000000)
         {
-            dc desktopDC;
+            wnd_dc desktopDC;
             compatible_dc cdc_dest(*desktopDC);
 
             BITMAPINFO bmi;
@@ -191,7 +191,7 @@ namespace mtl {
             VOID* pvBits = 0;
             HBITMAP dest = ::CreateDIBSection(*desktopDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
 
-            dc_view dcvd(*cdc_dest);
+            dc dcvd(*cdc_dest);
             dcvd.select(dest);
 
             int x, y;
@@ -374,7 +374,7 @@ namespace mtl {
             pathSize2bitmap_[path][w][h] = *dest;
 
             compatible_dc cdc_dest;            
-            dc_view dcvd(*cdc_dest);
+            dc dcvd(*cdc_dest);
             dcvd.select(*dest);
             dcvd.alpha_blend(bmp, 0, 0, w, h, 0xff);
             
@@ -407,7 +407,7 @@ namespace mtl {
             idSize2bitmap_[id][w][h] = *dest;
 
             compatible_dc cdc_dest;
-            dc_view dcvd(*cdc_dest);
+            dc dcvd(*cdc_dest);
             dcvd.select(*dest);
             dcvd.alpha_blend(bmp, 0, 0, w, h, 0xff);
 

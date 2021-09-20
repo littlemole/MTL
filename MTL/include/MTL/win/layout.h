@@ -471,7 +471,7 @@ namespace mtl {
 			mtl::paint_dc dc(hWnd);
 			RECT r = client_rect();
 			HBRUSH br = GetStockBrush(LTGRAY_BRUSH);
-			mtl::dc_view dcv(*dc);
+			mtl::dc dcv(*dc);
 			dcv.fill_rect(r, br);
 			break;
 		}

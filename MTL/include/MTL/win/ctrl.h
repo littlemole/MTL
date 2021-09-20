@@ -1665,7 +1665,7 @@ namespace mtl {
             if (tbcd->nmcd.dwDrawStage == CDDS_PREPAINT)
             {
                 HDC hdc = tbcd->nmcd.hdc;
-                dc_view dcv(hdc);
+                dc dcv(hdc);
                 if(colorTheme->font())
                     dcv.select(colorTheme->font());
                 dcv.fill_rect(tbcd->nmcd.rc, colorTheme->bkg_brush());
@@ -1677,7 +1677,7 @@ namespace mtl {
             if ((tbcd->nmcd.dwDrawStage == CDDS_ITEMPREPAINT))
             {
                 HDC hdc = tbcd->nmcd.hdc;
-                dc_view dcv(hdc);
+                dc dcv(hdc);
                 if (colorTheme->font())
                     dcv.select(colorTheme->font());
 

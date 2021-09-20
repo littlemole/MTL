@@ -141,7 +141,7 @@ namespace mtl {
 
 			// draw to meta DC
 			meta_dc mdc;
-			dc_view dcv(*mdc);
+			dc dcv(*mdc);
 			dcv.save();
 			dcv.set_window_org(0, 0);
 			dcv.set_window_ext(rectl.right, rectl.bottom);

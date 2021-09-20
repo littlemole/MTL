@@ -112,13 +112,17 @@ namespace mtl {
         HBRUSH hbr_ = nullptr;
     };
 
-    class dc_view
+    class dc
     {
     public:
 
-        dc_view() : hdc_(0) {};
-        dc_view(HDC hdc) : hdc_(hdc) {};
-        virtual ~dc_view()
+        dc() : hdc_(0) 
+        {};
+
+        dc(HDC hdc) : hdc_(hdc) 
+        {};
+
+        virtual ~dc()
         {
             for (std::list<HGDIOBJ>::iterator it = obList_.begin(); it != obList_.end(); it++)
             {
@@ -128,24 +132,31 @@ namespace mtl {
             obList_.clear();
         }
 
-        int set_bk_mode(int i)                       { return ::SetBkMode(hdc_, i); }
+        HDC operator *()    { return hdc_; }
+        void detach()       { hdc_ = nullptr; }
+
+        HGDIOBJ select(HGDIOBJ obj)
+        {
+            HGDIOBJ old = ::SelectObject(hdc_, obj);
+            obList_.push_front(old);
+            return old;
+        }
+
         int fill_rect(const RECT& r, HBRUSH hbr)     { return ::FillRect(hdc_, &r, hbr); }
         int frame_rect(const RECT& r, HBRUSH hbr)    { return ::FrameRect(hdc_, &r, hbr); }
-        COLORREF set_bk_color(COLORREF crColor)       { return ::SetBkColor(hdc_, crColor); }
-        COLORREF set_text_color(COLORREF crColor)     { return ::SetTextColor(hdc_, crColor); }
-        BOOL text_oOu(int x, int y, std::wstring t)  { return ::TextOut(hdc_, x, y, t.c_str(), (int)t.size()); }
+
+        int set_bk_mode(int i)                       { return ::SetBkMode(hdc_, i); }
+        COLORREF set_bk_color(COLORREF crColor)      { return ::SetBkColor(hdc_, crColor); }
+        COLORREF set_text_color(COLORREF crColor)    { return ::SetTextColor(hdc_, crColor); }
+
+        BOOL text_out(int x, int y, std::wstring t)  { return ::TextOut(hdc_, x, y, t.c_str(), (int)t.size()); }
+
         BOOL ext_text_out(int x, int y, std::wstring t, RECT& r, UINT options = ETO_CLIPPED | ETO_OPAQUE)
         {
             return ::ExtTextOut(hdc_, x, y, options, &r, t.c_str(), (UINT)t.size(), 0);
         }
 
-        void save()                                 { ::SaveDC(hdc_); }
-        void set_window_org(int x = 0, int y = 0)   { ::SetWindowOrgEx(hdc_, x, y, NULL); }
-        void set_window_ext(int x = 0, int y = 0)   { ::SetWindowExtEx(hdc_, x, y, NULL); }
-
-        void restore(int i = -1)                    { ::RestoreDC(hdc_, i); }
-
-        void draw_text( const wchar_t* txt, RECT& r, int flags = DT_LEFT)
+        void draw_text(const wchar_t* txt, RECT& r, int flags = DT_LEFT)
         {
             ::DrawText(hdc_, txt, -1, &r, flags);
         }
@@ -155,17 +166,11 @@ namespace mtl {
         void transparent_blit(HBITMAP bmp, int x, int y, int w, int h, COLORREF transparent = RGB(0, 0, 0));
         void alpha_blend(HBITMAP bmp, int x, int y, int w, int h, int alpha = 0xff );
 
+        void save() { ::SaveDC(hdc_); }
+        void set_window_org(int x = 0, int y = 0) { ::SetWindowOrgEx(hdc_, x, y, NULL); }
+        void set_window_ext(int x = 0, int y = 0) { ::SetWindowExtEx(hdc_, x, y, NULL); }
 
-        HGDIOBJ select(HGDIOBJ obj)
-        {
-            HGDIOBJ old = ::SelectObject(hdc_, obj);
-            obList_.push_front(old);
-            return old;
-        }
-
-        HDC operator *() { return hdc_; }
-
-        void detach() { hdc_ = nullptr; }
+        void restore(int i = -1) { ::RestoreDC(hdc_, i); }
 
     protected:
         std::list<HGDIOBJ>	obList_;
@@ -173,7 +178,7 @@ namespace mtl {
     };
 
 
-    class paint_dc 
+    class paint_dc : public dc
     {
     public:
         paint_dc(HWND hwnd)
@@ -194,25 +199,24 @@ namespace mtl {
 
     protected:
         HWND			hWnd_;
-        HDC             hdc_;
         PAINTSTRUCT		ps_;
     };
 
 
-    class dc 
+    class wnd_dc : public dc
     {
     public:
-        dc() : hWnd_(::GetDesktopWindow())
+        wnd_dc() : hWnd_(::GetDesktopWindow())
         { 
             hdc_ = ::GetDC(hWnd_); 
         }
 
-        dc(HWND hwnd) :hWnd_(hwnd)
+        wnd_dc(HWND hwnd) :hWnd_(hwnd)
         { 
             hdc_ = ::GetDC(hWnd_); 
         }
 
-        ~dc()
+        ~wnd_dc()
         {  
             ::ReleaseDC(hWnd_, hdc_); 
         }
@@ -224,10 +228,9 @@ namespace mtl {
 
     private:
         HWND			hWnd_;
-        HDC             hdc_;
     };
 
-    class compatible_dc
+    class compatible_dc : public dc
     {
     public:
 
@@ -239,7 +242,7 @@ namespace mtl {
             }
             else
             {
-                dc desktopDC;
+                wnd_dc desktopDC;
                 hdc_ = ::CreateCompatibleDC(*desktopDC);
             }
         }
@@ -254,11 +257,9 @@ namespace mtl {
             return hdc_;
         }
 
-    private:
-        HDC             hdc_;
     };
 
-    class meta_dc
+    class meta_dc : public dc
     {
     public:
         meta_dc()
@@ -286,39 +287,33 @@ namespace mtl {
             hdc_ = 0;
             return hmf;
         }
-
-    private:
-        HDC             hdc_ = nullptr;
     };
 
-    inline void dc_view::bit_blit(HBITMAP bitmap, int x, int y, int flags )
+    inline void dc::bit_blit(HBITMAP bitmap, int x, int y, int flags )
     {
         compatible_dc cdc;
-        dc_view dcv(*cdc);
-        dcv.select(bitmap);
+        cdc.select(bitmap);
 
         BITMAP bm;
         ::GetObject(bitmap, sizeof(bm), &bm);
         ::BitBlt(hdc_, x, y, bm.bmWidth, bm.bmHeight, *cdc, 0, 0, flags);
     }
 
-    inline void dc_view::stretch_blit(HBITMAP bitmap, int x, int y, int w, int h, int flags)
+    inline void dc::stretch_blit(HBITMAP bitmap, int x, int y, int w, int h, int flags)
     {
         compatible_dc cdc;
-        dc_view dcv(*cdc);
-        dcv.select(bitmap);
+        cdc.select(bitmap);
 
         BITMAP bm;
         ::GetObject(bitmap, sizeof(bm), &bm);
         ::StretchBlt(hdc_, x, y, w, h, *cdc, 0, 0, bm.bmWidth, bm.bmHeight, flags);
     }
 
-    inline void dc_view::transparent_blit(HBITMAP bitmap, int x, int y, int w, int h, COLORREF transparent)
+    inline void dc::transparent_blit(HBITMAP bitmap, int x, int y, int w, int h, COLORREF transparent)
     {
         compatible_dc cdc;
-        dc_view dcv(*cdc);
-        dcv.set_bk_mode(TRANSPARENT);
-        dcv.select(bitmap);
+        cdc.set_bk_mode(TRANSPARENT);
+        cdc.select(bitmap);
 
         BITMAP bm;
         ::GetObject(bitmap, sizeof(bm), &bm);
@@ -326,7 +321,7 @@ namespace mtl {
         ::TransparentBlt( hdc_, x, y, w, h, *cdc, 0, 0, bm.bmWidth, bm.bmHeight, transparent);
     }
 
-    inline void dc_view::alpha_blend(HBITMAP bmp, int x, int y, int w, int h, int alpha)
+    inline void dc::alpha_blend(HBITMAP bmp, int x, int y, int w, int h, int alpha)
     {
         BLENDFUNCTION bf;
         bf.BlendOp = AC_SRC_OVER;
@@ -337,12 +332,11 @@ namespace mtl {
         BITMAP bm;
         ::GetObject(bmp, sizeof(bm), &bm);
 
-        dc desktopDC;
-        compatible_dc cdcs(*desktopDC);
-        dc_view dcvs(*cdcs);
-        dcvs.select(bmp);
+        wnd_dc desktopDC;
+        compatible_dc cdc(*desktopDC);
+        cdc.select(bmp);
 
-        ::AlphaBlend(hdc_, x, y, w, h, *dcvs, 0, 0, bm.bmWidth, bm.bmHeight, bf);
+        ::AlphaBlend(hdc_, x, y, w, h, *cdc, 0, 0, bm.bmWidth, bm.bmHeight, bf);
     }
 
     class font_desc
@@ -476,6 +470,7 @@ namespace mtl {
     class font
     {
     public:
+
         font()
         {}
 
@@ -535,81 +530,83 @@ namespace mtl {
         HFONT font_ = nullptr;
     };
 
-class menu_item : public owner_drawn
-{
-public:
-    int id = -1;
-    std::wstring label;
-    bool enabled = true;
-    bool checked = false;
-    HMENU subMenu = nullptr;
-    HBITMAP bitmap = nullptr;
-    std::shared_ptr<color_theme> theme;
-    HMENU parent = nullptr;
-
-    menu_item() {}
-
-    menu_item( int i, const std::wstring& l, bool e, bool c, HMENU m, HBITMAP b)
-        : id(i), label(l), enabled(e), checked(c), subMenu(m), bitmap(b)
-    {}
-
-    virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) override;
-    virtual LRESULT wm_measure_item(MEASUREITEMSTRUCT* mis) override;
-
-    void check(bool status)
+    class menu_item : public owner_drawn
     {
-        checked = status;
+    public:
 
-        if (theme && theme->enabled()) return;
+        int id = -1;
+        std::wstring label;
+        bool enabled = true;
+        bool checked = false;
+        HMENU subMenu = nullptr;
+        HBITMAP bitmap = nullptr;
+        std::shared_ptr<color_theme> theme;
+        HMENU parent = nullptr;
 
-        MENUITEMINFO mii;
-        ::ZeroMemory(&mii, sizeof(mii));
-        mii.cbSize = sizeof(mii);
-        mii.fMask = MIIM_STATE| MIIM_CHECKMARKS| MIIM_BITMAP;
+        menu_item() 
+        {}
 
-        BOOL b = ::GetMenuItemInfo(parent, id, FALSE, &mii);
+        menu_item( int i, const std::wstring& l, bool e, bool c, HMENU m, HBITMAP b)
+            : id(i), label(l), enabled(e), checked(c), subMenu(m), bitmap(b)
+        {}
 
-        if (status)
+        virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) override;
+        virtual LRESULT wm_measure_item(MEASUREITEMSTRUCT* mis) override;
+
+        void check(bool status)
         {
-            mii.fState |= MFS_CHECKED;
-            mii.hbmpChecked = NULL;
-            mii.hbmpItem = bitmap;
+            checked = status;
+
+            if (theme && theme->enabled()) return;
+
+            MENUITEMINFO mii;
+            ::ZeroMemory(&mii, sizeof(mii));
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_STATE| MIIM_CHECKMARKS| MIIM_BITMAP;
+
+            BOOL b = ::GetMenuItemInfo(parent, id, FALSE, &mii);
+
+            if (status)
+            {
+                mii.fState |= MFS_CHECKED;
+                mii.hbmpChecked = NULL;
+                mii.hbmpItem = bitmap;
             
+            }
+            else
+            {
+                mii.fState &= ~MFS_CHECKED;
+                mii.hbmpChecked = NULL;
+                mii.hbmpItem = bitmap;
+            }
+             b = ::SetMenuItemInfo(parent, id, FALSE, &mii);
+            b = false;
         }
-        else
+
+        void status(bool status)
         {
-            mii.fState &= ~MFS_CHECKED;
-            mii.hbmpChecked = NULL;
-            mii.hbmpItem = bitmap;
+            enabled = status;
+
+            if (theme && theme->enabled()) return;
+
+            MENUITEMINFO mii;
+            ::ZeroMemory(&mii, sizeof(mii));
+            mii.cbSize = sizeof(mii);
+            mii.fMask = MIIM_STATE;
+
+            ::GetMenuItemInfo(parent, id, FALSE, &mii);
+
+            if (status)
+            {
+                mii.fState |= MFS_ENABLED;
+            }
+            else
+            {
+                mii.fState &= ~MFS_ENABLED;
+            }
+            ::SetMenuItemInfo(parent, id, FALSE, &mii);
         }
-         b = ::SetMenuItemInfo(parent, id, FALSE, &mii);
-        b = false;
-    }
-
-    void status(bool status)
-    {
-        enabled = status;
-
-        if (theme && theme->enabled()) return;
-
-        MENUITEMINFO mii;
-        ::ZeroMemory(&mii, sizeof(mii));
-        mii.cbSize = sizeof(mii);
-        mii.fMask = MIIM_STATE;
-
-        ::GetMenuItemInfo(parent, id, FALSE, &mii);
-
-        if (status)
-        {
-            mii.fState |= MFS_ENABLED;
-        }
-        else
-        {
-            mii.fState &= ~MFS_ENABLED;
-        }
-        ::SetMenuItemInfo(parent, id, FALSE, &mii);
-    }
-};
+    };
 
     class menu
     {
@@ -958,7 +955,7 @@ public:
 
     inline LRESULT menu_item::wm_draw_item(LPDRAWITEMSTRUCT dis)
     {
-        dc_view dcv(dis->hDC);
+        dc dcv(dis->hDC);
         dcv.select(theme->font());
 
         menu_item* item = (menu_item*)(dis->itemData);
@@ -1029,16 +1026,14 @@ public:
 
     inline LRESULT menu_item::wm_measure_item(MEASUREITEMSTRUCT* mis)
     {
-        mtl::dc dc(::GetDesktopWindow());
-        dc_view dcv(*dc);
-
-        dcv.select(theme->font());
+        mtl::wnd_dc dc(::GetDesktopWindow());
+        dc.select(theme->font());
 
         menu_item* item = (menu_item*)(mis->itemData);
         auto theme = item->theme;
 
         SIZE size = { 0,0 };
-        ::GetTextExtentPoint32(*dcv, item->label.c_str(), (int)item->label.size(), &size);
+        ::GetTextExtentPoint32(*dc, item->label.c_str(), (int)item->label.size(), &size);
         mis->itemWidth = size.cx + 2 * theme->padding();
         mis->itemHeight = 2 * theme->padding();
 
