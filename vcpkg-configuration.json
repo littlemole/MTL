@@ -1,0 +1,9 @@
+{
+  "registries": [
+    {
+      "kind": "filesystem",
+      "path": "C:\\Users\\mike\\source\\repos\\MTL\\vcpkg",
+      "packages": [ "metacpp" ]
+    }
+  ]
+}

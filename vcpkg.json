@@ -1,0 +1,8 @@
+{
+"name": "mtl",
+"version-string" : "0.0.1",
+"builtin-baseline" : "33214a880459fb8d02c48c15dc01505625f0b3fe",
+"dependencies": [
+  { "name" : "metacpp", "version>=" : "0.0.1"}
+]
+}
