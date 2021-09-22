@@ -1,6 +1,6 @@
 {
     "name": "mtl",
-    "version-string": "ab054ddd67d37aed8f9d97b92cbb36616993a93d",
+    "version-string": "79cb269abb62905c0b70e3913423db98ff560e7c",
     "dependencies": [
         {
             "name": "metacpp"
