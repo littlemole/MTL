@@ -1,5 +1,5 @@
 {
 "default": {
-    "metacpp": { "metacpp": "0.0.1", "port-version": 0 , "baseline" : "daf388290002ce25bbea6c808ae42d836bd99af9"}
+    "metacpp": { "baseline" : "cf8d684f737c82b325e3fff00bafd59f73fdef09"}
   }
 }
