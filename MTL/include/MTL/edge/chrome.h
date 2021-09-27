@@ -14,7 +14,7 @@
 //#include "MTL/win/codlg.h"
 //#include "MTL/win/dlg.h"
 //#include "MTL/util/path.h"
-//#include "MTL/obj/impl.h"
+#include "MTL/obj/impl.h"
 //#include "MTL/ole/shell.h"
 //#include "MTL/disp/variant.h"
 
