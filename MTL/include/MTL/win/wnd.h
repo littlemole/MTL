@@ -401,6 +401,12 @@ namespace mtl {
             return create_window(title, parent, r, style, exStyle, (HMENU)id);
         }
 
+        virtual HWND create(size_t id,HWND parent, const wchar_t* title = 0)
+        {
+            RECT r = { 0,0,10,10 };
+            return create_window(title, parent, r, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, (HMENU)id);
+        }
+
         virtual void destroy()
         {
             if (handle)
