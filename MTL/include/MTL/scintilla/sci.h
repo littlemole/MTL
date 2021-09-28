@@ -1,23 +1,26 @@
 #pragma once
 
 #include "MTL/sdk.h"
-#include "MTL/win32/module.h"
-#include "MTL/win32/mem.h"
-#include "MTL/win/wnd.h"
+//#include "MTL/win32/module.h"
+//#include "MTL/win32/mem.h"
 #include "MTL/win/clipboard.h"
 #include "MTL/win/app.h"
 #include "MTL/win/wc.h"
 #include "MTL/win/wnd.h"
 #include "MTL/win/gdi.h"
-#include "MTL/win/layout.h"
-#include "MTL/win/ctrl.h"
+//#include "MTL/win/layout.h"
+//#include "MTL/win/ctrl.h"
 #include "MTL/win/codlg.h"
-#include "MTL/win/dlg.h"
+//#include "MTL/win/dlg.h"
 #include "MTL/util/path.h"
-#include "MTL/obj/impl.h"
-#include "MTL/ole/shell.h"
-#include "MTL/disp/variant.h"
+//#include "MTL/obj/impl.h"
+//#include "MTL/ole/shell.h"
+//#include "MTL/disp/variant.h"
 #include "MTL/util/rgb.h"
+#include "mtl/persist/xml.h"
+
+namespace mtl {
+
 
 struct XmlStyle
 {
@@ -98,7 +101,7 @@ struct meta::Data<XmlStyleSets>
 class ScintillaWnd;
 
 template<>
-class MTL::WindowClass<ScintillaWnd>
+class window_class<ScintillaWnd>
 {
 public:
 	const wchar_t* name()
@@ -107,7 +110,7 @@ public:
 	}
 };
 
-class ScintillaWnd : public MTL::Ctrl<ScintillaWnd>
+class ScintillaWnd : public ctrl<ScintillaWnd>
 {
 public:
 
@@ -128,7 +131,7 @@ public:
 				break;
 			}
 		}
-		return MTL::Ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
+		return ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
 	}
 
 	/*
@@ -147,7 +150,7 @@ public:
 			break;
 		}
 		}
-		return MTL::Ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
+		return Ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
 	}
 	*/
 
@@ -289,7 +292,7 @@ public:
 	std::string getText()
 	{
 		size_t len = length() +1 ;
-		MTL::cbuff buf(len);
+		cbuff buf(len);
 		LRESULT lr = sendMsg(SCI_GETTEXT, (WPARAM)len, (LPARAM)(char*)buf);
 		return buf.toString();
 	}
@@ -779,7 +782,7 @@ public:
 	
 	void setAnnotation(int i, const std::wstring& str)
 	{
-		std::string tmp = MTL::to_string(str);
+		std::string tmp = to_string(str);
 		sendMsg(SCI_ANNOTATIONSETTEXT, (WPARAM)i, (LPARAM)(tmp.c_str()));
 	}
 
@@ -1030,7 +1033,7 @@ public:
 
 		std::string xml = oss.str();
 		
-		MTL::fromXml(xml, xmlStyleSets);
+		fromXml(xml, xmlStyleSets);
 		//for (size_t i = 0; i < 1; i++)//xmlStyleSets.styleSet.size(); i++)
 		size_t i = 8;
 		{
@@ -1043,8 +1046,8 @@ public:
 			{
 				XmlStyle& xmlStyle = xmlStyleSet.style[j];
 
-				COLORREF foreCol = MTL::hex2rgb(xmlStyle.foreColor);
-				COLORREF backCol = MTL::hex2rgb(xmlStyle.backgroundColor);
+				COLORREF foreCol = hex2rgb(xmlStyle.foreColor);
+				COLORREF backCol = hex2rgb(xmlStyle.backgroundColor);
 
 				setStyle(xmlStyle.id, foreCol, backCol, xmlStyle.fontSize, xmlStyle.font.c_str());
 					//	setKeywords((xmlStyleSet.id, xmlStyleSet.keywords);
@@ -1111,3 +1114,5 @@ public:
 		::LoadLibrary(L"SciLexer.dll");
 	}
 };
+
+}

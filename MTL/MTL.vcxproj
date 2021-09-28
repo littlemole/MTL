@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VcpkgEnableManifest>True</VcpkgEnableManifest>
+    <VCPkgLocalAppDataDisabled>true</VCPkgLocalAppDataDisabled>
+    <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
+  </PropertyGroup>
+  <Import Project="..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('..\..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -49,6 +55,7 @@
     <ClInclude Include="include\MTL\persist\stream.h" />
     <ClInclude Include="include\MTL\persist\xml.h" />
     <ClInclude Include="include\MTL\punk.h" />
+    <ClInclude Include="include\mtl\scintilla\sci.h" />
     <ClInclude Include="include\MTL\script\script.h" />
     <ClInclude Include="include\MTL\sdk.h" />
     <ClInclude Include="include\MTL\util\base64.h" />
@@ -77,31 +84,31 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\MTL\ole\cp.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\collection.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\io.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\json.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\shell.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\stream.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\test.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\variant.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="test_i.c">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,8 +119,12 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="tests\test.rc">
-      <AdditionalIncludeDirectories >$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\vcpkg-configuration.json" />
+    <None Include="..\vcpkg.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -226,7 +237,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(ProjectDir)\..\..\vcpkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

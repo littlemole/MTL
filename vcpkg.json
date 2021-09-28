@@ -4,6 +4,12 @@
     "dependencies": [
         {
             "name": "metacpp"
+        },
+        {
+            "name": "gtest"
+        },
+        {
+            "name": "nlohmann-json"
         }
     ]
 }
