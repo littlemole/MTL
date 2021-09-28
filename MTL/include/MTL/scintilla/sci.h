@@ -9,7 +9,7 @@
 #include "MTL/win/wnd.h"
 #include "MTL/win/gdi.h"
 //#include "MTL/win/layout.h"
-//#include "MTL/win/ctrl.h"
+#include "MTL/win/ctrl.h"
 #include "MTL/win/codlg.h"
 //#include "MTL/win/dlg.h"
 #include "MTL/util/path.h"
@@ -18,90 +18,100 @@
 //#include "MTL/disp/variant.h"
 #include "MTL/util/rgb.h"
 #include "mtl/persist/xml.h"
+#include "scintilla//Scintilla.h"
+#include "scintilla//ILexer.h"
+#include "scintilla//SciLexer.h"
+
+#include <fstream>
 
 namespace mtl {
 
 
-struct XmlStyle
-{
-	int id;
-	std::string desc;
-	std::string backgroundColor;
-	std::string foreColor;
-	std::string bold;
-	std::string eol;
-	std::string italic;
-	int fontSize;
-	std::string font;
-};
+	struct XmlStyle
+	{
+		int id;
+		std::string desc;
+		std::string backgroundColor;
+		std::string foreColor;
+		std::string bold;
+		std::string eol;
+		std::string italic;
+		int fontSize;
+		std::string font;
+	};
+
+	struct XmlStyleSet
+	{
+		int id;
+		std::string syntax;
+		std::vector<std::string> keywords;
+		std::vector<XmlStyle> style;
+	};
+
+	struct XmlStyleSets
+	{
+		std::vector<XmlStyleSet> styleSet;
+	};
+
+}
 
 template<>
-struct meta::Data<XmlStyle>
+struct meta::Data<mtl::XmlStyle>
 {
 	static constexpr auto meta()
 	{
 		return meta::data(
 			entity_root("style"),
-			member("id", &XmlStyle::id, meta::attribute()),
-			member("desc", &XmlStyle::desc, meta::attribute()),
-			member("background-color", &XmlStyle::backgroundColor, meta::attribute()),
-			member("foreground-color", &XmlStyle::foreColor, meta::attribute()),
-			member("bold", &XmlStyle::bold, meta::attribute()),
-			member("eol", &XmlStyle::eol, meta::attribute()),
-			member("italic", &XmlStyle::italic, meta::attribute()),
-			member("font-size", &XmlStyle::fontSize, meta::attribute()),
-			member("font", &XmlStyle::font, meta::attribute())
+			member("id", &mtl::XmlStyle::id, meta::attribute()),
+			member("desc", &mtl::XmlStyle::desc, meta::attribute()),
+			member("background-color", &mtl::XmlStyle::backgroundColor, meta::attribute()),
+			member("foreground-color", &mtl::XmlStyle::foreColor, meta::attribute()),
+			member("bold", &mtl::XmlStyle::bold, meta::attribute()),
+			member("eol", &mtl::XmlStyle::eol, meta::attribute()),
+			member("italic", &mtl::XmlStyle::italic, meta::attribute()),
+			member("font-size", &mtl::XmlStyle::fontSize, meta::attribute()),
+			member("font", &mtl::XmlStyle::font, meta::attribute())
 		);
 	}
 };
 
 
-struct XmlStyleSet
-{
-	int id;
-	std::string syntax;
-	std::vector<std::string> keywords;
-	std::vector<XmlStyle> style;
-};
+
 
 template<>
-struct meta::Data<XmlStyleSet>
+struct meta::Data<mtl::XmlStyleSet>
 {
 	static constexpr auto meta()
 	{
 		return meta::data(
 			entity_root("styleset"),
-			member("id", &XmlStyleSet::id, meta::attribute()),
-			member("syntax", &XmlStyleSet::syntax, meta::attribute()),
-			member("keywords", &XmlStyleSet::keywords),
-			member("style", &XmlStyleSet::style)
+			member("id", &mtl::XmlStyleSet::id, meta::attribute()),
+			member("syntax", &mtl::XmlStyleSet::syntax, meta::attribute()),
+			member("keywords", &mtl::XmlStyleSet::keywords),
+			member("style", &mtl::XmlStyleSet::style)
 		);
 	}
 };
 
-struct XmlStyleSets
-{
-	std::vector<XmlStyleSet> styleSet;
-};
 
 template<>
-struct meta::Data<XmlStyleSets>
+struct meta::Data<mtl::XmlStyleSets>
 {
 	static constexpr auto meta()
 	{
 		return meta::data(
 			entity_root("stylesets"),
-			member("styleset", &XmlStyleSets::styleSet)
+			member("styleset", &mtl::XmlStyleSets::styleSet)
 		);
 	}
 };
 
+namespace mtl {
 
-
-class ScintillaWnd;
+class scintilla_wnd;
 
 template<>
-class window_class<ScintillaWnd>
+class window_class<scintilla_wnd>
 {
 public:
 	const wchar_t* name()
@@ -110,13 +120,13 @@ public:
 	}
 };
 
-class ScintillaWnd : public ctrl<ScintillaWnd>
+class scintilla_wnd : public ctrl<scintilla_wnd>
 {
 public:
 
 	XmlStyleSets xmlStyleSets;
 
-	ScintillaWnd()
+	scintilla_wnd()
 	{
 
 	}
@@ -131,248 +141,249 @@ public:
 				break;
 			}
 		}
-		return ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
+		return ctrl<scintilla_wnd>::wndProc(hwnd, message, wParam, lParam);
 	}
 
-	/*
-	virtual LRESULT wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) override
+	scintilla_wnd& set_code_page(int cp)
 	{
-		switch (message)
-		{
-		case WM_CTLCOLORSTATIC:
-		case WM_CTLCOLORBTN:
-		case WM_CTLCOLORDLG:
-		case WM_CTLCOLORLISTBOX:
-		case WM_CTLCOLORMSGBOX:
-		case WM_CTLCOLORSCROLLBAR:
-		{
-			RECT cr = getClientRect();
-			break;
-		}
-		}
-		return Ctrl<ScintillaWnd>::wndProc(hwnd, message, wParam, lParam);
-	}
-	*/
-
-	LRESULT setCodePage(int cp)
-	{
-		return sendMsg(SCI_SETCODEPAGE, (WPARAM)cp, (LPARAM)0);
-	}
-	LRESULT getLength()
-	{
-		return sendMsg(SCI_GETLENGTH, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_SETCODEPAGE, (WPARAM)cp, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getCharAt(int pos)
+	int get_length()
 	{
-		return sendMsg(SCI_GETCHARAT, (WPARAM)pos, (LPARAM)0);
+		return (int) send_msg(SCI_GETLENGTH, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT getLineLength(int line)
+	char get_char_at(int pos)
 	{
-		return sendMsg(SCI_LINELENGTH, (WPARAM)line, (LPARAM)0);
+		return (char) send_msg(SCI_GETCHARAT, (WPARAM)pos, (LPARAM)0);
 	}
 
-	LRESULT getLineCount()
+	int get_line_length(int line)
 	{
-		return sendMsg(SCI_GETLINECOUNT, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_LINELENGTH, (WPARAM)line, (LPARAM)0);
 	}
 
-	LRESULT getFirstVisibleLine()
+	int get_line_count()
 	{
-		return sendMsg(SCI_GETFIRSTVISIBLELINE, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_GETLINECOUNT, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT getLinesOnScreen()
+	int get_first_visible_line()
 	{
-		return sendMsg(SCI_LINESONSCREEN, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_GETFIRSTVISIBLELINE, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT gotoLine(int line)
+	int get_lines_on_screen()
 	{
-		return sendMsg(SCI_GOTOLINE, (WPARAM)line, (LPARAM)0);
+		return (int)send_msg(SCI_LINESONSCREEN, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT lineFromPos(int pos)
+	scintilla_wnd& goto_line(int line)
 	{
-		return sendMsg(SCI_LINEFROMPOSITION, (WPARAM)pos, (LPARAM)0);
+		send_msg(SCI_GOTOLINE, (WPARAM)line, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT lineEndPos(int line)
+	int line_from_pos(int pos)
 	{
-		return sendMsg(SCI_GETLINEENDPOSITION, (WPARAM)line, (LPARAM)0);
+		return (int)send_msg(SCI_LINEFROMPOSITION, (WPARAM)pos, (LPARAM)0);
 	}
 
-	LRESULT posFromLine(int line)
+	int line_end_pos(int line)
 	{
-		return sendMsg(SCI_POSITIONFROMLINE, (WPARAM)line, (LPARAM)0);
+		return (int)send_msg(SCI_GETLINEENDPOSITION, (WPARAM)line, (LPARAM)0);
 	}
 
-	LRESULT pos()
+	int pos_from_line(int line)
 	{
-		return sendMsg(SCI_GETCURRENTPOS, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_POSITIONFROMLINE, (WPARAM)line, (LPARAM)0);
 	}
 
-	LRESULT pos(int pos)
+	int pos()
 	{
-		return sendMsg(SCI_SETCURRENTPOS, (WPARAM)pos, (LPARAM)0);
+		return (int)send_msg(SCI_GETCURRENTPOS, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT anchor()
+	scintilla_wnd& pos(int pos)
 	{
-		return sendMsg(SCI_GETANCHOR, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_SETCURRENTPOS, (WPARAM)pos, (LPARAM)0);
+		return *this;
 	}
 
-	void anchor(int pos)
+	int anchor()
 	{
-		sendMsg(SCI_SETANCHOR, (WPARAM)pos, (LPARAM)0);
+		return (int)send_msg(SCI_GETANCHOR, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT insertText(const std::string& txt, int p = -1)
+	scintilla_wnd& anchor(int pos)
+	{
+		send_msg(SCI_SETANCHOR, (WPARAM)pos, (LPARAM)0);
+		return *this;
+	}
+
+	scintilla_wnd& insert_text(const std::string& txt, int p = -1)
 	{
 		if (p == -1)
 			p = (int)pos();
 		int pos = p + (int)txt.size();
-		sendMsg(SCI_INSERTTEXT, (WPARAM)p, (LPARAM)txt.c_str());
-		this->setSel(pos, pos);
-		return TRUE;
+		send_msg(SCI_INSERTTEXT, (WPARAM)p, (LPARAM)txt.c_str());
+		this->set_selection(pos, pos);
+		return *this;
 	}
 
-	LRESULT replaceSel(const std::string& txt)
+	scintilla_wnd& replace_selection(const std::string& txt)
 	{
-		return sendMsg(SCI_REPLACESEL, (WPARAM)0, (LPARAM)(txt.c_str()));
+		send_msg(SCI_REPLACESEL, (WPARAM)0, (LPARAM)(txt.c_str()));
+		return *this;
 	}
 
-	LRESULT setSel(int anchorPos, int currentPos)
+	scintilla_wnd& set_selection(int anchorPos, int currentPos)
 	{
-		return sendMsg(SCI_SETSEL, (WPARAM)anchorPos, (LPARAM)currentPos);
+		send_msg(SCI_SETSEL, (WPARAM)anchorPos, (LPARAM)currentPos);
+		return *this;
 	}
 
-	LRESULT getSelStart()
+	int get_selection_start()
 	{
-		return sendMsg(SCI_GETSELECTIONSTART, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_GETSELECTIONSTART, (WPARAM)0, (LPARAM)0);
 	}
 
-	void setSelStart(int pos)
+	scintilla_wnd& set_selection_start(int pos)
 	{
-		sendMsg(SCI_SETSELECTIONSTART, (WPARAM)pos, (LPARAM)0);
+		send_msg(SCI_SETSELECTIONSTART, (WPARAM)pos, (LPARAM)0);
+		return *this;
 	}
 
-	void setSelEnd(int pos)
+	scintilla_wnd& set_selection_end(int pos)
 	{
-		sendMsg(SCI_SETSELECTIONEND, (WPARAM)pos, (LPARAM)0);
+		send_msg(SCI_SETSELECTIONEND, (WPARAM)pos, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getSelEnd()
+	int get_selection_end()
 	{
-		return sendMsg(SCI_GETSELECTIONEND, (WPARAM)0, (LPARAM)0);
+		return (int) send_msg(SCI_GETSELECTIONEND, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT getModified()
+	bool get_modified()
 	{
-		return sendMsg(SCI_GETMODIFY, (WPARAM)0, (LPARAM)0);
+		return (bool)send_msg(SCI_GETMODIFY, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT setReadOnly(bool b)
+	scintilla_wnd& set_read_only(bool b)
 	{
-		return sendMsg(SCI_SETREADONLY, (WPARAM)b, (LPARAM)0);
+		send_msg(SCI_SETREADONLY, (WPARAM)b, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getReadOnly(bool b)
+	bool get_read_only(bool b)
 	{
-		return sendMsg(SCI_GETREADONLY, (WPARAM)0, (LPARAM)0);
+		return (bool)send_msg(SCI_GETREADONLY, (WPARAM)0, (LPARAM)0);
 	}
 
 
-	LRESULT setText(const std::string& txt)
+	scintilla_wnd& set_text(const std::string& txt)
 	{
-		return  sendMsg(SCI_SETTEXT, (WPARAM)0, (LPARAM)(txt.c_str()));
+		send_msg(SCI_SETTEXT, (WPARAM)0, (LPARAM)(txt.c_str()));
+		return *this;
 	}
 
-	std::string getText()
+	std::string get_text()
 	{
 		size_t len = length() +1 ;
 		cbuff buf(len);
-		LRESULT lr = sendMsg(SCI_GETTEXT, (WPARAM)len, (LPARAM)(char*)buf);
+		LRESULT lr = send_msg(SCI_GETTEXT, (WPARAM)len, (LPARAM)(char*)buf);
 		return buf.toString();
 	}
 
 	size_t length()
 	{
-		return (size_t)sendMsg(SCI_GETLENGTH, 0, 0);
+		return (size_t)send_msg(SCI_GETLENGTH, 0, 0);
 	}
 
-	void setDropTarget(IDropTarget* dropTarget)
+	scintilla_wnd& set_drop_target(IDropTarget* dropTarget)
 	{
 		::RevokeDragDrop(handle);
 		::RegisterDragDrop(handle, dropTarget);
+		return *this;
 	}
 
-	LRESULT setSavePoint()
+	scintilla_wnd& set_save_point()
 	{
-		return sendMsg(SCI_SETSAVEPOINT, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_SETSAVEPOINT, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT cut()
+	scintilla_wnd& cut()
 	{
-		return sendMsg(SCI_CUT, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_CUT, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT copy()
+	scintilla_wnd& copy()
 	{
-		return sendMsg(SCI_COPY, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_COPY, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT paste()
+	scintilla_wnd& paste()
 	{
-		return sendMsg(SCI_PASTE, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_PASTE, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT undo()
+	scintilla_wnd& undo()
 	{
-		return sendMsg(SCI_UNDO, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_UNDO, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT redo()
+	scintilla_wnd& redo()
 	{
-		return sendMsg(SCI_REDO, (WPARAM)0, (LPARAM)0);
+		send_msg(SCI_REDO, (WPARAM)0, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getTabWidth()
+	int get_tab_width()
 	{
-		return sendMsg(SCI_GETTABWIDTH, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_GETTABWIDTH, (WPARAM)0, (LPARAM)0);
 	}
 
-	LRESULT setTabWidth(int w)
+	scintilla_wnd& set_tab_width(int w)
 	{
-		return sendMsg(SCI_SETTABWIDTH, (WPARAM)w, (LPARAM)0);
+		send_msg(SCI_SETTABWIDTH, (WPARAM)w, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT setUseTabs(bool b)
+	scintilla_wnd& set_use_tabs(bool b)
 	{
-		return sendMsg(SCI_SETUSETABS, (WPARAM)b, (LPARAM)0);
+		send_msg(SCI_SETUSETABS, (WPARAM)b, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getUseTabs()
+	bool get_use_tabs()
 	{
-		return sendMsg(SCI_GETUSETABS, (WPARAM)0, (LPARAM)0);
+		return (bool)send_msg(SCI_GETUSETABS, (WPARAM)0, (LPARAM)0);
 	}
 
 
-
-	LRESULT printPage(bool bDraw, Sci_RangeToFormat* pfr)
+	scintilla_wnd& print_page(bool bDraw, Sci_RangeToFormat* pfr)
 	{
-		return sendMsg(SCI_FORMATRANGE, (WPARAM)bDraw, (LPARAM)pfr);
+		send_msg(SCI_FORMATRANGE, (WPARAM)bDraw, (LPARAM)pfr);
+		return *this;
 	}
 
-	void getnextSearchPos_(int i)
+	scintilla_wnd& set_next_search_pos_(int i)
 	{
 		nextSearchPos_ = i;
+		return *this;
 	}
 
-	LRESULT findText(int searchFlags, Sci_TextToFind* ttf)
+	LRESULT find_text(int searchFlags, Sci_TextToFind* ttf)
 	{
-		return sendMsg(SCI_FINDTEXT, (WPARAM)searchFlags, (LPARAM)ttf);
+		return send_msg(SCI_FINDTEXT, (WPARAM)searchFlags, (LPARAM)ttf);
 	}
 
 	bool search(const std::string& what, int options)
@@ -396,11 +407,11 @@ public:
 
 		searchOptions_ = options;
 		chrg.cpMin = nextSearchPos_;
-		chrg.cpMax = (int)getLength();
+		chrg.cpMax = (int)get_length();
 
 		if (0 == (options & FR_DOWN))
 		{
-			int len = (int)getLength();
+			int len = (int)get_length();
 
 			if (nextSearchPos_ == 0)
 				chrg.cpMin = len - nextSearchPos_;//
@@ -410,7 +421,7 @@ public:
 		ft.lpstrText = (char*)(what.c_str());
 		ft.chrg = chrg;
 
-		int r = (int)findText(options, &ft);
+		int r = (int)find_text(options, &ft);
 
 		if (r == -1)
 		{
@@ -429,7 +440,7 @@ public:
 		else
 			nextSearchPos_ = ft.chrgText.cpMax + 1;
 
-		setSel(r, ft.chrgText.cpMax);
+		set_selection(r, ft.chrgText.cpMax);
 		return true;
 	}
 
@@ -454,11 +465,11 @@ public:
 
 		searchOptions_ = options;
 		chrg.cpMin = nextSearchPos_;
-		chrg.cpMax = (int)this->getLength();
+		chrg.cpMax = (int)this->get_length();
 
 		if (!(options & FR_DOWN))
 		{
-			int len = (int)this->getLength();
+			int len = (int)this->get_length();
 
 			if (nextSearchPos_ == 0)
 				chrg.cpMin = len - nextSearchPos_;//
@@ -468,14 +479,14 @@ public:
 		ft.lpstrText = (char*)(what.c_str());
 		ft.chrg = chrg;
 
-		int r = (int)this->findText(options, &ft);
+		int r = (int)this->find_text(options, &ft);
 
 		if (r == -1)
 		{
 			chrg.cpMin = 0;
 			chrg.cpMax = 0;
 			nextSearchPos_ = 0;
-			setSel(0, 0);
+			set_selection(0, 0);
 			return false;
 		}
 
@@ -487,10 +498,10 @@ public:
 		else
 			nextSearchPos_ = r + (long)whith.size();//chrg.cpMax;//+1;
 
-		setSel(chrg.cpMin, chrg.cpMax);
-		replaceSel(whith);
+		set_selection(chrg.cpMin, chrg.cpMax);
+		replace_selection(whith);
 		chrg.cpMax = chrg.cpMin + (long)whith.size();
-		setSel(chrg.cpMin, chrg.cpMax);
+		set_selection(chrg.cpMin, chrg.cpMax);
 
 		return true;
 	}
@@ -585,20 +596,20 @@ public:
 		SCIDOC* sciDoc_ = nullptr;
 	};
 
-	SciDoc getDocument()
+	SciDoc get_document()
 	{
-		SCIDOC* doc = (SCIDOC*)sendMsg(SCI_GETDOCPOINTER, 0, 0);
+		SCIDOC* doc = (SCIDOC*)send_msg(SCI_GETDOCPOINTER, 0, 0);
 		return SciDoc(handle, doc);
 	}
 
-	void setDocument(SCIDOC* doc)
+	void set_document(SCIDOC* doc)
 	{
-		sendMsg(SCI_SETDOCPOINTER, 0, (WPARAM) doc);
+		send_msg(SCI_SETDOCPOINTER, 0, (WPARAM) doc);
 	}
 
-	SciDoc createDocument()
+	SciDoc create_document()
 	{
-		SCIDOC* doc = (SCIDOC*)sendMsg(SCI_CREATEDOCUMENT, 0, 0);
+		SCIDOC* doc = (SCIDOC*)send_msg(SCI_CREATEDOCUMENT, 0, 0);
 		SciDoc result(handle, doc);
 		::SendMessage(handle, SCI_RELEASEDOCUMENT, 0, (LPARAM)*result);
 		return result;
@@ -607,247 +618,273 @@ public:
 
 	// zoom
 
-	LRESULT zoom_in()
+	scintilla_wnd& zoom_in()
 	{
-		return sendMsg(SCI_ZOOMIN, (WPARAM)0, (LPARAM)(0));
+		send_msg(SCI_ZOOMIN, (WPARAM)0, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT zoom_out()
+	scintilla_wnd& zoom_out()
 	{
-		return sendMsg(SCI_ZOOMOUT, (WPARAM)0, (LPARAM)(0));
+		send_msg(SCI_ZOOMOUT, (WPARAM)0, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT setZoom(int zoom)
+	scintilla_wnd& set_zoom(int zoom)
 	{
-		return sendMsg(SCI_SETZOOM, (WPARAM)zoom, (LPARAM)(0));
+		send_msg(SCI_SETZOOM, (WPARAM)zoom, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getZoom()
+	int get_zoom()
 	{
-		return sendMsg(SCI_GETZOOM, (WPARAM)0, (LPARAM)(0));
+		return (int)send_msg(SCI_GETZOOM, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setMarginType(int margin, int type)
+	scintilla_wnd& set_margin_type(int margin, int type)
 	{
-		return sendMsg(SCI_SETMARGINTYPEN, (WPARAM)margin, (LPARAM)(type));
+		send_msg(SCI_SETMARGINTYPEN, (WPARAM)margin, (LPARAM)(type));
+		return *this;
 	}
 
-	LRESULT getMarginType(int margin)
+	int get_margin_type(int margin)
 	{
-		return sendMsg(SCI_GETMARGINTYPEN, (WPARAM)margin, (LPARAM)(0));
+		return (int)send_msg(SCI_GETMARGINTYPEN, (WPARAM)margin, (LPARAM)(0));
 	}
 
-	LRESULT setMarginWidth(int margin, int w)
+	scintilla_wnd& set_margin_width(int margin, int w)
 	{
-		return sendMsg(SCI_SETMARGINWIDTHN, (WPARAM)margin, (LPARAM)(w));
+		send_msg(SCI_SETMARGINWIDTHN, (WPARAM)margin, (LPARAM)(w));
+		return *this;
 	}
 
-	LRESULT getMarginWidth(int margin)
+	int get_margin_width(int margin)
 	{
-		return sendMsg(SCI_SETMARGINWIDTHN, (WPARAM)margin, (LPARAM)(0));
+		return (int)send_msg(SCI_SETMARGINWIDTHN, (WPARAM)margin, (LPARAM)(0));
 	}
 
-	LRESULT setMarginStyle(int margin)
+	scintilla_wnd& set_margin_style(int margin)
 	{
-		sendMsg(SCI_SETMARGINTYPEN, margin, SC_MARGIN_FORE);
-		return sendMsg(SCI_SETMARGINTYPEN, margin, SC_MARGIN_BACK);
+		send_msg(SCI_SETMARGINTYPEN, margin, SC_MARGIN_FORE);
+		send_msg(SCI_SETMARGINTYPEN, margin, SC_MARGIN_BACK);
+		return *this;
 	}
 
-	LRESULT setOvertype(bool b)
+	scintilla_wnd& set_overtype(bool b)
 	{
-		return sendMsg(SCI_SETOVERTYPE, (WPARAM)b, (LPARAM)(0));
+		send_msg(SCI_SETOVERTYPE, (WPARAM)b, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getOvertype()
+	bool get_overtype()
 	{
-		return sendMsg(SCI_GETOVERTYPE, (WPARAM)0, (LPARAM)(0));
+		return (bool)send_msg(SCI_GETOVERTYPE, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT lineScroll(int col, int line)
+	LRESULT line_scroll(int col, int line)
 	{
-		return sendMsg(SCI_LINESCROLL, (WPARAM)col, (LPARAM)(line));
+		return send_msg(SCI_LINESCROLL, (WPARAM)col, (LPARAM)(line));
 	}
 
-	LRESULT scrollCaret()
+	LRESULT scroll_caret()
 	{
-		return sendMsg(SCI_SCROLLCARET, (WPARAM)0, (LPARAM)(0));
+		return send_msg(SCI_SCROLLCARET, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT getCaretWidth()
+	int get_caret_width()
 	{
-		return sendMsg(SCI_SETCARETWIDTH, (WPARAM)0, (LPARAM)(0));
+		return (int) send_msg(SCI_SETCARETWIDTH, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setCaretWidth(int w)
+	scintilla_wnd& set_caret_width(int w)
 	{
-		return sendMsg(SCI_GETCARETWIDTH, (WPARAM)w, (LPARAM)(0));
+		send_msg(SCI_GETCARETWIDTH, (WPARAM)w, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getFocus()
+	LRESULT get_focus()
 	{
-		return sendMsg(SCI_GETFOCUS, (WPARAM)0, (LPARAM)(0));
+		return send_msg(SCI_GETFOCUS, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT getScrollWidth()
+	int get_scroll_width()
 	{
-		return sendMsg(SCI_GETSCROLLWIDTH, (WPARAM)0, (LPARAM)(0));
+		return (int)send_msg(SCI_GETSCROLLWIDTH, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setScrollWidth(int w)
+	scintilla_wnd& set_scroll_width(int w)
 	{
-		return sendMsg(SCI_SETSCROLLWIDTH, (WPARAM)w, (LPARAM)(0));
+		send_msg(SCI_SETSCROLLWIDTH, (WPARAM)w, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT setUsePopUp(bool b)
+	scintilla_wnd& set_use_popup(bool b)
 	{
-		return sendMsg(SCI_USEPOPUP, (WPARAM)b, (LPARAM)(0));
+		send_msg(SCI_USEPOPUP, (WPARAM)b, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT setIndent(int w)
+	scintilla_wnd& set_indent(int w)
 	{
-		return postMsg(SCI_SETINDENT, (WPARAM)w, (LPARAM)(0));
+		post_msg(SCI_SETINDENT, (WPARAM)w, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getIndent()
+	int get_indent()
 	{
-		return sendMsg(SCI_GETINDENT, (WPARAM)0, (LPARAM)(0));
+		return (int)send_msg(SCI_GETINDENT, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setLineIndent(int l, int w)
+	scintilla_wnd& set_line_indent(int l, int w)
 	{
-		return sendMsg(SCI_SETLINEINDENTATION, (WPARAM)l, (LPARAM)(w));
+		send_msg(SCI_SETLINEINDENTATION, (WPARAM)l, (LPARAM)(w));
+		return *this;
 	}
 
-	LRESULT getLineIndent(int l)
+	int get_line_indent(int l)
 	{
-		return sendMsg(SCI_GETLINEINDENTATION, (WPARAM)l, (LPARAM)(0));
+		return (int)send_msg(SCI_GETLINEINDENTATION, (WPARAM)l, (LPARAM)(0));
 	}
 
-	LRESULT setTabIndents(bool b)
+	scintilla_wnd& set_tab_indents(bool b)
 	{
-		return sendMsg(SCI_SETTABINDENTS, (WPARAM)b, (LPARAM)(0));
+		send_msg(SCI_SETTABINDENTS, (WPARAM)b, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getTabIndents()
+	bool get_tab_indents()
 	{
-		return sendMsg(SCI_GETTABINDENTS, (WPARAM)0, (LPARAM)(0));
+		return (bool)send_msg(SCI_GETTABINDENTS, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setBackSpaceUnindents(bool b)
+	scintilla_wnd& set_backspace_unindents(bool b)
 	{
-		return sendMsg(SCI_SETBACKSPACEUNINDENTS, (WPARAM)b, (LPARAM)(0));
+		send_msg(SCI_SETBACKSPACEUNINDENTS, (WPARAM)b, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getBackSpaceUnindents()
+	bool get_backspace_unindents()
 	{
-		return sendMsg(SCI_GETBACKSPACEUNINDENTS, (WPARAM)0, (LPARAM)(0));
+		return (bool) send_msg(SCI_GETBACKSPACEUNINDENTS, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setViewEol(bool b)
+	scintilla_wnd& set_view_eol(bool b)
 	{
-		return sendMsg(SCI_SETVIEWEOL, (WPARAM)b, (LPARAM)(0));
+		send_msg(SCI_SETVIEWEOL, (WPARAM)b, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getViewEol()
+	bool get_view_eol()
 	{
-		return sendMsg(SCI_GETVIEWEOL, (WPARAM)0, (LPARAM)(0));
+		return (bool)send_msg(SCI_GETVIEWEOL, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT setEolMode(int mode)
+	scintilla_wnd& set_eol_mode(int mode)
 	{
-		return sendMsg(SCI_SETEOLMODE, (WPARAM)mode, (LPARAM)(0));
+		send_msg(SCI_SETEOLMODE, (WPARAM)mode, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT getEolMode()
+	int get_eol_mode()
 	{
-		return sendMsg(SCI_GETEOLMODE, (WPARAM)0, (LPARAM)(0));
+		return (int) send_msg(SCI_GETEOLMODE, (WPARAM)0, (LPARAM)(0));
 	}
 
-	LRESULT convertEol(int mode)
+	scintilla_wnd& convert_eol(int mode)
 	{
-		return sendMsg(SCI_CONVERTEOLS, (WPARAM)mode, (LPARAM)(0));
+		send_msg(SCI_CONVERTEOLS, (WPARAM)mode, (LPARAM)(0));
+		return *this;
 	}
 
-	LRESULT braceHighlight(int pos1, int pos2)
+	scintilla_wnd& brace_highlight(int pos1, int pos2)
 	{
-		return sendMsg(SCI_BRACEHIGHLIGHT, (WPARAM)pos1, (LPARAM)(pos2));
+		send_msg(SCI_BRACEHIGHLIGHT, (WPARAM)pos1, (LPARAM)(pos2));
+		return *this;
 	}
 
-	LRESULT braceMatch(int pos)
+	LRESULT brace_match(int pos)
 	{
-		return sendMsg(SCI_BRACEMATCH, (WPARAM)pos, (LPARAM)(0));
+		return send_msg(SCI_BRACEMATCH, (WPARAM)pos, (LPARAM)(0));
 	}
 
 	// Annotations
 	
-	void setAnnotation(int i, const std::wstring& str)
+	scintilla_wnd& set_annotation(int i, const std::wstring& str)
 	{
 		std::string tmp = to_string(str);
-		sendMsg(SCI_ANNOTATIONSETTEXT, (WPARAM)i, (LPARAM)(tmp.c_str()));
+		send_msg(SCI_ANNOTATIONSETTEXT, (WPARAM)i, (LPARAM)(tmp.c_str()));
+		return *this;
 	}
 
-	void setAnnotationStyle(int i, int style)
+	scintilla_wnd& set_annotation_style(int i, int style)
 	{
-		sendMsg(SCI_ANNOTATIONSETSTYLE, (WPARAM)i, (LPARAM)(style));
+		send_msg(SCI_ANNOTATIONSETSTYLE, (WPARAM)i, (LPARAM)(style));
+		return *this;
 	}
 
-	void clearAnnotation(int i)
+	scintilla_wnd& clear_annotation(int i)
 	{
-		sendMsg(SCI_ANNOTATIONSETTEXT, (WPARAM)i, (LPARAM)(0));
+		send_msg(SCI_ANNOTATIONSETTEXT, (WPARAM)i, (LPARAM)(0));
+		return *this;
 	}
 
-	void clearAnnotations()
+	scintilla_wnd& clear_annotations()
 	{
-		sendMsg(SCI_ANNOTATIONCLEARALL, (WPARAM)0, (LPARAM)(0));
+		send_msg(SCI_ANNOTATIONCLEARALL, (WPARAM)0, (LPARAM)(0));
+		return *this;
 	}
 
-	void showAnnotations(int style)
+	scintilla_wnd& show_annotations(int style)
 	{
-		sendMsg(SCI_ANNOTATIONSETVISIBLE, (WPARAM)style, (LPARAM)(0));
+		send_msg(SCI_ANNOTATIONSETVISIBLE, (WPARAM)style, (LPARAM)(0));
+		return *this;
 	}
 
-	void clearAllMarkers()
+	scintilla_wnd& clear_all_markers()
 	{
-		sendMsg(SCI_MARKERDELETEALL, (WPARAM)-1, (LPARAM)(0));
+		send_msg(SCI_MARKERDELETEALL, (WPARAM)-1, (LPARAM)(0));
+		return *this;
 	}
 
-	void setMarker(int line, int num = 2)
+	scintilla_wnd& set_marker(int line, int num = 2)
 	{
-		LRESULT markerhandle = sendMsg(SCI_MARKERADD, (WPARAM)line, (LPARAM)(num));
+		LRESULT markerhandle = send_msg(SCI_MARKERADD, (WPARAM)line, (LPARAM)(num));
 		markers_.insert(markerhandle);
+		return *this;
 	}
 
-	void removeMarker(int line, int num = 2)
+	scintilla_wnd& remove_marker(int line, int num = 2)
 	{
 		for (std::set<LRESULT>::iterator it = markers_.begin(); it != markers_.end(); it++)
 		{
 			LRESULT markerhandler = (*it);
-			LRESULT l = sendMsg(SCI_MARKERLINEFROMHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
+			LRESULT l = send_msg(SCI_MARKERLINEFROMHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
 			if (l == line)
 			{
 				markers_.erase(markerhandler);
-				sendMsg(SCI_MARKERDELETEHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
-				return;
+				send_msg(SCI_MARKERDELETEHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
+				return *this;
 			}
 		}
+		return *this;
 	}
 
-	std::set<int> getMarkers()
+	std::set<int> get_markers()
 	{
 		std::set<int> lines;
 		for (std::set<LRESULT>::iterator it = markers_.begin(); it != markers_.end(); it++)
 		{
 			LRESULT markerhandler = (*it);
-			int line = (int)sendMsg(SCI_MARKERLINEFROMHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
-			int pos = (int)posFromLine(line);
+			int line = (int)send_msg(SCI_MARKERLINEFROMHANDLE, (WPARAM)markerhandler, (LPARAM)(0));
+			int pos = (int)pos_from_line(line);
 			lines.insert(pos);
 		}
 		return lines;
 	}
 
-	bool hasMarker(int line, int mask = 0x04)
+	bool has_marker(int line, int mask = 0x04)
 	{
-		LRESULT val = sendMsg(SCI_MARKERGET, (WPARAM)(line), (LPARAM)(0));
+		LRESULT val = send_msg(SCI_MARKERGET, (WPARAM)(line), (LPARAM)(0));
 		if (mask & val)
 		{
 			return true;
@@ -855,32 +892,32 @@ public:
 		return false;
 	}
 
-	bool toggleMarker(int line)
+	bool toggle_marker(int line)
 	{
-		bool b = hasMarker(line);
+		bool b = has_marker(line);
 		if (!b)
 		{
-			setMarker(line);
+			set_marker(line);
 			return b;
 		}
-		removeMarker(line);
+		remove_marker(line);
 		return !b;
 	}
 
-	void useMarkers(bool b)
+	scintilla_wnd& use_markers(bool b)
 	{
 		if (b)
 		{
 
-			LRESULT fore = sendMsg(SCI_STYLEGETFORE, (WPARAM)STYLE_DEFAULT, (LPARAM)0);
-			LRESULT back = sendMsg(SCI_STYLEGETBACK, (WPARAM)STYLE_DEFAULT, (LPARAM)0);
+			LRESULT fore = send_msg(SCI_STYLEGETFORE, (WPARAM)STYLE_DEFAULT, (LPARAM)0);
+			LRESULT back = send_msg(SCI_STYLEGETBACK, (WPARAM)STYLE_DEFAULT, (LPARAM)0);
 
-			sendMsg(SCI_SETMARGINWIDTHN, (WPARAM)(2), (LPARAM)(16));
-			sendMsg(SCI_SETMARGINSENSITIVEN, (WPARAM)(2), (LPARAM)(true));
-			sendMsg(SCI_MARKERDEFINE, (WPARAM)(2), (LPARAM)(SC_MARK_CIRCLE));
+			send_msg(SCI_SETMARGINWIDTHN, (WPARAM)(2), (LPARAM)(16));
+			send_msg(SCI_SETMARGINSENSITIVEN, (WPARAM)(2), (LPARAM)(true));
+			send_msg(SCI_MARKERDEFINE, (WPARAM)(2), (LPARAM)(SC_MARK_CIRCLE));
 
-			sendMsg(SCI_SETMARGINMASKN, (WPARAM)(1), (LPARAM)(0));
-			sendMsg(SCI_SETMARGINMASKN, (WPARAM)(2), (LPARAM)(~SC_MASK_FOLDERS));
+			send_msg(SCI_SETMARGINMASKN, (WPARAM)(1), (LPARAM)(0));
+			send_msg(SCI_SETMARGINMASKN, (WPARAM)(2), (LPARAM)(~SC_MASK_FOLDERS));
 			//sendMessage( SCI_MARKERSETBACK, (WPARAM)(2), (LPARAM)(back) );
 			//sendMessage(SCI_MARKERSETFORE, (WPARAM)(2), (LPARAM)(fore));
 			//sendMessage(SCI_SETFOLDMARGINCOLOUR, (WPARAM)1, (LPARAM)(fore));
@@ -888,47 +925,52 @@ public:
 
 		//	sendMessage(SCI_SETMARGINTYPEN, (WPARAM)(2) ,(LPARAM)(SC_MARGIN_BACK));
 		//	sendMessage(SCI_SETMARGINTYPEN, (WPARAM)(2), (LPARAM)(SC_MARGIN_FORE));
-			setCaretForeCol((int)fore);
-			return;
+			set_caret_forecol((int)fore);
+			return *this;
 		}
-		sendMsg(SCI_SETMARGINWIDTHN, (WPARAM)(2), (LPARAM)(0));
-		sendMsg(SCI_SETMARGINSENSITIVEN, (WPARAM)(2), (LPARAM)(false));
+		send_msg(SCI_SETMARGINWIDTHN, (WPARAM)(2), (LPARAM)(0));
+		send_msg(SCI_SETMARGINSENSITIVEN, (WPARAM)(2), (LPARAM)(false));
+
+		return *this;
 	}
 
-	void highliteLine(int line)
+	scintilla_wnd& highlite_line(int line)
 	{
 		if (highlight_ != 0)
 		{
-			sendMsg(SCI_MARKERDELETEHANDLE, (WPARAM)highlight_, (LPARAM)(0));
+			send_msg(SCI_MARKERDELETEHANDLE, (WPARAM)highlight_, (LPARAM)(0));
 			highlight_ = 0;
 		}
 
 		if (line == -1)
 		{
-			return;
+			return *this;
 		}
 
-		sendMsg(SCI_MARKERDEFINE, (WPARAM)(1), (LPARAM)(SC_MARK_BACKGROUND));
-		sendMsg(SCI_MARKERSETBACK, (WPARAM)(1), (LPARAM)(RGB(255, 245, 199)));
-		highlight_ = sendMsg(SCI_MARKERADD, (WPARAM)line, (LPARAM)(1));
+		send_msg(SCI_MARKERDEFINE, (WPARAM)(1), (LPARAM)(SC_MARK_BACKGROUND));
+		send_msg(SCI_MARKERSETBACK, (WPARAM)(1), (LPARAM)(RGB(255, 245, 199)));
+		highlight_ = send_msg(SCI_MARKERADD, (WPARAM)line, (LPARAM)(1));
+
+		return *this;
 	}
 
 
 	// Lexer and Styles
 
-	void setLexer(int lex)
+	scintilla_wnd& set_lexer(int lex)
 	{
-		sendMsg(SCI_SETLEXER, (WPARAM)lex, (LPARAM)0);
+		send_msg(SCI_SETLEXER, (WPARAM)lex, (LPARAM)0);
+		return *this;
 	}
 
-	LRESULT getLexer()
+	int get_lexer()
 	{
-		return sendMsg(SCI_GETLEXER, (WPARAM)0, (LPARAM)0);
+		return (int)send_msg(SCI_GETLEXER, (WPARAM)0, (LPARAM)0);
 	}
 
-	void setMode(int lex)
+	scintilla_wnd& set_mode(int lex)
 	{
-		setLexer(SCLEX_CPP);
+		set_lexer(SCLEX_CPP);
 
 		for (auto& styleSet : xmlStyleSets.styleSet)
 		{
@@ -937,87 +979,100 @@ public:
 				size_t c = styleSet.keywords.size();
 				for (int i = 0; i < c; i++)
 				{
-					setKeywords(i, styleSet.keywords[i]);
+					set_keywords(i, styleSet.keywords[i]);
 				}
 				break;
 			}
 		}
 		
 		colorize();
+		return *this;
 	}
 
-	void colorize(int start = 0, int end = -1)
+	scintilla_wnd& colorize(int start = 0, int end = -1)
 	{
-		sendMsg(SCI_COLOURISE, (WPARAM)start, (LPARAM)end);
+		send_msg(SCI_COLOURISE, (WPARAM)start, (LPARAM)end);
+		return *this;
 	}
 
-	void setStyle(int style, COLORREF fore, COLORREF back = 0, int size = 0, const char* font = 0)
+	scintilla_wnd& set_style(int style, COLORREF fore, COLORREF back = 0, int size = 0, const char* font = 0)
 	{
-		styleSetFore(style, fore);
+		style_set_fore(style, fore);
 		if (back)
-			styleSetBack(style, back);
+			style_set_back(style, back);
 		if (size >= 1)
-			styleSetSize(style, size);
+			style_set_size(style, size);
 		if (font)
-			styleSetFont(style, font);
+			style_set_font(style, font);
+
+		return *this;
 	}
 
-	LRESULT setCaretForeCol(int col)
+	scintilla_wnd& set_caret_forecol(int col)
 	{
-		return sendMsg(SCI_SETCARETFORE, (WPARAM)col, (LPARAM)col);
+		send_msg(SCI_SETCARETFORE, (WPARAM)col, (LPARAM)col);
+		return *this;
 	}
 
 
-	LRESULT styleSetFont(int style, const std::string& font)
+	scintilla_wnd& style_set_font(int style, const std::string& font)
 	{
-		return sendMsg(SCI_STYLESETFONT, (WPARAM)style, (LPARAM)(font.c_str()));
+		send_msg(SCI_STYLESETFONT, (WPARAM)style, (LPARAM)(font.c_str()));
+		return *this;
 	}
 
-	LRESULT styleSetSize(int style, int size)
+	scintilla_wnd& style_set_size(int style, int size)
 	{
-		return sendMsg(SCI_STYLESETSIZE, (WPARAM)style, (LPARAM)size);
+		send_msg(SCI_STYLESETSIZE, (WPARAM)style, (LPARAM)size);
+		return *this;
 	}
 
-	LRESULT styleSetFore(int style, int col)
-	{
-		if (style == STYLE_LINENUMBER)
-		{
-			setCaretForeCol(col);
-			sendMsg(SCI_SETSELBACK, (WPARAM)(1), (LPARAM)(col));
-		}
-		return sendMsg(SCI_STYLESETFORE, (WPARAM)style, (LPARAM)col);
-	}
-
-	LRESULT styleSetBack(int style, int col)
+	scintilla_wnd& style_set_fore(int style, int col)
 	{
 		if (style == STYLE_LINENUMBER)
 		{
-			sendMsg(SCI_SETSELFORE, (WPARAM)(1), (LPARAM)(col));
+			set_caret_forecol(col);
+			send_msg(SCI_SETSELBACK, (WPARAM)(1), (LPARAM)(col));
 		}
-		return sendMsg(SCI_STYLESETBACK, (WPARAM)style, (LPARAM)col);
+		send_msg(SCI_STYLESETFORE, (WPARAM)style, (LPARAM)col);
+		return *this;
 	}
 
-	LRESULT setKeywords(int keySet, const std::string& keyList)
+	scintilla_wnd& style_set_back(int style, int col)
 	{
-		return sendMsg(SCI_SETKEYWORDS, (WPARAM)keySet, (LPARAM)(keyList.c_str()));
+		if (style == STYLE_LINENUMBER)
+		{
+			send_msg(SCI_SETSELFORE, (WPARAM)(1), (LPARAM)(col));
+		}
+		send_msg(SCI_STYLESETBACK, (WPARAM)style, (LPARAM)col);
+		return *this;
 	}
 
-	LRESULT styleSetBold(int style, bool bold)
+	scintilla_wnd& set_keywords(int keySet, const std::string& keyList)
 	{
-		return sendMsg(SCI_STYLESETBOLD, (WPARAM)style, (LPARAM)bold);
+		send_msg(SCI_SETKEYWORDS, (WPARAM)keySet, (LPARAM)(keyList.c_str()));
+		return *this;
 	}
 
-	LRESULT styleSetItalic(int style, bool bold)
+	scintilla_wnd& style_set_bold(int style, bool bold)
 	{
-		return sendMsg(SCI_STYLESETITALIC, (WPARAM)style, (LPARAM)bold);
+		send_msg(SCI_STYLESETBOLD, (WPARAM)style, (LPARAM)bold);
+		return *this;
 	}
 
-	LRESULT styleSetEolFilled(int style, bool filled)
+	scintilla_wnd& style_set_italic(int style, bool bold)
 	{
-		return sendMsg(SCI_STYLESETEOLFILLED, (WPARAM)style, (LPARAM)filled);
+		send_msg(SCI_STYLESETITALIC, (WPARAM)style, (LPARAM)bold);
+		return *this;
 	}
 
-	void load_xml(const std::wstring& path)
+	scintilla_wnd& style_set_eol_filled(int style, bool filled)
+	{
+		send_msg(SCI_STYLESETEOLFILLED, (WPARAM)style, (LPARAM)filled);
+		return *this;
+	}
+
+	scintilla_wnd& load_xml(const std::wstring& path)
 	{
 		std::ifstream fs;
 		fs.open(path, std::ios::binary | std::ios::in);
@@ -1046,38 +1101,38 @@ public:
 			{
 				XmlStyle& xmlStyle = xmlStyleSet.style[j];
 
-				COLORREF foreCol = hex2rgb(xmlStyle.foreColor);
-				COLORREF backCol = hex2rgb(xmlStyle.backgroundColor);
+				COLORREF foreCol = hex_to_rgb(xmlStyle.foreColor);
+				COLORREF backCol = hex_to_rgb(xmlStyle.backgroundColor);
 
-				setStyle(xmlStyle.id, foreCol, backCol, xmlStyle.fontSize, xmlStyle.font.c_str());
+				set_style(xmlStyle.id, foreCol, backCol, xmlStyle.fontSize, xmlStyle.font.c_str());
 					//	setKeywords((xmlStyleSet.id, xmlStyleSet.keywords);
 
 				if (xmlStyle.bold == "true")
 				{
-					styleSetBold(xmlStyle.id, true);
+					style_set_bold(xmlStyle.id, true);
 				}
 				if (xmlStyle.italic == "true")
 				{
-					styleSetItalic(xmlStyle.id, true);
+					style_set_italic(xmlStyle.id, true);
 				}
 				if (xmlStyle.eol == "true")
 				{
-					styleSetEolFilled(xmlStyle.id, true);
+					style_set_eol_filled(xmlStyle.id, true);
 				}
 			}
 		}
-
+		return *this;
 	}
 
 
-	int searchPos()
+	int search_pos()
 	{
 		return nextSearchPos_;
 	}
 
-	bool searchPos(unsigned int pos)
+	bool search_pos(unsigned int pos)
 	{
-		if (pos <= (unsigned int)this->getLength())
+		if (pos <= (unsigned int)this->get_length())
 		{
 			nextSearchPos_ = pos;
 			return true;
@@ -1085,12 +1140,12 @@ public:
 		return false;
 	}
 
-	int searchOptions()
+	int search_options()
 	{
 		return searchOptions_;
 	}
 
-	bool searchOptions(int options)
+	bool search_options(int options)
 	{
 		searchOptions_ = options;
 		return true;
@@ -1106,10 +1161,10 @@ public:
 };
 
 
-class SciLexer
+class sci_lexer
 {
 public:
-	SciLexer()
+	sci_lexer()
 	{
 		::LoadLibrary(L"SciLexer.dll");
 	}
