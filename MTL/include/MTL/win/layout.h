@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mtl/win/wind.h"
+#include "mtl/win/wnd.h"
 #include "mtl/win/gdi.h"
 #include <windowsx.h>
 
@@ -98,7 +98,7 @@ namespace mtl {
 		{
 			static int unused = []() // init once
 			{
-				windowclass<splitter>().hCursor = ::LoadCursor(nullptr, IDC_HAND);// IDC_SIZEWE);
+				wc<splitter>().hCursor = ::LoadCursor(nullptr, IDC_HAND);// IDC_SIZEWE);
 				return 0;
 			}();
 		}

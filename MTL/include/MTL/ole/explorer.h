@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mtl/punk.h>
-#include <mtl/win/wind.h>
+#include <mtl/win/wnd.h>
 #include <mtl/win32/mem.h>
 #include <mtl/obj/impl.h>
 

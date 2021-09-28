@@ -1,0 +1,9 @@
+{
+    "name": "mtl",
+    "version-string": "c88f0d99139c9b836a5c2cb75f34978da7b711af",
+    "dependencies": [
+        {
+            "name": "metacpp"
+        }
+    ]
+}

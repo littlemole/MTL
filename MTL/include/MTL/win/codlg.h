@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mtl/punk.h>
-#include "mtl/win/wind.h"
+#include "mtl/win/wnd.h"
 #include "mtl/win/enc.h"
 #include <mtl/win32/uni.h>
 #include <mtl/win32/mem.h>
@@ -405,9 +405,9 @@ namespace mtl {
                 if (hr != S_OK)
                     return hr;
 
-                MTL::punk<IShellItem> shit;
+                punk<IShellItem> shit;
                 hr = ::SHCreateItemFromParsingName(
-                    MTL::Path(path).parentDir().str().c_str(),
+                    mtl::path(path).parentDir().str().c_str(),
                     NULL,
                     IID_IShellItem,
                     (void**)&shit
@@ -432,7 +432,7 @@ namespace mtl {
             fd_.release();
             paths_.clear();
 
-            HRESULT hr = fd_.createObject(clsid);
+            HRESULT hr = fd_.create_object(clsid);
             if (hr != S_OK)
                 return hr;
 
@@ -527,7 +527,7 @@ namespace mtl {
     {
     public:
         file_save_dialog(int options = 0)
-            : file_dialog<FileSaveDialog>(options)
+            : file_dialog<file_save_dialog>(options)
         {
             HR hr = init(options_, CLSID_FileSaveDialog);
         }
