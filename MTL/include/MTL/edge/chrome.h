@@ -1,23 +1,10 @@
 #pragma once
 
 #include "MTL/sdk.h"
-//#include "MTL/punk.h"
-//#include "MTL/win32/module.h"
-//#include "MTL/win32/mem.h"
 #include "MTL/win/wnd.h"
 #include "MTL/win/clipboard.h"
-//#include "MTL/win/app.h"
-//#include "MTL/win/wc.h"
 #include "MTL/win/wnd.h"
-//#include "MTL/win/gdi.h"
-//#include "MTL/win/layout.h"
-//#include "MTL/win/ctrl.h"
-//#include "MTL/win/codlg.h"
-//#include "MTL/win/dlg.h"
-//#include "MTL/util/path.h"
-//#include "MTL/obj/impl.h"
 #include "MTL/ole/shell.h"
-//#include "MTL/disp/variant.h"
 
 #include "webview2/WebView2.h"
 

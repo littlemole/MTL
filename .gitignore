@@ -43,3 +43,5 @@ Debug/
 Release/
 x64/
 
+vcpkg/
+vcpkg_installed/
