@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+<?ifndef MANUFACTURER ?>
+<?define MANUFACTURER = "mol" ?>
+<?endif?>
+
+<?ifndef UPGRADEUUID ?>
+<?define UPGRADEUUID = "A4507936-2B34-4EC9-81C4-D1E49B2D774E" ?>
+<?endif?>
+
+<?ifndef VENDORGUID ?>
+<?define VENDORGUID = "4F7915BA-9655-452C-A7C8-6F66E70583ED" ?>
+<?endif?>
+
+<?ifndef VERSION ?>
+<?define VERSION = "1.0.0.0" ?>
+<?endif?>
+
+
+  <!-- the product (TestCom) to install -->
+  <Product Id="*"
+           Name="$(var.MANUFACTURER)" Language="1033" Version="$(var.VERSION)"
+           Manufacturer="$(var.MANUFACTURER)"
+           UpgradeCode="$(var.UPGRADEUUID)">
+
+
+    <?if $(var.BuildArch) = "x86" ?>
+    <?define PF = ProgramFilesFolder ?>
+    <?define Win64 = "no" ?>
+    <?elseif $(var.BuildArch) = "x64" ?>
+    <?define PF = ProgramFiles64Folder ?>
+    <?define Win64 = "yes" ?>
+    <?endif?>
+
+    
+    <!-- msi version and packaging-->
+    <Package InstallerVersion="500" Compressed="yes" /> <!-- </Package> InstallScope="perMachine" /> -->
+
+    <!-- msi media: use single embedded cabinet archive-->
+    <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+	  <!-- no repair or change options in installer -->
+	  <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" /> 
+    <!--
+	  <Property Id="ARPNOMODIFY" Value="yes" Secure="yes" />
+    -->
+    
+    <!-- default settings regarding install scope -->
+    <Property Id="ALLUSERS" Secure="yes" Value="2" />
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
+    
+    <!-- package icon -->
+    <Icon Id="icon.ico" SourceFile=".\res\moe.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    <Property Id="projectName">$(var.projectName)</Property>
+
+
+    <!-- installation directory structure -->
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+
+      <!-- Binaries -->
+      <Directory Id="$(var.PF)">
+        <Directory Id="INSTALLLOCATION" Name="$(var.MANUFACTURER)">
+
+          <Component Id="$(var.projectName)Dir" Guid="$(var.VENDORGUID)"
+            SharedDllRefCount="no" KeyPath="no" NeverOverwrite="no" Permanent="no" Transitive="no"
+            Win64="$(var.Win64)" Location="either">
+            <CreateFolder/>
+          </Component>       
+	        <Directory Id='COMPATH' Name='$(var.projectName)' />
+       
+
+          <Component Id="RegistryEntries" Guid="*">
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor">
+              <RegistryValue Type="string" Name="subcommands" Value=""/>
+              <RegistryValue Type="string" Name="Icon" Value="[COMPATH]\moe.ico"/>
+            </RegistryKey>
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell" />
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell\Cmd1" >
+              <RegistryValue Type="string" Value="Open Default"/>
+              <RegistryValue Type="string" Name="Icon" Value="[COMPATH]\moe.ico"/>
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell\Cmd1\command">
+              <RegistryValue Type="string" Value='"[COMPATH]\Editor.exe" /file "%1"'/>
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell\Cmd2">
+              <RegistryValue Type="string" Value="Open Split"/>
+              <RegistryValue Type="string" Name="Icon" Value="C:\Windows\System32\shell32.dll,70"/>
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell\Cmd2\command">
+              <RegistryValue Type="string" Value='"C:\Users\mike\source\repos\MTL\x64\Debug\Editor.exe" /split "%1"'/>
+            </RegistryKey>
+
+          </Component>
+        </Directory>
+      </Directory>
+
+    </Directory>
+    
+    <!-- Features -->
+
+    <Feature AllowAdvertise='no' InstallDefault='local' Absent='disallow'
+             Id='$(var.projectName)Main' Title='$(var.projectName)' Description='$(var.projectName)'
+             Level='1' ConfigurableDirectory="INSTALLLOCATION">
+
+      <Feature Id="$(var.projectName)Core" Title="$(var.projectName)" Description='$(var.projectName)' Level="1">
+	     <ComponentRef Id="$(var.projectName)Dir" />
+       <?include features.xml ?>
+       <ComponentRef Id="RegistryEntries" />
+      </Feature>
+    </Feature>
+
+    <InstallExecuteSequence>
+ 	   <RemoveExistingProducts Before='InstallInitialize' />
+    </InstallExecuteSequence>
+
+    <!-- WIX UI overrides-->
+    <WixVariable Id="WixUILicenseRtf" Value=".\res\License.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value=".\res\moeinstall.jpg" />
+    <WixVariable Id="WixUIDialogBmp" Value=".\res\front.jpg" />
+
+    <WixVariable Id="WixUISupportPerMachine" Value="1" />
+    <WixVariable Id="WixUISupportPerUser" Value="1" />
+
+    <!-- WIX UI support -->
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <UIRef Id="WixUI_MondoNoLicense" >
+
+    </UIRef>
+  </Product>
+</Wix>

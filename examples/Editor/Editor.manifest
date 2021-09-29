@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+
+ <assemblyIdentity type="win32" name="Editor" processorArchitecture="amd64" version="1.0.0.0" /> 
+
+ <file name="Editor.exe"> 
+  <typelib tlbid="{0F7E34D4-236B-421E-8437-B9ADA59D60AE}" version="1.0" helpdir="" />
+ </file>
+
+<comInterfaceExternalProxyStub name="IMTLEditorDocument" iid="{5AE58F46-47DC-41F8-883A-54B7719A2FDB}" tlbid="{0F7E34D4-236B-421E-8437-B9ADA59D60AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"  /> 
+<comInterfaceExternalProxyStub name="IMTLEditorDocuments" iid="{2CA50833-CE2D-4543-B9E6-46DF983C00E5}" tlbid="{0F7E34D4-236B-421E-8437-B9ADA59D60AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"  /> 
+<comInterfaceExternalProxyStub name="IMTLEditor" iid="{BE5C3CDD-1E0A-4ECA-A0FA-FB9E2813932F}" tlbid="{0F7E34D4-236B-421E-8437-B9ADA59D60AE}" proxyStubClsid32="{00020424-0000-0000-C000-000000000046}"  /> 
+
+
+<!-- uncomment if you want XP style themes enabled for CommonControls library (if you link with ComCtl32.dll) -->
+ <dependency>
+  <dependentAssembly>
+   <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="amd64" publicKeyToken="6595b64144ccf1df" language="*" /> 
+  </dependentAssembly>
+ </dependency>
+
+
+<!-- UAccess Mode. patch as desired  -->
+ <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+  <security>
+   <requestedPrivileges>
+    <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+   </requestedPrivileges>
+  </security>
+ </trustInfo>
+
+</assembly>
+

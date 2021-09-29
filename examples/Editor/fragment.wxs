@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+ <Fragment Id='FragmentComEditor'>
+  <DirectoryRef Id='COMPATH'>
+   <Component Id="EditorServer" Guid="{076002AE-DAE9-4DBB-9C8E-E0A330B22214}">
+    <File Id="EditorServer" KeyPath="yes" Source="$(var.SourceDir)\Editor.exe">
+    </File>
+   </Component>
+  </DirectoryRef>
+  <ComponentGroup Id="ComEditor">
+   <ComponentRef Id="EditorServer" />
+  </ComponentGroup>
+ </Fragment>
+</Wix>
+

@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="COMPATH">
+            <Directory Id="dir1D47F3FE577BD86F683602867D60C7EC" Name="img" />
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="DeployComEditor">
+            <Component Id="cmp05C22E35F04C9DA66538E3312B6E3B4C" Directory="COMPATH" Guid="{BF2D6432-DB54-4EE9-AC49-071AE0FC395A}">
+                <File Id="filC010388A80FB7133C24AAF8980E4ADF5" KeyPath="yes" Source="$(var.SourceDir)\bar.xml" />
+            </Component>
+            <Component Id="cmp346E868FEC2B7AD69C0A9A78B42537F1" Directory="COMPATH" Guid="{6FE64717-B3CD-4C89-B269-D998C943001C}">
+                <File Id="fil31BC1A840500FF8E757322906A597873" KeyPath="yes" Source="$(var.SourceDir)\moe.ico" />
+            </Component>
+            <Component Id="cmpB4C7F386ADE146468C03C7A79F937571" Directory="COMPATH" Guid="{C9E53FEA-D7FA-418E-9116-322D400F9033}">
+                <File Id="fil861F99FF4F462515F5B6BF415E13A029" KeyPath="yes" Source="$(var.SourceDir)\styles.xml" />
+            </Component>
+            <Component Id="cmpEAEFE37ECBFFA2F253A1B42244E65974" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{47AC61A0-C3B5-40A4-BF32-F90870EBD0E3}">
+                <File Id="fil6C220A19A6C97D7D646ABB87647CFA22" KeyPath="yes" Source="$(var.SourceDir)\img\alien.png" />
+            </Component>
+            <Component Id="cmp39C474EF9D0490924844B19C3145F37F" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{9CB5F851-1B22-43AA-996D-1F3B714C9FA7}">
+                <File Id="fil76256A355E406B7AA77BB7C8784D858A" KeyPath="yes" Source="$(var.SourceDir)\img\Application-default-icon.png" />
+            </Component>
+            <Component Id="cmp6955366C6A9D469BB8189A9BAA6E1069" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{F489C1E7-CD4B-4E03-96AB-28B3078D8764}">
+                <File Id="fil48FD32E0744A064E1A471F6E739A160D" KeyPath="yes" Source="$(var.SourceDir)\img\application-exit.png" />
+            </Component>
+            <Component Id="cmp4AC439E13EF0CC2836821CCA3A000070" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{904B4720-010A-43CE-A19F-143B083AADB2}">
+                <File Id="fil927CFF1826062F3C29543A103998B049" KeyPath="yes" Source="$(var.SourceDir)\img\applications-graphics.png" />
+            </Component>
+            <Component Id="cmpA32606DA478812A02D9C973CC8DE4A63" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{792AB0FD-253A-46C0-B6A4-6DBD72203F2C}">
+                <File Id="fil024B5A0E37F51F54D9B0EA7A9C038C4E" KeyPath="yes" Source="$(var.SourceDir)\img\Applications-system.png" />
+            </Component>
+            <Component Id="cmp64DBA222E495CDFFC0A0086BFBF162EA" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{6ED9C1DF-48C6-4C42-8393-B34ED5B175DB}">
+                <File Id="filD94E3A9F3B3D3DA099A9CB6CD6F62266" KeyPath="yes" Source="$(var.SourceDir)\img\base64.png" />
+            </Component>
+            <Component Id="cmp72879247A1E633F6A7273B54A94C32C6" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{584E8D38-BEA1-484A-BC2F-6BDCE9846D6A}">
+                <File Id="fil50875B5411A0263E0E4C60894B6A8011" KeyPath="yes" Source="$(var.SourceDir)\img\cascades.png" />
+            </Component>
+            <Component Id="cmp67E61879F5593188E398E2F716995A8E" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{437D6774-6AE4-4D05-9B3C-C8ABAF01936F}">
+                <File Id="fil405C463B19EC31A819C874ABB4F07DBC" KeyPath="yes" Source="$(var.SourceDir)\img\cpp.png" />
+            </Component>
+            <Component Id="cmp979E3385B4C1AB70D86AEE39708FB067" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{3490F799-7C42-4CB9-845A-7784D7DFB371}">
+                <File Id="fil02452F997F14DE0F471325E1A1EF72EF" KeyPath="yes" Source="$(var.SourceDir)\img\debug-run.png" />
+            </Component>
+            <Component Id="cmpAC96A8F2113500931110B40D03035B99" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{6DFBEA30-262D-4220-A6D9-A76939ABF005}">
+                <File Id="fil6AF9699A0DCEA5DE2EACD61597ADC28C" KeyPath="yes" Source="$(var.SourceDir)\img\debug-step-into.png" />
+            </Component>
+            <Component Id="cmp69FF6E6DE2FAB9D19DF2AD3B0C58573A" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{C329D26A-417B-474B-8D61-0B2963A7B6AC}">
+                <File Id="fil88ED89BC63DBB0E40A8B9833D5DE6DD2" KeyPath="yes" Source="$(var.SourceDir)\img\debug-step-out.png" />
+            </Component>
+            <Component Id="cmp53C6EE9388292BE4E4005080F47CDE20" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{3543F01B-AF2A-481C-AC41-63ED589AD403}">
+                <File Id="fil4596760965CE09A1C14BB9A0CCCB9502" KeyPath="yes" Source="$(var.SourceDir)\img\debug-step-over.png" />
+            </Component>
+            <Component Id="cmp2CCE66B41260FB40DB183013C7EE7CC8" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{AA4419C7-37FB-4BF2-9A6D-0731D4D6944B}">
+                <File Id="fil282183DE16281615D57361B632E9B609" KeyPath="yes" Source="$(var.SourceDir)\img\debug-step.png" />
+            </Component>
+            <Component Id="cmpC856636569CE3F2FCAA31CD95985EE77" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{5BA6A104-BA0E-40F0-B2D2-36F0E683193A}">
+                <File Id="filE3615F819E91C747A1C1B75530202E11" KeyPath="yes" Source="$(var.SourceDir)\img\delete-comment.png" />
+            </Component>
+            <Component Id="cmpAB24D867EE9D350117168221887D9BFF" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{55545910-EAE0-435D-95C6-E4DBA84206EE}">
+                <File Id="fil8F3715C3B5AE264489E75EC2B08A700C" KeyPath="yes" Source="$(var.SourceDir)\img\Dialog-error-round.png" />
+            </Component>
+            <Component Id="cmpEBDB4C785F9FBC715812140B43F71286" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{EC0A5EC9-656D-4658-9A66-DDE37BF689CB}">
+                <File Id="filD395DA4B355DF84C414556F0C367A0F0" KeyPath="yes" Source="$(var.SourceDir)\img\document-close.png" />
+            </Component>
+            <Component Id="cmpE3D30C3D6BF62159A7A178F091C39680" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{A5B4D85D-361C-4006-99B9-57E13C2A65D7}">
+                <File Id="fil5D92B8844F96174A25FB6642493BF8D5" KeyPath="yes" Source="$(var.SourceDir)\img\document-new.png" />
+            </Component>
+            <Component Id="cmpAA1E80BF8227961F38003EC57D2071B3" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{093D3A85-3E4E-49D3-99EF-996CCE8BEA96}">
+                <File Id="filD9DE5D7EC84E66C6F38F1F5E487E0224" KeyPath="yes" Source="$(var.SourceDir)\img\document-open.png" />
+            </Component>
+            <Component Id="cmp5F929A84903BC87FF5DF52F33DD639F5" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{747E74EB-0F00-4F55-9268-085037811668}">
+                <File Id="filB9712E1606CE5B1DB2246598429511BC" KeyPath="yes" Source="$(var.SourceDir)\img\document-print.png" />
+            </Component>
+            <Component Id="cmpA34E80961F2F97FF89DF73BFF6AE4CDC" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{3EE7FF7A-86CA-4FE7-918D-8C09EC561416}">
+                <File Id="fil53340B0345E71A8FBDE8F2C24CDDDADB" KeyPath="yes" Source="$(var.SourceDir)\img\document-properties.png" />
+            </Component>
+            <Component Id="cmp1C03BCCE53423F3034EDCC292BE34B13" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{DDBBB45B-F87B-4072-BF48-866A24041FDE}">
+                <File Id="filB95E05C9BD6D401CA004084B3381E98D" KeyPath="yes" Source="$(var.SourceDir)\img\document-revert.png" />
+            </Component>
+            <Component Id="cmp1B845D91F70BEC70D61BF9CFD18C7FA2" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{1327F221-6265-40A9-B2FF-696E80924F54}">
+                <File Id="fil2396A732F42F522E0D0E2A518BA5A716" KeyPath="yes" Source="$(var.SourceDir)\img\document-save-as.png" />
+            </Component>
+            <Component Id="cmp497458B1952F8FB7299DB13AB082B270" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{3E6167B8-DE85-435A-AFC0-3350863940B7}">
+                <File Id="fil6526F329110039E58617A785BD846920" KeyPath="yes" Source="$(var.SourceDir)\img\document-save.png" />
+            </Component>
+            <Component Id="cmp9D4BB6C6BD5B64AD152CE11E0E9F93E4" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{6ADB5E99-94E3-404E-8672-E05B6E4C338F}">
+                <File Id="fil66F4D59BCD69ECBFBF096D9D56F2BF24" KeyPath="yes" Source="$(var.SourceDir)\img\document.png" />
+            </Component>
+            <Component Id="cmp20911D2B055717F5434992A2B097FFC0" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{93E860B1-4172-40FA-ABBA-EEE35E156C3B}">
+                <File Id="fil800F060F9E76B00BE4171A6C8F321883" KeyPath="yes" Source="$(var.SourceDir)\img\dot.png" />
+            </Component>
+            <Component Id="cmp8BB81FEBFDD7BA70F8740CD3CB9AAD8B" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{E628759B-9D40-4EB7-90BB-3D50BC65E31F}">
+                <File Id="fil531D760867DFAF1206667A06E38CCBC1" KeyPath="yes" Source="$(var.SourceDir)\img\edit-copy.png" />
+            </Component>
+            <Component Id="cmpCD4CED211DD7F5626EF76A897C293695" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{4D954952-3312-4C36-AA68-EBF0FC4BDD3E}">
+                <File Id="fil0F08D9F7B16549B1443C4D9D1A6B8175" KeyPath="yes" Source="$(var.SourceDir)\img\edit-cut.png" />
+            </Component>
+            <Component Id="cmp67D9E65F57BD5FC093E6B34325A68BB3" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{F1B3F83D-C5E2-41FE-9954-722F8DF0F3E3}">
+                <File Id="fil24B531EEB86175D4970CA2C6552F39A8" KeyPath="yes" Source="$(var.SourceDir)\img\edit-find-replace.png" />
+            </Component>
+            <Component Id="cmpEF826E63E6E0FD72E3E0B396309F7DFA" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{854E60DA-FCA6-46A0-A58C-5FD4E270E1E4}">
+                <File Id="fil8C7D2BC29CBB1CEAA3890906DA7318FA" KeyPath="yes" Source="$(var.SourceDir)\img\edit-find.png" />
+            </Component>
+            <Component Id="cmp4C29E36B2FEB16E4EDC59FD8A0F6CACF" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{DE771C60-7C95-496F-9755-2B889D75BC95}">
+                <File Id="filFDFA7A2738818EC10A2254D4AE754CD0" KeyPath="yes" Source="$(var.SourceDir)\img\edit-paste.png" />
+            </Component>
+            <Component Id="cmpCB268B73ADBFB3ADE3A2BC3BDB7E3AAD" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{99C94DEC-F4C7-417F-B9F9-A9B603D9A822}">
+                <File Id="fil839AB4826EAA0CC8AA22C94AF57D8D86" KeyPath="yes" Source="$(var.SourceDir)\img\edit-redo.png" />
+            </Component>
+            <Component Id="cmp43EDF8999CE22C6B87F3204F655A3814" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{246A6472-4469-4DFC-97A7-C1CC9B3A72BF}">
+                <File Id="fil2F0C577629816677E5B843AE7C90477E" KeyPath="yes" Source="$(var.SourceDir)\img\edit-select-all.png" />
+            </Component>
+            <Component Id="cmp176DCFFEFF410BC9CAC79361D3F57880" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{A0D5CB9C-6B07-4B0F-A059-0E6061D860A6}">
+                <File Id="filB12A0B5AD02C1830E2F3A830230E1614" KeyPath="yes" Source="$(var.SourceDir)\img\edit-undo.png" />
+            </Component>
+            <Component Id="cmpBCA26ADB1B1ED6B5EEA0EE70EC2917C7" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{7039CE26-531A-4B2B-8933-FBD93C7418E5}">
+                <File Id="fil4AA8623BA8B3A23B71957C5F6F153997" KeyPath="yes" Source="$(var.SourceDir)\img\Emblem-system.png" />
+            </Component>
+            <Component Id="cmp9F1D7FA33CF6742EA8896A2D5FF13640" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{C0142DB3-A0F4-4FB3-B8E8-20DF9078EF97}">
+                <File Id="filF423C6B83CED5E83E65F8DB5500FBE12" KeyPath="yes" Source="$(var.SourceDir)\img\Emblem-unreadable.png" />
+            </Component>
+            <Component Id="cmpF669316D200933A9BE7454ACF1FF414D" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{1DDA46F0-5022-4939-AE58-55FC01A7A0B2}">
+                <File Id="filC6297A0B8D3CEB0AD08C9F6C85C6C280" KeyPath="yes" Source="$(var.SourceDir)\img\folder-new.png" />
+            </Component>
+            <Component Id="cmp63F4C465F0743C88A8949435CC7C8461" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{A83E2F2A-934A-45D4-B2CF-4BB1E0E58E41}">
+                <File Id="fil7DB5F027594C9AE40B5846F30FC17ED1" KeyPath="yes" Source="$(var.SourceDir)\img\folder.png" />
+            </Component>
+            <Component Id="cmp460B379C114281737350A855E5A9AAD9" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{1D44A25C-2803-4CD1-AAF9-5B118B77FC08}">
+                <File Id="filC6571FB871DDA3F1391EA4EAAA887E94" KeyPath="yes" Source="$(var.SourceDir)\img\Go-jump.png" />
+            </Component>
+            <Component Id="cmp81A8A01DE635BA1CC4EAA4BC13D32936" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{840C35CD-BF7C-4679-8FB7-ABE4F21B0CE4}">
+                <File Id="fil29BE67A82E867EB656CDACF37531C4E4" KeyPath="yes" Source="$(var.SourceDir)\img\Go-next.png" />
+            </Component>
+            <Component Id="cmpA70D1ADA1F8BA4CB5C5443901DB7AC20" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{1C87F65B-0C57-44AA-99E6-6D3A4ADC2CC6}">
+                <File Id="fil6F189D14947A169F7078A874AA317ACC" KeyPath="yes" Source="$(var.SourceDir)\img\Go-previous.png" />
+            </Component>
+            <Component Id="cmp9D78A438CE0E611D410A3C6BE6A40F1C" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{D8E52714-8024-4EE2-9491-825C0176FAA1}">
+                <File Id="filAFF03B79CBB6306030F42B1CB25DB1AB" KeyPath="yes" Source="$(var.SourceDir)\img\go-up.png" />
+            </Component>
+            <Component Id="cmp4B228861CDBAA4C59CF52C267F4C02F8" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{361D5EBF-9193-4BD5-AEC8-C0C38F3DBF28}">
+                <File Id="filC2929E59A0369C6E438F84C5D63EFC91" KeyPath="yes" Source="$(var.SourceDir)\img\Help-browser.png" />
+            </Component>
+            <Component Id="cmp6419F5F8B8D5B426B91E932D7512F366" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{42335FD4-D97A-4913-9577-AD8C7E3D9EC9}">
+                <File Id="fil6D3B7DF325942F51EACEA06225A26AAD" KeyPath="yes" Source="$(var.SourceDir)\img\html-file.png" />
+            </Component>
+            <Component Id="cmpEA8B77AE501D2C80EC6F9444EEAA497C" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{8A6CE6AA-9E8F-40C0-900D-91E9F66496BA}">
+                <File Id="fil0212A4C5A233128C7E7084530E00CA58" KeyPath="yes" Source="$(var.SourceDir)\img\info.png" />
+            </Component>
+            <Component Id="cmpD0425BF8723C898FE443E5B6EF9F948B" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{D77EFE5F-E968-4555-B1BD-E516BCA01003}">
+                <File Id="filFAD2747772EA931F86BE69AA8BEA4B2C" KeyPath="yes" Source="$(var.SourceDir)\img\java.png" />
+            </Component>
+            <Component Id="cmpC11BCB40A146BFA1424E04F5C81FED11" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{0FDE2D64-9015-4B57-BCC3-F36B083C8578}">
+                <File Id="filD9A24EED95D6FB8FE9F33B9A8E73032E" KeyPath="yes" Source="$(var.SourceDir)\img\javascript.png" />
+            </Component>
+            <Component Id="cmpDBDD395F4A80A48917318A610078AC8A" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{B1FCEBB7-1D54-4570-84E6-748B8FD7D1B8}">
+                <File Id="filD70C31925C753E511827257C518258EB" KeyPath="yes" Source="$(var.SourceDir)\img\json.png" />
+            </Component>
+            <Component Id="cmp214C02EF4CA978189FFE33781B3D8158" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{32B41482-0570-41E4-8C46-2A2496C991A6}">
+                <File Id="filCF712448E21BD66AD4585129C3EC1D32" KeyPath="yes" Source="$(var.SourceDir)\img\markdown.png" />
+            </Component>
+            <Component Id="cmp2DC64F95F490D1A8D1EC20B29AA85D3B" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{4424635D-E47C-4E0C-8DEC-797FC47F44A6}">
+                <File Id="filA5D9D708803D2BC4C1F16543F5052C8E" KeyPath="yes" Source="$(var.SourceDir)\img\msdos.png" />
+            </Component>
+            <Component Id="cmpF9A864748E0B1269103AE456E61BBA5F" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{B6236ED3-A4C7-46AC-B675-694F752976D3}">
+                <File Id="filF49DEF6D0CDC88DF5CE9DAF0E2167FB1" KeyPath="yes" Source="$(var.SourceDir)\img\pause.png" />
+            </Component>
+            <Component Id="cmpFD703B21918F468EB4320675953C70B6" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{F858F987-87C2-48C8-A5F5-59D5BE8F8928}">
+                <File Id="fil393D6D71E78DEE90B22B4CAE5204CD39" KeyPath="yes" Source="$(var.SourceDir)\img\perl.png" />
+            </Component>
+            <Component Id="cmp7F8E0FC809022589D3BC41612EEF7F23" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{B4763210-EF1F-4042-834A-2EBD8D18D2BD}">
+                <File Id="filEC89E1883B9B455533684553A3F374AB" KeyPath="yes" Source="$(var.SourceDir)\img\preferences-desktop.png" />
+            </Component>
+            <Component Id="cmpDCFDD64BE637CB2B4B8E75C679574669" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{38C042E1-B02F-49C6-939C-4130BD739457}">
+                <File Id="fil9D1B22D10D38F39E70455A0E3F6A5C7E" KeyPath="yes" Source="$(var.SourceDir)\img\preferences-system-windows.png" />
+            </Component>
+            <Component Id="cmpCE8712F3347F1B42B89B3FAA8C7D82E3" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{36B5CEF7-DCFF-4F1A-BC13-8E630F1A1872}">
+                <File Id="fil47671E3D78A8DCB34C2EF8C94ABFDCC3" KeyPath="yes" Source="$(var.SourceDir)\img\Preferences-system.png" />
+            </Component>
+            <Component Id="cmpFE69EFD320D6E1EB269615791F74F695" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{E3E6AEC3-4BE5-4380-883A-AE660864B60D}">
+                <File Id="fil9D184CDB5C385F2D5C8001AA1AA24C15" KeyPath="yes" Source="$(var.SourceDir)\img\python.png" />
+            </Component>
+            <Component Id="cmp10058B82D4551418EE545607A78ABE02" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{141A6951-874A-47D3-9795-E7D994089224}">
+                <File Id="filD35C3707B0EDF2641348E4F38521842F" KeyPath="yes" Source="$(var.SourceDir)\img\shebang.png" />
+            </Component>
+            <Component Id="cmpB757746DC2543DEA1558F288867BDA36" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{7095757F-4E42-497D-AFFC-B7982367F593}">
+                <File Id="filD9F376990030A010C3994A0AD9D2A016" KeyPath="yes" Source="$(var.SourceDir)\img\start.png" />
+            </Component>
+            <Component Id="cmp6EF81827E8734B4B3C14005115055036" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{FDC23F26-DF75-468A-A1D0-E8778A3397D1}">
+                <File Id="fil78AC381BE57538A6D8B179554921E895" KeyPath="yes" Source="$(var.SourceDir)\img\stop.png" />
+            </Component>
+            <Component Id="cmpA8AD211DFAFF485E6220C00B064C4A9B" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{BAE4E8A7-4E72-474F-9D0A-4D110DADD28A}">
+                <File Id="filDB3D340DD9EB3E60B31343253C8C626A" KeyPath="yes" Source="$(var.SourceDir)\img\svg.png" />
+            </Component>
+            <Component Id="cmpD78438FBDA01375AF03C64429686D555" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{BFE16CC2-F965-4F4C-A825-9AA204E2B2A1}">
+                <File Id="filCC61F6E648E35F5D63E880DCDA0D0324" KeyPath="yes" Source="$(var.SourceDir)\img\system-run.png" />
+            </Component>
+            <Component Id="cmp554FAD38A1F650014F46886470D98CD4" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{360475D7-D72D-4BE4-BC1D-344E37FA9E48}">
+                <File Id="filC02CAE4744E2BCE6CEE4B65F496447C7" KeyPath="yes" Source="$(var.SourceDir)\img\system-search.png" />
+            </Component>
+            <Component Id="cmp20234B8C592CA1A0FE8B07B2D2487825" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{69CA9873-5841-467F-ADCC-52E7C4E19B26}">
+                <File Id="fil5FA462CFBFFDA9869CC071307D816E12" KeyPath="yes" Source="$(var.SourceDir)\img\tile.png" />
+            </Component>
+            <Component Id="cmpEEF2AEBA72A7A4F3B4C5CB7BE682EF9E" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{500617E7-BCBF-4E77-AAE7-3A2FBCDED08E}">
+                <File Id="fil3E56AA550B46BCD2B46BADE41422623D" KeyPath="yes" Source="$(var.SourceDir)\img\unix.png" />
+            </Component>
+            <Component Id="cmpB7F1529C6B86213F404F249360B0E856" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{8A53C6E2-2E38-497E-A1C0-DC92738C697D}">
+                <File Id="fil7189272F322D7FD75EAF38C7F5432243" KeyPath="yes" Source="$(var.SourceDir)\img\utilities-terminal.png" />
+            </Component>
+            <Component Id="cmp39BA47BBB66CF61713C84F97C4338A5E" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{24300CAB-0F1D-482E-AB98-D63E5EA69D60}">
+                <File Id="filAD925B0260EF71B9A204A273B3EDC28C" KeyPath="yes" Source="$(var.SourceDir)\img\View-fullscreen.png" />
+            </Component>
+            <Component Id="cmp8F01D9F467223594A00095A80036E2EC" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{A4B58FC5-AC89-46FE-894B-AD7E5DB66E97}">
+                <File Id="filAAE3C58BD94ABD9C028665C2A29120B4" KeyPath="yes" Source="$(var.SourceDir)\img\View-refresh.png" />
+            </Component>
+            <Component Id="cmpEEABACC87EAA5BB2E40E9EE75E5E69B9" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{1EEB7699-C4C8-4E62-A603-88346D02EA32}">
+                <File Id="filA485B7C54892B18AFADEF875A61BFA40" KeyPath="yes" Source="$(var.SourceDir)\img\view-restore.png" />
+            </Component>
+            <Component Id="cmp2B175330B9E11C9501644494DD22BAB9" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{3572FF13-65E7-4E73-9F7A-4F47231B85C4}">
+                <File Id="fil48B5191FED2A16E007AF63CBA51DD058" KeyPath="yes" Source="$(var.SourceDir)\img\web-browser.png" />
+            </Component>
+            <Component Id="cmp0C68E1FC7545A158FEC4B81C49FA1440" Directory="dir1D47F3FE577BD86F683602867D60C7EC" Guid="{F95B8E8F-D393-4198-A943-8509C4C7B0AC}">
+                <File Id="fil1EF2120462DE1AFF5588C105729DC5C1" KeyPath="yes" Source="$(var.SourceDir)\img\xml.png" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

@@ -1,0 +1,111 @@
+
+#include <string>
+#include <sstream>
+#include <map>
+
+std::map<int,std::string> int2id;
+std::map<std::string,int> id2int;
+
+static int unused = []()
+{
+int2id[103]="IDS_APP_TITLE";
+ id2int["IDS_APP_TITLE"]=103;
+int2id[128]="IDR_MAINFRAME";
+ id2int["IDR_MAINFRAME"]=128;
+int2id[102]="IDD_EDITOR_DIALOG";
+ id2int["IDD_EDITOR_DIALOG"]=102;
+int2id[103]="IDD_ABOUTBOX";
+ id2int["IDD_ABOUTBOX"]=103;
+int2id[104]="IDM_ABOUT";
+ id2int["IDM_ABOUT"]=104;
+int2id[105]="IDM_EXIT";
+ id2int["IDM_EXIT"]=105;
+int2id[301]="IDM_EOL";
+ id2int["IDM_EOL"]=301;
+int2id[302]="IDM_EOL_WIN32";
+ id2int["IDM_EOL_WIN32"]=302;
+int2id[303]="IDM_EOL_UNIX";
+ id2int["IDM_EOL_UNIX"]=303;
+int2id[102]="ID_FILE";
+ id2int["ID_FILE"]=102;
+int2id[101]="ID_EDIT";
+ id2int["ID_EDIT"]=101;
+int2id[100]="ID_HELP";
+ id2int["ID_HELP"]=100;
+int2id[106]="ID_FILE_OPEN";
+ id2int["ID_FILE_OPEN"]=106;
+int2id[107]="ID_EDIT_CUT";
+ id2int["ID_EDIT_CUT"]=107;
+int2id[108]="ID_EDIT_COPY";
+ id2int["ID_EDIT_COPY"]=108;
+int2id[109]="ID_EDIT_PASTE";
+ id2int["ID_EDIT_PASTE"]=109;
+int2id[110]="ID_FILE_NEW";
+ id2int["ID_FILE_NEW"]=110;
+int2id[111]="ID_EDIT_RUN";
+ id2int["ID_EDIT_RUN"]=111;
+int2id[200]="IDC_SCINTILLA";
+ id2int["IDC_SCINTILLA"]=200;
+int2id[201]="IDC_TOOLBAR";
+ id2int["IDC_TOOLBAR"]=201;
+int2id[202]="IDC_STATUSBAR";
+ id2int["IDC_STATUSBAR"]=202;
+int2id[203]="IDC_TOOLBAR_DOC";
+ id2int["IDC_TOOLBAR_DOC"]=203;
+int2id[507]="IDI_EDITOR";
+ id2int["IDI_EDITOR"]=507;
+int2id[508]="IDC_EOL";
+ id2int["IDC_EOL"]=508;
+int2id[509]="IDC_EDITOR";
+ id2int["IDC_EDITOR"]=509;
+int2id[510]="IDC_SYNTAX";
+ id2int["IDC_SYNTAX"]=510;
+int2id[511]="IDC_TABCONTROL";
+ id2int["IDC_TABCONTROL"]=511;
+int2id[512]="IDC_REBAR";
+ id2int["IDC_REBAR"]=512;
+int2id[513]="IDC_REBAR_MAIN";
+ id2int["IDC_REBAR_MAIN"]=513;
+int2id[514]="IDC_REBAR_DOC";
+ id2int["IDC_REBAR_DOC"]=514;
+int2id[515]="IDC_REBAR_SYNTAX";
+ id2int["IDC_REBAR_SYNTAX"]=515;
+int2id[516]="IDC_ENCODING";
+ id2int["IDC_ENCODING"]=516;
+int2id[517]="IDC_REBAR_ENCODING";
+ id2int["IDC_REBAR_ENCODING"]=517;
+int2id[518]="IDC_REBAR_EOL";
+ id2int["IDC_REBAR_EOL"]=518;
+int2id[519]="IDC_SELECTOR";
+ id2int["IDC_SELECTOR"]=519;
+int2id[520]="IDC_TOOLTIP";
+ id2int["IDC_TOOLTIP"]=520;
+int2id[608]="IDI_SMALL";
+ id2int["IDI_SMALL"]=608;
+int2id[609]="IDI_FILE_OPEN";
+ id2int["IDI_FILE_OPEN"]=609;
+int2id[610]="IDI_FILE_NEW";
+ id2int["IDI_FILE_NEW"]=610;
+int2id[611]="IDI_FILE_SAVE";
+ id2int["IDI_FILE_SAVE"]=611;
+int2id[700]="IDM_SYNTAX_PLAIN";
+ id2int["IDM_SYNTAX_PLAIN"]=700;
+int2id[701]="IDM_SYNTAX_CPP";
+ id2int["IDM_SYNTAX_CPP"]=701;
+int2id[702]="IDM_SYNTAX_JAVA";
+ id2int["IDM_SYNTAX_JAVA"]=702;
+int2id[703]="IDM_SYNTAX_JS";
+ id2int["IDM_SYNTAX_JS"]=703;
+int2id[800]="ID_MODE_SIMPLE";
+ id2int["ID_MODE_SIMPLE"]=800;
+int2id[801]="ID_MODE_EDIT";
+ id2int["ID_MODE_EDIT"]=801;
+int2id[2]="IDC_MYICON";
+ id2int["IDC_MYICON"]=2;
+int2id[-1]="IDC_STATIC";
+ id2int["IDC_STATIC"]=-1;
+
+	return 0;
+}();
+
+

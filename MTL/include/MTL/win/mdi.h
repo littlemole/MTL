@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mtl/win/wind.h"
+#include "mtl/win/wnd.h"
 #include "mtl/win/layout.h"
 
 namespace mtl {
@@ -300,15 +300,15 @@ namespace mtl {
 
         mdi_child()
         {
-            auto& wc = windowclass<mdi_child>();
-            wc.lpfnWndProc = &mdi_child::windowProc;
+            auto& clazz = wc<mdi_child>();
+            clazz.lpfnWndProc = &mdi_child::windowProc;
         }
 
         mdi_child(int menuId, int viewMenuIndex = -1)
             : menu(menuId), viewMenuIndex_(viewMenuIndex)
         {
-            auto& wc = windowclass<mdi_child>();
-            wc.lpfnWndProc = &mdi_child::windowProc;
+            auto& clazz = wc<mdi_child>();
+            clazz.lpfnWndProc = &mdi_child::windowProc;
         }
 
         virtual LRESULT wm_size(RECT& clientRect) override
@@ -514,10 +514,10 @@ namespace mtl {
     {
         RECT bounds = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
 
-        auto& wc = windowclass<mdi_child>();
+        auto& clazz = wc<mdi_child>();
 
         HWND wnd = ::CreateMDIWindow(
-            wc.name(), 
+            clazz.name(), 
             title.c_str(), 
             styles, 
             bounds.left, bounds.top,
@@ -542,10 +542,10 @@ namespace mtl {
     {
         RECT bounds = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
 
-        auto& wc = windowclass<mdi_child>();
+        auto& clazz = wc<mdi_child>();
 
         HWND wnd = ::CreateMDIWindow(
-            wc.name(),
+            clazz.name(),
             title,
             style,
             bounds.left, bounds.top,

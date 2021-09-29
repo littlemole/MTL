@@ -407,7 +407,7 @@ namespace mtl {
 
                 punk<IShellItem> shit;
                 hr = ::SHCreateItemFromParsingName(
-                    mtl::path(path).parentDir().str().c_str(),
+                    mtl::path(path).parent_dir().str().c_str(),
                     NULL,
                     IID_IShellItem,
                     (void**)&shit

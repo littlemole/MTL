@@ -548,11 +548,11 @@ namespace mtl {
         struct item
         {
             item(int i)
-                : id(i), label(ui().label(id).c_str())
+                : id(i), label(gui().label(id).c_str())
             {} 
 
             item(int i, bool check)
-                : id(i), label(ui().label(id).c_str()),checked(check)
+                : id(i), label(gui().label(id).c_str()),checked(check)
             {}
 
             item(int i, const wchar_t* l)
@@ -568,7 +568,7 @@ namespace mtl {
             {}
 
             item(int i, const std::vector<item>& subMenu)
-                : id(i), label(ui().label(id).c_str()), items(subMenu)
+                : id(i), label(gui().label(id).c_str()), items(subMenu)
             {}
 
             int id;

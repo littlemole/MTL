@@ -7,13 +7,13 @@
 #include <map>
 #include <vector>
 
-namespace MTL {
+namespace mtl {
 
-    class Options
+    class options
     {
     public:
 
-        Options(const std::vector<std::wstring>& opts)
+        options(const std::vector<std::wstring>& opts)
             : available_(opts)
         {
             int argc = __argc;

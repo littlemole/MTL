@@ -259,7 +259,7 @@ namespace mtl {
 		}
 
 
-		static mtl::punk<IUnknown> getObject(const CLSID& clsid, const std::wstring& id)
+		static mtl::punk<IUnknown> get_object(const CLSID& clsid, const std::wstring& id)
 		{
 			mtl::punk<IUnknown> result;
 			mtl::punk<IRunningObjectTable> rot;
@@ -292,7 +292,7 @@ namespace mtl {
 		template<class T>
 		static mtl::punk<T> object(const std::wstring& id)
 		{
-			mtl::punk<IUnknown> obj = getObject(id);
+			mtl::punk<IUnknown> obj = get_object(id);
 			if (!obj) return obj;
 			mtl::punk<T> result(obj);
 			return result;
@@ -302,7 +302,7 @@ namespace mtl {
 		template<class T>
 		static mtl::punk<T> object(const CLSID& clsid, const std::wstring& id)
 		{
-			mtl::punk<IUnknown> obj = getObject(clsid,id);
+			mtl::punk<IUnknown> obj = get_object(clsid,id);
 			if (!obj) return obj;
 			mtl::punk<T> result(obj);
 			return result;
@@ -415,24 +415,24 @@ namespace mtl {
 			obj = rhs;
 			if (cookie)
 			{
-				rot::revokeObject(cookie);
+				rot::revoke_object(cookie);
 				cookie = 0;
 			}
 			punk<IUnknown> unk(obj);
 			if (::IsEqualCLSID(clsid, CLSID_NULL))
 			{
-				cookie = rot::registerObject(uid, *unk, flags);
+				cookie = rot::register_object(uid, *unk, flags);
 			}
 			else
 			{
-				cookie = rot::registerObject(clsid, uid, *unk, flags);
+				cookie = rot::register_object(clsid, uid, *unk, flags);
 			}
 			return *this;
 		}
 
 		~rotten()
 		{
-			rot::revokeObject(cookie);
+			rot::revoke_object(cookie);
 		}
 
 		std::wstring id()

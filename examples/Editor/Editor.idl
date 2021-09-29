@@ -1,0 +1,94 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+////////////////////////////////////////////////////////////////////////////////////
+// IMTLEditorDocument
+////////////////////////////////////////////////////////////////////////////////////
+
+[
+	uuid(5AE58F46-47DC-41F8-883A-54B7719A2FDB),
+	helpstring("IMTLEditorDocument"),
+	object, oleautomation, dual
+]
+interface IMTLEditorDocument : IDispatch
+{
+	[id(1), propget, helpstring("Document Id")]
+	HRESULT documentId([out, retval] BSTR* docId);
+
+	[id(2), propget, helpstring("Filename")]
+	HRESULT filename([out, retval] BSTR* fn);
+
+	[id(3), propget, helpstring("Content")]
+	HRESULT content([out, retval] BSTR* cnt);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// IMTLEditorDocuments
+////////////////////////////////////////////////////////////////////////////////////
+
+[
+	uuid(2CA50833-CE2D-4543-B9E6-46DF983C00E5),
+	helpstring("IMTLEditorDocuments"),
+	object, oleautomation, dual
+]
+interface IMTLEditorDocuments : IDispatch
+{
+	[id(1), propget, helpstring("Count")]
+	HRESULT count([out,retval] long* cnt);
+
+	[id(2), helpstring("item")]
+	HRESULT item( [in] VARIANT idx, [out,retval] IMTLEditorDocument** doc);
+
+	[id(3), helpstring("remove item")]
+	HRESULT remove([in] VARIANT idx);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// IMTLEditor
+////////////////////////////////////////////////////////////////////////////////////
+[
+	uuid(BE5C3CDD-1E0A-4ECA-A0FA-FB9E2813932F),
+	helpstring("IMTLEditor"),
+	object, oleautomation, dual
+]
+interface IMTLEditor : IDispatch
+{
+	[id(1), helpstring("Say Hello")]
+	HRESULT SayHello([in] BSTR message);
+
+	[id(2), propput, helpstring("Value")]
+	HRESULT Value([in] VARIANT value);
+	[id(2), propget, helpstring("Value")]
+	HRESULT Value([out,retval] VARIANT* value);
+
+	[id(3), propget, helpstring("Documents")]
+	HRESULT documents([out, retval] IMTLEditorDocuments** docs);
+
+}
+
+[
+	uuid(0F7E34D4-236B-421E-8437-B9ADA59D60AE),
+	version(1.0),
+	helpstring("MTLEditor Typelib")
+]
+library MTLEditor
+{
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Co Classes ( class factories )
+	////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////////////////
+	// MTLEditor
+	////////////////////////////////////////////////////////////////////////////////////
+	[
+		uuid(A258064A-8664-42F0-9676-E2EDEB23E3A9)
+	]
+	coclass MTLEditor
+	{
+		[default] interface     IMTLEditor;
+		interface IMTLEditorDocuments;
+		interface IMTLEditorDocument;
+	}
+}

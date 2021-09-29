@@ -1,0 +1,31 @@
+Windows Registry Editor Version 5.00
+
+; https://help4windows.com/windows_7_shell32_dll.shtml
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor]
+"subcommands"=""
+"Icon"="C:\\Windows\\System32\\shell32.dll,42"
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor\Shell]
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor\Shell\Cmd1]
+@="open default"
+"Icon"="C:\\Windows\\System32\\shell32.dll,134"
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor\Shell\Cmd1\command]
+@="\"C:\\Users\\mike\\source\\repos\\MTL\\x64\\Debug\\Editor.exe\" /file \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor\Shell\Cmd2]
+@="open HTML"
+"Icon"="C:\\Windows\\System32\\shell32.dll,70"
+
+[HKEY_CURRENT_USER\Software\Classes\*\shell\mtlEditor\Shell\Cmd2\command]
+@="\"C:\\Users\\mike\\source\\repos\\MTL\\x64\\Debug\\Editor.exe\" /split \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\mtlEditor]
+@="Cascade"
+"Icon"="C:\\Windows\\System32\\shell32.dll,42"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\mtlEditor\command]
+@="\"C:\\Users\\mike\\source\\repos\\MTL\\x64\\Debug\\Editor.exe\" /open \"%1\""
+"Icon"="C:\\Windows\\System32\\shell32.dll,266"

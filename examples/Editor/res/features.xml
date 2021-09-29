@@ -1,0 +1,4 @@
+﻿<Include>
+  <ComponentGroupRef Id='Com$(var.projectName)' />
+  <ComponentGroupRef Id='DeployCom$(var.projectName)' />
+</Include>

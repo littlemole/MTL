@@ -1,0 +1,59 @@
+<?xml version="1.0" standalone="yes"?>
+<rebar>
+	<bar id="IDC_REBAR_MAIN" label="Main" visible="0" width="1424" mode="ID_MODE_SIMPLE">
+		<items id="ID_FILE_OPEN">
+			<label>OPEN</label>
+			<style>BTNS_DROPDOWN</style>
+			<img>document-open.png</img>
+		</items>
+		<items id="ID_FILE_NEW">
+			<label>NEW</label>
+			<style/>
+			<img>document-new.png</img>
+		</items>
+	</bar>
+	<bar id="IDC_REBAR_MAIN" label="Main" visible="0" width="1424" mode="ID_MODE_EDIT">
+		<items id="ID_FILE_OPEN">
+			<label>OPEN</label>
+			<style></style>
+			<img>document-open.png</img>
+		</items>
+		<items id="ID_FILE_NEW">
+			<label>NEW</label>
+			<style/>
+			<img>document-new.png</img>
+		</items>
+		<items id="ID_FILE_SAVE" >
+			<label>SAVE</label>
+			<style>BTNS_CHECK</style>
+			<img>document-save.png</img>
+		</items>
+    <items id="ID_EDIT_FIND" >
+      <label>FIND</label>
+      <style></style>
+      <img>edit-find.png</img>
+    </items>
+  </bar>
+	<bar id="IDC_REBAR_DOC" label="Document" visible="1" width="1424"  mode="ID_MODE_EDIT">
+		<items id="ID_EDIT_CUT">
+			<label>CUT</label>
+			<style/>
+			<img>edit-cut.png</img>
+		</items>
+		<items id="ID_EDIT_COPY">
+			<label>COPY</label>
+			<style/>
+			<img>edit-copy.png</img>
+		</items>
+		<items id="ID_EDIT_PASTE">
+			<label>PASTE</label>
+			<style/>
+			<img>edit-paste.png</img>
+		</items>
+		<items id="ID_EDIT_RUN">
+			<label>RUN</label>
+			<style/>
+			<img>alien.png</img>
+		</items>
+	</bar>
+</rebar>

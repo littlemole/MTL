@@ -1,0 +1,34 @@
+<rebar>
+ <menu id="IDM_ABOUT"><label>File</label></menu>
+ <menu id="IDC_REBAR_MAIN" ><label>Main</label></menu>
+ <menu id="IDC_REBAR_DOC" ><label>Document</label></menu>
+  <bar id="IDC_REBAR_MAIN" visible="true">
+   <item id="IDM_FILE_OPEN">
+    <label>Open</label>
+    <style>BTNS_DROPDOWN></style>
+	<img>document-open.png</img>
+   </item>
+   <item id="IDM_FILE_NEW">
+    <label>New</label>
+    <style>></style>
+	<img>document-new.png</img>
+   </item>
+  </bar>
+  <bar id="IDC_REBAR_DOC" visible="false">
+   <item id="IDM_EDIT_CUT">
+    <label>Cut</label>
+    <style>></style>
+	<img>edit-cut.png</img>
+   </item>
+   <item id="IDM_EDIT_COPY">
+    <label>Copy</label>
+    <style>></style>
+	<img>edit-copy.png</img>
+   </item>
+   <item id="IDM_EDIT_PASTE">
+    <label>Paste</label>
+    <style>></style>
+	<img>edit-paste.png</img>
+   </item>
+  </bar>
+</rebar>

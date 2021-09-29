@@ -974,7 +974,7 @@ namespace mtl {
 
                     ::ScrollWindow(this->handle, 0, height * (yPos - verticalScrollInfo_.nPos), NULL, NULL);
                     ::UpdateWindow(this->handle);
-                    this->wmVScroll(verticalScrollInfo_.nPos);
+                    this->wm_v_scroll(verticalScrollInfo_.nPos);
                 }
                 return 0;
             }
@@ -1036,7 +1036,7 @@ namespace mtl {
 
                     ::ScrollWindow(this->handle, width * (xPos - horizontalScrollInfo_.nPos), 0, NULL, NULL);
                     ::UpdateWindow(this->handle);
-                    this->wmHScroll(horizontalScrollInfo_.nPos);
+                    this->wm_h_scroll(horizontalScrollInfo_.nPos);
                 }
                 return 0;
             }
