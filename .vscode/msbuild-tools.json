@@ -3,7 +3,7 @@
     "variables": {
         "MSBUILD": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/MSBuild/Current/Bin/MSBuild.exe",
         "DEVENV": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/IDE/devenv.com",
-        "INCLUDE": "../vcpkg/installed/x64-windows/include",
+        "xxINCLUDE": "../vcpkg/installed/x64-windows/include",
         "PATH" : "%PATH%;../vcpkg/installed/x64-windows/bin;../vcpkg/installed/x64-windows/debug/bin"
     },
     "buildConfigurations": [
@@ -40,7 +40,7 @@
         {
             "name": "helloworld",
             "cwd": "${workspaceRoot}",
-            "program": "${workspaceRoot}/x64/${buildConfig}/helloworld.exe",
+            "program": "${workspaceRoot}/examples/helloworld/helloworld/x64/${buildConfig}/helloworld.exe",
             "args": []
         }
     ]

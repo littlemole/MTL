@@ -8,7 +8,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-namespace MTL {
+namespace mtl {
 	namespace JSON {
 
 		using namespace nlohmann;
@@ -522,7 +522,7 @@ namespace meta {
 	template<class T>
 	void fromJson(const std::string& from, T& t)
 	{
-		json json = MTL::JSON::parse(from);
+		json json = mtl::JSON::parse(from);
 		fromJson(json, t);
 	}
 

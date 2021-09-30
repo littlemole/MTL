@@ -668,8 +668,14 @@ namespace mtl {
 
         void hook_color_theme(std::shared_ptr<color_theme>& ct)
         {
-            colorTheme_.reset();
-            colorThemeToken_ = ct->onUpdate([this]() { this->update(); });
+            if(colorTheme_)
+            {
+                colorTheme_.reset();
+            }
+            if(ct)
+            {
+                colorThemeToken_ = ct->onUpdate([this]() { this->update(); });
+            }
         }
 
         menu submenu(int pos)

@@ -3,6 +3,8 @@
 
 #include "framework.h"
 #include "helloworld.h"
+#include "mtl/persist/json.h"
+#include "mtl/win32/io.h"
 
 class AboutDlg : public mtl::dialog
 {
@@ -37,20 +39,34 @@ class MainWindow : public mtl::window<MainWindow>
 {
 public:
 
+	mtl::menu	menu;
 	mtl::button butt;
 	AboutDlg aboutDlg;
 
 
 	MainWindow()
 	{
+		mtl::gui().add({
+			{ MTL_ID(IDM_FILE)}, //L"File" },
+			{ MTL_ID(IDM_EXIT)}, //L"Exit" },
+			{ MTL_ID(IDM_HELP)}, //L"Help" },			
+			{ MTL_ID(IDM_ABOUT)},// L"About" }
+		});
+
+		menu.create();
+		mtl::menu_builder mb(menu);
+		mb.add({
+			{ IDM_FILE, {{ IDM_EXIT }} },
+			{ IDM_HELP, {{ IDM_ABOUT}} }
+		});
 		// set menu implicitly on window class
-		mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
+		//mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
 
 		// peload jpeg image for display
 		mtl::the_bitmap_cache().load(IDI_JPEG, CLSID_WICJpegDecoder, L"JPEG" );
 
 		// create and show window
-		create(L"Hello Worls", WS_OVERLAPPEDWINDOW);
+		create(L"Hello World", WS_OVERLAPPEDWINDOW,0,*menu);
 		show();
 
 	}
@@ -127,6 +143,7 @@ public:
 		return 0;
 	}
 };
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,

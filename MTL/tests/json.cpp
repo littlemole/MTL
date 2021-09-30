@@ -101,7 +101,7 @@ TEST_F(JsonTest, simpleJson)
 
 	json value = toJson(t);
 
-	std::string s = MTL::JSON::flatten(value);
+	std::string s = mtl::JSON::flatten(value);
 
 	EXPECT_STREQ("{\"txt\":\"hello meta\",\"x\":42}",s.c_str());
 
@@ -122,7 +122,7 @@ TEST_F(JsonTest, simpleJsonVector)
 
 	json value = toJson(at);
 
-	std::string s = MTL::JSON::flatten(value);
+	std::string s = mtl::JSON::flatten(value);
 
 	EXPECT_STREQ("{\"huhu\":{\"test\":[{\"txt\":\"hello meta\",\"x\":42},{\"txt\":\"hello meta\",\"x\":42}]}}",s.c_str());
 
@@ -130,7 +130,7 @@ TEST_F(JsonTest, simpleJsonVector)
 	fromJson(value, at2);
 
     json value2 = toJson(at2);
-	s = MTL::JSON::flatten(value2);
+	s = mtl::JSON::flatten(value2);
 
 	EXPECT_STREQ("{\"huhu\":{\"test\":[{\"txt\":\"hello meta\",\"x\":42},{\"txt\":\"hello meta\",\"x\":42}]}}",s.c_str());
 
@@ -146,7 +146,7 @@ TEST_F(JsonTest, jsonVector)
 
 	json value = toJson(v);
 
-	std::string s = MTL::JSON::flatten(value);
+	std::string s = mtl::JSON::flatten(value);
 
 	EXPECT_STREQ("{\"vector\":[{\"txt\":\"hello meta\",\"x\":42},{\"txt\":\"hello meta\",\"x\":42}]}",s.c_str());
 
@@ -154,7 +154,7 @@ TEST_F(JsonTest, jsonVector)
 	fromJson(value, v2);
 
     json value2 = toJson(v2);
-	s = MTL::JSON::flatten(value2);
+	s = mtl::JSON::flatten(value2);
 
 	EXPECT_STREQ("{\"vector\":[{\"txt\":\"hello meta\",\"x\":42},{\"txt\":\"hello meta\",\"x\":42}]}",s.c_str());
 
@@ -194,7 +194,7 @@ TEST_F(JsonTest, toJson)
 	User user{ "mike", "littlemole", "secret", { "one", "two", "three"} };
 	json value = toJson(user);
 
-	std::string s = MTL::JSON::flatten(value);
+	std::string s = mtl::JSON::flatten(value);
 
 	std::cout << s << std::endl;
 
@@ -219,7 +219,7 @@ TEST_F(JsonTest, toJsonConst)
 	const User user{ "mike", "littlemole", "secret", { "one", "two", "three"} };
 	json value = toJson(user);
 
-	std::string s = MTL::JSON::flatten(value); 
+	std::string s = mtl::JSON::flatten(value); 
 
 	std::cout << s << std::endl;
 

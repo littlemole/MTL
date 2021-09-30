@@ -448,12 +448,22 @@ namespace mtl {
             std::wstring img;
         };
 
-        void add( const std::vector<item>& new_items)
+        void add( std::vector<item> new_items)
         {
             for (auto& it : new_items)
             {
                 id2string[it.id] = to_wstring(it.str);
                 string2id[to_wstring(it.str)] = it.id;
+
+                if(it.label.empty())
+                {
+                    mtl::wbuff buf(1024);
+                    int r = ::LoadString(mtl::module_instance(),it.id,buf,buf.size());
+                    if(r)
+                    {
+                        it.label = buf.toString();
+                    }
+                }
 
                 if (!it.label.empty())
                 {

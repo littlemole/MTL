@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VcpkgEnableManifest>True</VcpkgEnableManifest>
+    <VCPkgLocalAppDataDisabled>true</VCPkgLocalAppDataDisabled>
+    <VcpkgInstalledDir>..\..\..\vcpkg_installed</VcpkgInstalledDir>
+  </PropertyGroup>
+  <Import Project="..\..\..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('..\..\..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets')" />
+
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -117,7 +124,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>..\..\..\MTL\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\MTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

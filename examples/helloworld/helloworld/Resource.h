@@ -13,6 +13,8 @@
 #define IDI_JPEG                        109
 #define IDC_HELLOWORLD                  110
 #define IDR_MAINFRAME                   128
+#define IDM_FILE                        129
+#define IDM_HELP                        130
 #define IDC_CHECK_LOVE                  1000
 #define IDC_LIST_LOVE                   1001
 #define IDC_COMBO1                      1002
