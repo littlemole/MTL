@@ -17,6 +17,174 @@ namespace mtl {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
 
+    struct accel : public ACCEL
+    {
+        accel()
+        {
+            this->fVirt = 0;
+            this->key = (WORD)0; 
+            this->cmd = 0;
+        }
+
+        accel(int vkey, int cmd, int flags = 0 )
+        {
+            this->fVirt = flags;
+            this->key = (WORD)vkey; 
+            this->cmd = cmd;
+        }
+
+        accel(char key, int cmd, int flags = 0 )
+        {
+            this->fVirt = flags;
+            this->key = (WORD)key; 
+            this->cmd = cmd;
+        }
+    };
+
+    class accelerators
+    {
+    public:
+
+        accelerators()
+        {}
+
+        accelerators(int id)
+        {
+            load(id);
+        }
+
+        accelerators(ACCEL* accels, int size)
+        {
+            if(size == 0) throw std::string("accel size == 0");
+            bool b = create(accels,size);
+             if(!b) throw std::string("accels create failed");
+        }
+
+        accelerators(std::vector<accel> accels)
+        {
+            if(accels.empty()) throw std::string("accel empty");
+            bool b = create(accels);
+            if(!b) throw std::string("accel create failed");
+
+        }
+
+        ~accelerators()
+        {
+            free();
+        }
+
+        accelerators(const accelerators& rhs)
+        {
+            if(rhs.accel_ == nullptr) return;
+
+            int s = ::CopyAcceleratorTable(rhs.accel_,nullptr,0);
+            ACCEL* acc = new ACCEL[s];
+            ::CopyAcceleratorTable(rhs.accel_,acc,s);
+            create(acc,s);
+
+            delete[] acc;
+        }
+
+        accelerators(accelerators&& rhs)
+        {
+            accel_ = rhs.accel_;
+            rhs.accel_ = nullptr;
+        }
+
+        accelerators& operator=(const accelerators& rhs)
+        {
+            if(this == &rhs) return *this;
+
+            free();
+
+            if(rhs.accel_ == nullptr)
+            {
+                return *this;
+            }
+
+            int s = ::CopyAcceleratorTable(rhs.accel_,nullptr,0);
+            ACCEL* acc = new ACCEL[s];
+            ::CopyAcceleratorTable(rhs.accel_,acc,s);
+            create(acc,s);
+
+            delete[] acc;
+
+            return *this;
+        }
+
+        accelerators& operator=(accelerators&& rhs)
+        {
+            if(this == &rhs) return *this;
+
+            free();
+
+            accel_ = rhs.accel_;
+            rhs.accel_ = nullptr;
+
+            return *this;
+        }
+
+        std::vector<accel> get()
+        {
+            std::vector<accel> result;
+            if(accel_ == nullptr) return result;
+
+            int s = ::CopyAcceleratorTable(accel_,nullptr,0);
+            result.resize(s);
+            ::CopyAcceleratorTable(accel_,&result[0],s);
+
+            return result;
+        }
+
+        bool load(int id)
+        {
+            free();
+            accel_ = ::LoadAccelerators(mtl::module_instance(),MAKEINTRESOURCE(id));
+            return accel_ != nullptr;
+        }
+
+        bool create( ACCEL* accels, int size )
+        {
+            free();
+            accel_ = ::CreateAcceleratorTable(accels,size);
+            return accel_ != nullptr;
+        }
+
+        bool create( std::vector<accel> accels )
+        {
+            free();
+            if(accels.empty()) return true;
+
+            return create( (ACCEL*)&accels[0], (int)accels.size());
+        }
+
+        
+
+        void free()
+        {
+            if(accel_)
+            {
+                ::DestroyAcceleratorTable(accel_);
+                accel_ = nullptr;
+            }
+        }
+
+        HACCEL operator*()
+        {
+            return accel_;
+        }
+
+        HACCEL detach()
+        {
+            HACCEL result = accel_;
+            accel_ = nullptr;
+            return result;
+        }
+    private:
+
+        HACCEL accel_ = nullptr;
+    };
+
     template<class T>
     class thread_box;
 
@@ -24,6 +192,9 @@ namespace mtl {
     class thread_box<void()>
     {
     public:
+
+        accelerators keyboardAccelerators;
+        HWND hWnd = nullptr;
 
         using task_t = std::function<void()>;
 
@@ -114,14 +285,15 @@ namespace mtl {
             return run(msg_handler);
         }
 
-        int run(HWND hWnd, HACCEL hAccelTable)
+        int run(HWND wnd, accelerators accels)
         {
-            HACCEL accel = hAccelTable;
-            HWND wnd = hWnd;
+            keyboardAccelerators = std::move(accels);
+            hWnd = wnd;
 
-            auto msg_handler = [wnd, accel](MSG& msg)
+            auto msg_handler = [this](MSG& msg)
             {
-                if(!TranslateAccelerator(wnd, accel, &msg))
+                if(*keyboardAccelerators == nullptr) throw std::string("!!");
+                if(!TranslateAccelerator(hWnd, *keyboardAccelerators, &msg))
                 {
                     ::TranslateMessage(&msg);
                     ::DispatchMessage(&msg);

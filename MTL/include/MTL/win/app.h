@@ -14,14 +14,14 @@ namespace mtl {
             UINT unused = WmReflect();
         }
 
-        int run(HWND acceleree = nullptr, int accelId = 0)
+        int run()
         {
-            if (::IsWindow(acceleree) && accelId)
-            {
-                hAccelTable_ = ::LoadAccelerators(module_instance(), MAKEINTRESOURCE(accelId));
-                return  ui_thread().run(acceleree, hAccelTable_);
-            }
             return  ui_thread().run();
+        }        
+
+        int run(HWND acceleree, mtl::accelerators accel)
+        {
+            return  ui_thread().run(acceleree, accel);
         }
 
 /* MSG msg;

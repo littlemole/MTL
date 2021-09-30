@@ -142,7 +142,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	MainWindow mainWnd;
 
-	return app.run(*mainWnd, IDC_HELLOWORLD);
+	mtl::accelerators acc({{ 'T', IDM_ABOUT, FCONTROL|FVIRTKEY }});
+	return app.run(*mainWnd, acc);
 
 }
 
