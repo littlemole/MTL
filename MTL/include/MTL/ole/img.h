@@ -507,7 +507,7 @@ namespace mtl {
             the_bitmap_cache().load(id);
         }
 
-        const std::wstring& idString(int id) 
+        const std::wstring& id_string(int id) 
         {
             if (id2string.count(id) == 0) return L"";
             return id2string[id];
