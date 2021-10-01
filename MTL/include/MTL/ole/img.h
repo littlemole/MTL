@@ -340,7 +340,7 @@ namespace mtl {
             return path2bitmap_[path];
         }
 
-        HBITMAP getById(int id)
+        HBITMAP get(int id)
         {
             if (id2bitmap_.count(id) == 0)
             {
@@ -458,7 +458,7 @@ namespace mtl {
                 if(it.label.empty())
                 {
                     mtl::wbuff buf(1024);
-                    int r = ::LoadString(mtl::module_instance(),it.id,buf,buf.size());
+                    int r = ::LoadString(mtl::module_instance(),it.id,buf, (int)buf.size());
                     if(r)
                     {
                         it.label = buf.toString();
@@ -472,7 +472,7 @@ namespace mtl {
 
                 if (it.img.empty())
                 {
-                    the_bitmap_cache().load(it.id);
+                    //the_bitmap_cache().load(it.id);
                 }
                 else
                 {
@@ -486,7 +486,7 @@ namespace mtl {
             id2string[id] = to_wstring(str);
             string2id[to_wstring(str)] = id;
 
-            the_bitmap_cache().load(id);
+            //the_bitmap_cache().load(id);
         }
 
         void add(int id, const std::string& str, const std::wstring& label, const std::wstring& img)
@@ -495,7 +495,7 @@ namespace mtl {
             id2label[id] = label;
             string2id[to_wstring(str)] = id;
 
-            the_bitmap_cache().load(id, img.c_str());
+            //the_bitmap_cache().load(id, img.c_str());
         }
 
         void add(int id, const std::string& str, const std::wstring& label)
@@ -504,12 +504,13 @@ namespace mtl {
             id2label[id] = label;
             string2id[to_wstring(str)] = id;
 
-            the_bitmap_cache().load(id);
+           // the_bitmap_cache().load(id);
         }
 
         const std::wstring& id_string(int id) 
         {
-            if (id2string.count(id) == 0) return L"";
+            static std::wstring empty = L"";
+            if (id2string.count(id) == 0) return empty;
             return id2string[id];
         }
 
@@ -528,7 +529,7 @@ namespace mtl {
 
         HBITMAP bitmap(int id)
         {
-            return the_bitmap_cache().getById(id);
+            return the_bitmap_cache().get(id);
         }
 
         HBITMAP bitmap(int id, int w, int h)
@@ -606,7 +607,7 @@ namespace mtl {
 
             for (auto& it : items)
             {
-                HBITMAP bmp = the_bitmap_cache().get(it.id, w_, h_);
+                HBITMAP bmp = gui().bitmap(it.id, w_, h_);
 
                 if (it.items.empty())
                 {
@@ -654,7 +655,7 @@ namespace mtl {
                 }
                 else
                 {
-                    HBITMAP bmp = the_bitmap_cache().get(id, w, h);
+                    HBITMAP bmp = gui().bitmap(id, w, h);
                     if (bmp)
                     {
                         m.add_bitmap(i, bmp);

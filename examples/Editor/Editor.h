@@ -29,5 +29,4 @@
 
 #include "resource.h"
 
-extern std::map<int, std::string> int2id;
-extern std::map<std::string, int> id2int;
+

@@ -347,13 +347,18 @@ public:
 		RECT dest = { rc.right - cbw -2, rc.top +1, rc.right-2,rc.top + cbh+1 };
 		comboBoxSyntax.move(dest);
 		invalidate();
-		return 0;
+		RECT r = rc;
+		r.right -= (dest.right - dest.left);
+		return mtl::status_bar::wm_size(r);
 	}
 };
 
 
-#define CONTROL_GROUP           2000
-#define CONTROL_COMBOBOX        2001
+#define CONTROL_GROUP_ENC       2000
+#define CONTROL_GROUP_EOL       2001
+#define CONTROL_ENCODING        2003
+#define CONTROL_EOL		        2004
+#define CONTROL_SWITCH	        2005
 
 #define OPENCHOICES					0
 #define OPENCHOICES_OPEN			0
@@ -381,16 +386,16 @@ public:
 				return;
 
 			// Create a Visual Group.
-			hr = fdc->StartVisualGroup(CONTROL_GROUP, L"Encoding");
+			hr = fdc->StartVisualGroup(CONTROL_GROUP_ENC, L"Encoding");
 			if (hr != S_OK)
 				return;
 
 			// Add a combo box
-			hr = fdc->AddComboBox(CONTROL_COMBOBOX);
+			hr = fdc->AddComboBox(CONTROL_ENCODING);
 			if (hr != S_OK)
 				return;
 
-			hr = fdc->SetControlState(CONTROL_COMBOBOX, CDCS_VISIBLE | CDCS_ENABLED);
+			hr = fdc->SetControlState(CONTROL_ENCODING, CDCS_VISIBLE | CDCS_ENABLED);
 			if (hr != S_OK)
 				return;
 
@@ -399,7 +404,7 @@ public:
 			for (Encodings::Iterator it = encodings().begin(); it != encodings().end(); it++)
 			{
 				const Encodings::CodePage codePage = *it;
-				hr = fdc->AddControlItem(CONTROL_COMBOBOX, i, codePage.second.c_str());
+				hr = fdc->AddControlItem(CONTROL_ENCODING, i, codePage.second.c_str());
 				if (hr != S_OK)
 					return;
 				i++;
@@ -439,17 +444,31 @@ public:
 	{
 		customize([this](mtl::punk<IFileDialogCustomize> fdc)
 		{
+
+			HRESULT hr = fdc->AddRadioButtonList(CONTROL_SWITCH);
+			if (hr != S_OK)
+				return;
+
+			hr = fdc->SetControlState(CONTROL_SWITCH, CDCS_VISIBLE | CDCS_ENABLED);
+			if (hr != S_OK)
+				return;
+
+			fdc->AddControlItem(CONTROL_SWITCH, 0, L"UNIX");
+			fdc->AddControlItem(CONTROL_SWITCH, 1, L"DOS");
+
+			fdc->SetSelectedControlItem(CONTROL_SWITCH, 1);
+
 			// Create a Visual Group.
-			HRESULT hr = fdc->StartVisualGroup(CONTROL_GROUP, L"Encoding");
+			hr = fdc->StartVisualGroup(CONTROL_GROUP_ENC, L"Encoding");
 			if (hr != S_OK)
 				return;
 
 			// Add a combo box
-			hr = fdc->AddComboBox(CONTROL_COMBOBOX);
+			hr = fdc->AddComboBox(CONTROL_ENCODING);
 			if (hr != S_OK)
 				return;
 
-			hr = fdc->SetControlState(CONTROL_COMBOBOX, CDCS_VISIBLE | CDCS_ENABLED);
+			hr = fdc->SetControlState(CONTROL_ENCODING, CDCS_VISIBLE | CDCS_ENABLED);
 			if (hr != S_OK)
 				return;
 
@@ -458,14 +477,28 @@ public:
 			for (Encodings::Iterator it = encodings().begin(); it != encodings().end(); it++)
 			{
 				const Encodings::CodePage codePage = *it;
-				hr = fdc->AddControlItem(CONTROL_COMBOBOX, i, codePage.second.c_str());
+				hr = fdc->AddControlItem(CONTROL_ENCODING, i, codePage.second.c_str());
 				if (hr != S_OK)
 					return;
 				i++;
 			}
 
+			fdc->SetSelectedControlItem(CONTROL_ENCODING, 1);
+			
+			/*
 			// End the visual group.
 			hr = fdc->EndVisualGroup();
+			
+			// Create another Visual Group.
+			hr = fdc->StartVisualGroup(CONTROL_GROUP_EOL, L"EOL Mode");
+			if (hr != S_OK)
+				return;
+			*/
+			
+
+			// End the visual group.
+			hr = fdc->EndVisualGroup();
+			
 		});
 	}
 
@@ -619,7 +652,7 @@ public:
 	mtl::event<void(FINDREPLACE*)>	onFind;
 
 	mtl::default_layout				layout;
-	MenuBar& menuBar;
+	//MenuBar& menuBar;
 
 	mtl::menu						menu;
 	mtl::font						menuFont;
@@ -632,8 +665,7 @@ public:
 
 	int								padding = 6;
 
-	MainWindow(MenuBar& mb)
-		: menuBar(mb)
+	MainWindow()
 	{
 		mtl::font_desc fontDesc(L"Lucida Console", 14);
 		menuFont = fontDesc.create();
@@ -689,21 +721,22 @@ public:
 
 
 	MainWindow				mainWnd;
-	MenuBar					menuBar;
+	//MenuBar					menuBar;
 	mtl::tab_ctrl			tabControl;
 	MyStatusBar				statusBar;
 	mtl::splitter			splitter;
 	//mtl::ExplorerTree		tree;
-	std::map<int,mtl::tool_bar*> toolBars;
+	//std::map<int,mtl::tool_bar*> toolBars;
 	mtl::bitmap				bitmap;
 	mtl::image_list			imageList;
 	mtl::font				font;
 	mtl::font				smallFont;
-	mtl::rebar				reBar;
+	//mtl::rebar				reBar;
 	mtl::monitor			monitor;
 	mtl::tool_tip			tooltip;
 	mtl::search_dlg			searchDlg;
-	mtl::button				theButton;
+	//mtl::button				theButton;
+	mtl::tool_bar			toolBar;
 
 	// events
 	mtl::event<int()>			 onBarCmd;
@@ -748,7 +781,7 @@ public:
 			{ MTL_ID(ID_FILE), L"File", L"document.png" },
 			{ MTL_ID(ID_EDIT), L"Edit", L"edit-copy.png" },
 			{ MTL_ID(ID_HELP), L"Help", L"info.png" },
-			{ MTL_ID(IDM_EXIT), L"Exit", L"application-exit.png" },
+		//	{ MTL_ID(IDM_EXIT), L"Exit", L"application-exit.png" },
 			{ MTL_ID(IDM_ABOUT), L"About", L"Help-browser.png" },
 			{ MTL_ID(ID_FILE_OPEN), L"Open File", L"document-open.png" },
 			{ MTL_ID(ID_FILE_OPEN_DIR), L"Open File", L"document-open.png" },
@@ -773,7 +806,7 @@ public:
 	}
 
 	EditorView()
-		:  mainWnd(menuBar), /*menu(IDC_EDITOR), */ imageList(16, 16)
+		: /* mainWnd(menuBar), / *menu(IDC_EDITOR), */ imageList(16, 16)
 	{
 		setUpAssets(mtl::path_to_self_directory(L"\\img").c_str());
 
@@ -810,7 +843,8 @@ public:
 					{ID_EDIT_CUT, {
 							{ID_EDIT_COPY, true},
 							{ID_EDIT_PASTE} 
-					}}
+					}},
+					{IDM_EXIT}
 			}}
 		});
 		//mainWnd.menu.item(ID_EDIT_COPY).checked = true;
@@ -825,11 +859,20 @@ public:
 		RECT r1;
 		::GetClientRect(hWnd, &r1);
 
+		RECT tbr = { 0,0,48,48 };
+		toolBar.create(IDC_TOOLBAR, *mainWnd, tbr, 
+			CCS_NODIVIDER | CCS_NOPARENTALIGN | WS_CHILD  | TBSTYLE_TOOLTIPS);
+		toolBar.add_button(IDM_NEW);
+		toolBar.add_button(IDM_OPEN);
+		toolBar.add_button(IDM_SAVE);
+		toolBar.add_button(IDM_SAVE_AS);
+		toolBar.set_color_theme(colorTheme);
+
 		//RECT tbr = r1;
 		//tbr.right = tbr.left + 32;
 		//tbr.bottom = tbr.top + 32;
 
-
+		/*
 		reBar.create(IDC_REBAR, hWnd, r1,
 			CCS_NOPARENTALIGN|// RBS_AUTOSIZE| //RBS_FIXEDORDER
 			WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
@@ -837,11 +880,12 @@ public:
 			CCS_NODIVIDER | RBS_BANDBORDERS
 		);
 		reBar.set_color_theme(colorTheme);
-
+		
 		menuBar.set_color_theme(colorTheme);
-		menuBar.create(IDC_SELECTOR, *reBar, r1, WS_CHILD  | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+		menuBar.create(IDC_SELECTOR, *mainWnd, r1, WS_CHILD  | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 
 		reBar.addBar(L"", IDC_REBAR_EOL, *menuBar, -1, RBBS_GRIPPERALWAYS);// RBBS_NOGRIPPER | RBBS_BREAK);// RBBS_TOPALIGN);// | RBBS_NOGRIPPER); //RBBS_GRIPPERALWAYS); //RBBS_HIDETITLE
+		
 
 		RECT rb{ 0,0,96,48 };
 		theButton.create(ID_EDIT_RUN, *reBar, rb);// , WS_CHILD | WS_BORDER | BS_NOTIFY | BS_FLAT | BS_TEXT | BS_OWNERDRAW);
@@ -853,7 +897,7 @@ public:
 		reBar.addBar(L"", IDC_REBAR_ENCODING, *theButton, -1,  RBBS_GRIPPERALWAYS);// RBBS_NOGRIPPER | RBBS_BREAK);// RBBS_TOPALIGN);// | RBBS_NOGRIPPER); //RBBS_GRIPPERALWAYS); //RBBS_HIDETITLE
 
 		load_xml(ID_MODE_SIMPLE);
-		
+		*/
 		RECT tabRect = r1;
 		tabControl.create(IDC_TABCONTROL, L"", *mainWnd, tabRect, TCS_FLATBUTTONS | TCS_TABS | CCS_NODIVIDER | CCS_NOPARENTALIGN | WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TCS_OWNERDRAWFIXED);
 
@@ -868,7 +912,7 @@ public:
 
 		//RECT tr = tabControl.displayRect();
 
-		statusBar.create(IDC_STATUSBAR, L"Status", hWnd, r1,WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|CCS_NOPARENTALIGN| CCS_NODIVIDER);
+		statusBar.create(IDC_STATUSBAR, L"Status", hWnd, r1, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CCS_NOPARENTALIGN);// | CCS_NODIVIDER);
 		statusBar.set_color_theme(colorTheme);
 		statusBar.comboBoxSyntax.set_color_theme(colorTheme);
 
@@ -880,7 +924,7 @@ public:
 		mainWnd.layout = {							// Default Layout with a
 			{										//  vector<Widget> of
 				{
-					*reBar,
+					*toolBar,
 					mtl::layout::style::NORTH
 				},
 				/*
@@ -925,269 +969,15 @@ public:
 
 		});
 		
-		tooltip.add(*mainWnd, menuBar.eolButton);
+		//tooltip.add(*mainWnd, menuBar.eolButton);
 		tooltip.add(statusBar, L"STATUS");
 
 		tooltip.set_font(colorTheme->font());
 
-		statusBar.set_text(L"STATUS");
+		//statusBar.set_text(L"STATUS");
+		statusBar.set_status({ L"STATUS", L"",L"INS", L"DOS", L"Line 221", L"Pos 18", L"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"});
 	}
 
-	void save_xml()
-	{
-		return;
-		XmlReBar xmlRebar;
-		/*
-		int cnt = tabControl.count();
-		for (int i = 0; i < cnt; i++)
-		{
-			auto it = tabControl.getTabCtrlItem(i);
-			std::wstring title = it->title;
-			std::string id = int2id[it->lparam];
-			XmlMenu m;
-			m.id = id;
-			m.label = mtl::to_string(title);
-			xmlRebar.menu.push_back(m);
-		}
-		*/
-
-		int cnt = reBar.count();
-		for (int i = 0; i < cnt; i++)
-		{
-			mtl::wbuff buf(1024);
-			REBARBANDINFO  rbi;
-			rbi.cbSize = sizeof(REBARBANDINFO);
-			rbi.fMask = RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE|RBBIM_TEXT| RBBIM_SIZE;
-			rbi.lpText = buf;
-			rbi.cch = (UINT) buf.size();
-			reBar.getBar(i, &rbi);
-
-			XmlBar bar;
-			bar.id = int2id[rbi.wID];
-//			bar.visible = (rbi.fStyle & RBBS_HIDDEN) ? false : true;
-			bar.width = rbi.cx;
-
-			if (toolBars.count(rbi.wID))
-			{
-				mtl::tool_bar* tb = toolBars[rbi.wID];
-				if (tb)
-				{
-					TBBUTTON tbb;
-					menuBar.mainBar.get_button_by_cmd(rbi.wID, &tbb);
-					std::wstring label( (wchar_t*)tbb.iString);
-					bar.label = mtl::to_string(label);
-					int c = tb->count();
-					for (int j = 0; j < c; j++)
-					{
-						XmlReBarItem item;
-
-						TBBUTTON tbb;
-						
-						::ZeroMemory(&tbb, sizeof(tbb));
-						tb->get_button(j, &tbb);
-
-						item.id = int2id[tbb.idCommand];
-						std::wstring bmp = tb->bmp(tbb.iBitmap);
-						item.img = mtl::to_string(bmp);
-						const wchar_t* is = (const wchar_t*)tbb.iString;
-						item.label = mtl::to_string(is);
-						std::ostringstream oss;
-						if (tbb.fsStyle & BTNS_DROPDOWN)
-						{
-							oss << "BTNS_DROPDOWN|";
-						}
-						if (tbb.fsStyle & BTNS_CHECK)
-						{
-							oss << "BTNS_CHECK|";
-						}
-
-						std::string s = oss.str();
-						if (!s.empty())
-						{
-							s = s.substr(0, s.size() - 1);
-						}
-						item.style = s;
-
-						bar.items.push_back(item);
-					}
-					xmlRebar.bar.push_back(bar);
-				}
-			}
-		}
-
-		mtl::punk<IXMLDOMDocument> doc = mtl::toXml(xmlRebar);
-		mtl::bstr xml;
-		doc->get_xml(&xml);
-
-		std::wostringstream woss;
-		woss << mtl::path_to_self_directory() << "\\bar.xml";
-
-		std::ofstream of;
-		of.open(woss.str(), std::ios::binary | std::ios::out);
-		if (of)
-		{
-			std::string tmp = xml.to_string();
-			of.write(tmp.data(), tmp.size());
-			of.close();
-		}
-
-	}
-
-	void cleanup_ui()
-	{
-		std::vector<int> bars2remove;
-
-		int cnt = reBar.count();
-		for (int i = 0; i < cnt; i++)
-		{
-			int id = reBar.id(i);
-			switch (id)
-			{
-			case IDC_TABCONTROL:
-			case IDC_REBAR:
-			case IDC_REBAR_SYNTAX :
-			case IDC_REBAR_EOL:
-			case IDC_REBAR_ENCODING:
-			{
-				continue;
-				break;
-			}
-			default: {
-				bars2remove.push_back(id);
-			}
-			}
-		}
-		for (auto& b : bars2remove)
-		{
-			int pos = reBar.index(b);
-			reBar.remove(pos);
-		}
-		menuBar.mainBar.clear();
-	}
-
-	void load_xml(int mode)
-	{
-		//return;
-		cleanup_ui();
-
-		menuBar.mainBar.add_text_button(IDC_REBAR, L"File", BTNS_CHECK)
-			.add_text_button(IDC_REBAR_MAIN, L"Main", BTNS_CHECK);
-
-		if (mode == ID_MODE_EDIT)
-		{
-			menuBar.mainBar.add_text_button(IDC_REBAR_DOC, L"Document", BTNS_CHECK);
-		}
-
-
-		std::wostringstream woss;
-		woss << mtl::path_to_self_directory() << "\\bar.xml";
-
-		std::ifstream fs;
-		fs.open(woss.str(), std::ios::binary | std::ios::in);
-		std::ostringstream oss;
-		while (fs)
-		{
-			char buf[1024];
-			fs.read(buf, 1024);
-			size_t c = fs.gcount();
-			oss.write(buf, c);
-		}
-		fs.close();
-
-		std::string xml = oss.str();
-
-		XmlReBar xmlRebar;
-		mtl::fromXml(xml, xmlRebar);
-		/*
-		for (int i = 0; i < xmlRebar.menu.size(); i++)
-		{
-			XmlMenu& m = xmlRebar.menu[i];
-			tabControl.insertItem(
-				new mtl::TabControl::TabCtrlItem(
-					mtl::to_wstring(m.label), 
-					id2int[m.id]
-				)
-			);
-		}
-		*/
-		int firstid = 0;
-
-		for (int i = 0; i < xmlRebar.bar.size(); i++)
-		{
-			XmlBar& bar = xmlRebar.bar[i];
-			if ( !bar.mode.empty() && bar.mode != int2id[mode])
-			{
-				continue;
-			}
-
-			if (!firstid)
-			{
-				firstid = id2int[bar.id];
-			}
-
-			auto tb = new  mtl::tool_bar;
-
-			RECT r2;
-			::GetClientRect(*mainWnd,&r2);
-			r2.right = r2.left + 32;
-			r2.bottom = r2.top + 32;
-
-			tb->create(
-				id2int[bar.id], 
-				*reBar, 
-				r2, WS_BORDER|
-				CCS_NODIVIDER | CCS_NOPARENTALIGN  | WS_CHILD| TBSTYLE_LIST | TBSTYLE_TOOLTIPS,//| TBSTYLE_TRANSPARENT,
-				TBSTYLE_EX_DRAWDDARROWS| TBSTYLE_EX_MIXEDBUTTONS
-			);
-
-			tb->set_color_theme(this->colorTheme);
-
-			tb->onBar( [this](int id)
-			{
-				onBarCmd.fire(id);
-			});
-
-			tb->onBarNotify([this](int id, NMTOOLBAR* nmtb)
-			{
-				onBarNotify.fire(id,nmtb);
-			});
-
-			//tb->setFont(*font);
-			tb->padding(10, 10)
-				.spacing(10, 10)
-				.indent(20);
-
-			for (int j = 0; j < bar.items.size(); j++)
-			{
-				XmlReBarItem& item = bar.items[j];				
-				tb->add_button(
-					mtl::to_wstring(item.img), 
-					id2int[item.id], 
-					mtl::to_wstring(item.label).c_str(),
-					0
-				);
-			}
-			for (int j = 0; j < bar.items.size(); j++)
-			{
-				XmlReBarItem& item = bar.items[j];
-				BYTE style = 0;// BTNS_AUTOSIZE;
-				if (item.style == "BTNS_DROPDOWN")
-				{
-					style |= BTNS_DROPDOWN;
-				}
-				if (item.style == "BTNS_CHECK")
-				{
-					style |= BTNS_CHECK;
-				}
-				tb->button_style(id2int[item.id], style);
-			}
-			toolBars[id2int[bar.id]] = tb;
-			reBar.addBar(L"MENU", id2int[bar.id], tb->handle, -1, RBBS_GRIPPERALWAYS);// , RBBS_NOGRIPPER | RBBS_BREAK);// , r.bottom - r.top);// , 100);
-			reBar.show(reBar.index(id2int[bar.id]), false);
-
-		}
-		reBar.show(reBar.index(firstid), true);
-	}
 };
 
 // Controller handles User Input
@@ -1330,7 +1120,7 @@ public:
 			activeDocument = L"";
 			HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
 			view.mainWnd.set_icon(hIcon);
-			view.load_xml(ID_MODE_SIMPLE);
+			//view.load_xml(ID_MODE_SIMPLE);
 		}
 		else
 		{
@@ -1340,7 +1130,7 @@ public:
 			activeDocument = firstId;
 			HICON icon = mtl::shell::file_icon(documentPaths[firstId]);
 			view.mainWnd.set_icon(icon);
-			view.load_xml(ID_MODE_EDIT);
+			//view.load_xml(ID_MODE_EDIT);
 		}
 	}
 
@@ -1408,7 +1198,7 @@ public:
 		view.tabControl.add( { title, path, id }, scintilla->handle );
 
 		//view.mainWnd.postMsg(WM_LAYOUT, 0, 0);
-		view.load_xml(ID_MODE_EDIT);
+		//view.load_xml(ID_MODE_EDIT);
 
 		/*
 		auto doc = view.scintilla.createDocument();
@@ -1519,16 +1309,19 @@ public:
 			.then([this]()
 		{
 
-			MyFileDialog fd(FOS_ALLOWMULTISELECT);
+			MySaveDialog fd(0);
 
 			fd.filter({ { L"all files (*.*)", L"*.*"} });
 			fd.encoding(CP_UTF8);
 
-			HRESULT hr = fd.open(*view.mainWnd);
+			HRESULT hr = fd.save(*view.mainWnd);
 			if (hr == S_OK)
 			{
 				std::wstring path = fd.path();
-				::MessageBox(0, path.c_str(), L"yo", 0);
+				int i = fd.choice(CONTROL_SWITCH);
+				std::wstring eol = L"UNIX";
+				if (i == 1) eol = L"DOS";
+				::MessageBox(0, path.c_str(), eol.c_str(), 0);
 			}
 
 		});
@@ -1652,7 +1445,7 @@ public:
 		});
 
 
-		view.onBarCmd(ID_FILE_OPEN, [this]()
+		view.toolBar.onCommand(IDM_OPEN, [this]()
 		{
 			//mtl::Dialog dlg;
 			//dlg.showModal(IDD_ABOUTBOX, view.mainWnd.handle);
@@ -1732,6 +1525,14 @@ public:
 			::PostQuitMessage(0);
 		});
 
+		/*
+		view.onBarNotify(ID_FILE_OPEN, [this](NMTOOLBAR* hdr)
+		{
+			view.mainWnd.menu.sub_menu(ID_EDIT_CUT).popup(*view.mainWnd, TPM_CENTERALIGN);
+
+		});
+		*/
+
 		onToolbar(view.onBarNotify)
 			.when(ID_FILE_OPEN)
 			.then([this](NMTOOLBAR* hdr)
@@ -1762,60 +1563,6 @@ public:
 						*/
 		});
 
-		view.menuBar.mainBar.onRightClick(IDC_REBAR, [this]()
-		{
-			view.mainWnd.menu.sub_menu(0).popup(*view.mainWnd);
-			//::MessageBox(*mainWnd, L"RCLICK", L"!", 0);
-		});
-
-		view.menuBar.mainBar.onBar([this](int id)
-		{
-			if (id != IDC_REBAR)
-				view.menuBar.mainBar.check(IDC_REBAR, false);
-			if (id != IDC_REBAR_MAIN)
-				view.menuBar.mainBar.check(IDC_REBAR_MAIN, false);
-			if (id != IDC_REBAR_DOC)
-				view.menuBar.mainBar.check(IDC_REBAR_DOC, false);
-
-			if (id == IDC_REBAR)
-			{
-				view.save_xml();
-			}
-			else
-			{
-
-				view.reBar.show(view.reBar.index(IDC_REBAR_MAIN), false);
-				view.reBar.show(view.reBar.index(IDC_REBAR_DOC), false);
-
-				view.reBar.show(view.reBar.index(id), true);
-			}
-			view.mainWnd.send_msg(WM_LAYOUT, 0, 0);
-
-			//view.mainBar.check(id, true);
-		});
-
-		view.menuBar.eolButton.onCommand(IDC_EOL, [this]()
-		{
-			mtl::menu menu;
-			menu.create_popup();
-			menu.add(std::make_shared<mtl::menu_item>(IDM_EOL_WIN32, L"DOS", true, false, nullptr, mtl::the_bitmap_cache().get(L"msdos.png", 32, 32)));
-			menu.add(std::make_shared<mtl::menu_item>(IDM_EOL_UNIX, L"UNIX", true, false, nullptr, mtl::the_bitmap_cache().get(L"unix.png", 32, 32)));
-			//			menu.addItem(mtl::MenuItem(IDM_EOL_UNIX, L"UNIX", mtl::bitmapCache().get(L"unix.png", 32, 32)), menu.count());
-			menu.popup(*view.mainWnd, TPM_CENTERALIGN);
-		});
-
-		view.mainWnd.onCmd(IDM_EOL_WIN32, [this]()
-		{
-			view.menuBar.eolButton.set_text(L"DOS");
-			view.menuBar.eolButton.set_bitmap(mtl::the_bitmap_cache().get(L"msdos.png", 20, 20));
-		});
-
-		view.mainWnd.onCmd(IDM_EOL_UNIX, [this]()
-		{
-			view.menuBar.eolButton.set_text(L"UNIX");
-			view.menuBar.eolButton.set_bitmap(mtl::the_bitmap_cache().get(L"unix.png", 20, 20));
-		});
-
 		view.tabControl.onDragOut([this](std::wstring id)
 		{
 			::MessageBox(*view.mainWnd, id.c_str(), L"DRAG OUT", 0);
@@ -1833,40 +1580,6 @@ public:
 		view.tabControl.onNotify(NM_CLICK, [this](NMHDR* hmhdr) 
 		{
 			::MessageBox(*view.mainWnd, L"NM_CLICK", L"tabControl.onNotify", 0);
-			/*
-			if (view.tabControl.hitIconTest())
-			{
-				int idx = view.tabControl.hitTest();
-				if (idx == -1) return;
-				//::OutputDebugString(L"CLOSE: view.tabControl.onNotify\r\n");
-				auto& item = view.tabControl.item(idx);
-				removeDoc(item.id);
-				return;
-			}
-			*/
-			/*
-			POINT pt;
-			::GetCursorPos(&pt);
-			::ScreenToClient( *view.tabControl, &pt);
-
-			RECT r = view.tabControl.getTabRect(view.tabControl.selected());
-
-			r.right = r.left + view.tabControl.imageList.width;
-			r.bottom = r.top + view.tabControl.imageList.height;
-
-			if (::PtInRect(&r, pt))
-			{
-
-//			if (view.tabControl.hitIconTest())
-	//		{
-				int idx = view.tabControl.hitTest();
-				if (idx == -1) return;
-				::OutputDebugString(L"CLOSE: view.tabControl.onNotify\r\n");
-				auto& item = view.tabControl.item(idx);
-				removeDoc(item.id);
-				return;
-			}
-			*/
 		});
 
 		view.tabControl.onSelect([this](mtl::tab_ctrl::tab& item)
@@ -1924,14 +1637,6 @@ public:
 			//int to = view.tabControl.id2index(id);
 			transferTab(from, index_to);
 
-			/*
-			XmlDocument xmlDoc;
-			mtl::fromXml(utf8, xmlDoc);
-
-			::MessageBox(0, mtl::to_wstring(xmlDoc.info.title).c_str(), mtl::to_wstring(xmlDoc.info.tooltip).c_str(), 0);
-
-			transferTab( mtl::to_wstring(xmlDoc.info.id), id);
-			*/
 		});
 
 		view.dropTarget->onDrop([this](IDataObject* ido, DWORD keyState, DWORD& effect)
@@ -2078,7 +1783,7 @@ HRESULT __stdcall MTLEditorDocuments::remove(VARIANT idx)
 // go WinMain, go!
 
 
-
+void load_resource_ids();
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -2097,6 +1802,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	mtl::options opt(
 		{ L"open", L"split"}
 	);
+
+	//load_resource_ids();
 
 	mtl::application app(hInstance);
 

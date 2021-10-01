@@ -265,6 +265,62 @@ namespace mtl {
     class status_bar : public ctrl<status_bar>
     {
     public:
+
+        void set_status(std::vector<std::wstring> parts)
+        {
+            status_ = parts;
+            set_status_txt(statusRect_);
+        }
+
+    protected:
+
+        void set_status_txt( RECT& r)
+        {
+            int n = (int)status_.size();
+
+            if (n == 0) return;
+
+            mtl::wnd_dc dc(handle);
+
+            HFONT font = (HFONT)send_msg(WM_GETFONT, 0, 0);
+            dc.select(font);
+
+            std::vector<int> widths;
+            for (auto& part : status_)
+            {
+                int w = dc.text_width(part)+10;
+                widths.push_back(w);
+            }
+
+            std::vector<int> rights;
+            rights.resize(n);
+
+            int right = r.right;
+            for (int i = n - 1; i > 0; i--)
+            {
+                rights[i] = right;
+                right -= widths[i];
+            }
+            rights[0] = widths[0];
+
+            send_msg(SB_SETPARTS, (WPARAM)n, (LPARAM)&rights[0]);
+
+            for (int i = 0; i < n; i++)
+            {
+                send_msg(SB_SETTEXT, (WPARAM)i, (LPARAM)status_[i].c_str());
+            }
+        }
+
+        virtual LRESULT wm_size(RECT& rc) override
+        {
+            statusRect_ = rc;
+            set_status_txt(rc);
+            return 0;
+        }
+
+        RECT statusRect_;
+        std::vector<std::wstring> status_;
+        int parts_ = 0;
     };
 
 
@@ -1414,9 +1470,10 @@ namespace mtl {
     {
     protected:
         image_list imageList_;
-        std::map<size_t, std::wstring> rindex_;
-        std::map<std::wstring, size_t> index_;
-        std::map<int, int> id2pos_;
+        std::map<size_t, size_t> cmd2img_;
+//        std::map<size_t, size_t> rindex_;
+ //       std::map<size_t, size_t> index_;
+        std::map<int, int> cmd2pos_;
         int wPadding = 5;
         int hPadding = 5;
         int w = 32;
@@ -1428,9 +1485,9 @@ namespace mtl {
         event<void(int id, NMTOOLBAR*)> onBarNotify;
         event<int()> onRightClick;
 
-        tool_bar& add_button(const std::wstring& path, int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
+        tool_bar& add_button(int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
         {
-            size_t index = getBitmapIndex(path);
+            size_t index = getBitmapIndex(iCmd);
             TBBUTTON tbButton;
             tbButton.dwData = data;
             tbButton.fsState = state;
@@ -1440,7 +1497,7 @@ namespace mtl {
             tbButton.iString = (INT_PTR)label;
 
             send_msg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
-            id2pos_[iCmd] = count() - 1;
+            cmd2pos_[iCmd] = count() - 1;
             return *this;
         }
 
@@ -1456,7 +1513,7 @@ namespace mtl {
             tbButton.iString = (INT_PTR)label;
 
             send_msg(TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&tbButton);
-            id2pos_[iCmd] = count() - 1;
+            cmd2pos_[iCmd] = count() - 1;
             return *this;
         }
 
@@ -1488,7 +1545,7 @@ namespace mtl {
                 r.bottom - r.top - hPadding,
                 SWP_NOZORDER | SWP_NOACTIVATE
             );
-            id2pos_[iCmd] = count() - 1;
+            cmd2pos_[iCmd] = count() - 1;
             return *this;
         }
 
@@ -1616,14 +1673,10 @@ namespace mtl {
 
         void get_button_by_cmd(int iCmd, TBBUTTON* tb)
         {
-            int pos = id2pos_[iCmd];
+            int pos = cmd2pos_[iCmd];
             send_msg(TB_GETBUTTON, pos, (LPARAM)tb);
         }
 
-        std::wstring bmp(int idx)
-        {
-            return rindex_[idx];
-        }
 
     protected:
 
@@ -1713,23 +1766,24 @@ namespace mtl {
             return CDRF_DODEFAULT;
         }
 
-        size_t getBitmapIndex(const std::wstring& s)
+        size_t getBitmapIndex(int id)
         {
-            if (index_.count(s) == 0)
+            if (cmd2img_.count(id) == 0)
             {
-                auto bmp = the_bitmap_cache().get(s.c_str(), w, h);
+                auto bmp = the_bitmap_cache().get(id, w, h);
 
-                int idx = imageList_.add_bitmap(bmp);
-
-                index_[s] = index_.size();
-                rindex_[idx] = s;
+                if (bmp)
+                {
+                    int idx = imageList_.add_bitmap(bmp);
+                    cmd2img_[id] = idx;
+                }
             }
 
-            if (index_.count(s) == 0)
+            if (cmd2img_.count(id) == 0)
             {
                 return -1;
             }
-            return index_[s];
+            return cmd2img_[id];
         }
 
         virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override

@@ -149,13 +149,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="dispids.h" />
     <ClInclude Include="Editor.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Editor.cpp" />
-    <ClCompile Include="ids.cpp" />
+    <ClCompile Include="id.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Editor.rc">
@@ -175,6 +176,19 @@
   <ItemGroup>
     <None Include="ctx-unreg.reg" />
     <None Include="ctx.reg" />
+    <CustomBuild Include="dispid.bat">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cmd.exe /Q /C dispid.bat</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generate dispid.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">dispids.h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Editor.idl</AdditionalInputs>
+    </CustomBuild>
+    <CustomBuild Include="id.js">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cscript.exe /Nologo id.js resource.h &gt; id.cpp</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">generating UI ids</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">id.cpp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">resource.h</AdditionalInputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

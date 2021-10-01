@@ -35,6 +35,8 @@ public:
 
 };
 
+void load_resource_ids();
+
 class MainWindow : public mtl::window<MainWindow>
 {
 public:
@@ -46,17 +48,26 @@ public:
 
 	MainWindow()
 	{
+		//load_resource_ids();
+		/*
 		mtl::gui().add({
 			{ MTL_ID(IDM_FILE)}, //L"File" },
 			{ MTL_ID(IDM_EXIT)}, //L"Exit" },
 			{ MTL_ID(IDM_HELP)}, //L"Help" },			
 			{ MTL_ID(IDM_ABOUT)},// L"About" }
 		});
+		*/
 
 		menu.create();
 		mtl::menu_builder mb(menu);
-		mb.add({
-			{ IDM_FILE, {{ IDM_EXIT }} },
+		mb.add({{
+			IDM_FILE, {{
+				IDM_MENU_A,{
+					{IDM_MENU_B },
+					{IDM_MENU_C }
+				}},
+				{ IDM_EXIT }
+			}},
 			{ IDM_HELP, {{ IDM_ABOUT}} }
 		});
 		// set menu implicitly on window class
@@ -119,7 +130,8 @@ public:
 
 	virtual LRESULT wm_draw(HDC hdc, RECT& bounds) override
 	{
-		HBITMAP bmp = mtl::the_bitmap_cache().get(IDI_JPEG, 500, 314);
+//		HBITMAP bmp = mtl::the_bitmap_cache().get(IDI_JPEG, 500, 314);
+		HBITMAP bmp = mtl::gui().bitmap(IDI_JPEG);// , 500, 314);
 
 		mtl::dc dc(hdc);
 		dc.bit_blit(bmp, 0, 0);

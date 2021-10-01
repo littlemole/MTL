@@ -185,11 +185,11 @@ namespace mtl {
 			{
 				if (len < 3)
 					return false;
-				if ((unsigned char)c[0] == UTF8_BOM()[0])
+				if (( char)c[0] == UTF8_BOM()[0])
 				{
-					if ((unsigned char)c[1] == UTF8_BOM()[1])
+					if (( char)c[1] == UTF8_BOM()[1])
 					{
-						if ((unsigned char)c[2] == UTF8_BOM()[2])
+						if (( char)c[2] == UTF8_BOM()[2])
 						{
 							return true;
 						}
@@ -202,9 +202,9 @@ namespace mtl {
 			{
 				if (len < 2)
 					return false;
-				if ((unsigned char)c[0] == UTF16LE_BOM()[0])
+				if (( char)c[0] == UTF16LE_BOM()[0])
 				{
-					if ((unsigned char)c[1] == UTF16LE_BOM()[1])
+					if (( char)c[1] == UTF16LE_BOM()[1])
 					{
 						return true;
 					}
@@ -212,15 +212,15 @@ namespace mtl {
 				return false;
 			}
 
-			static const unsigned char* UTF8_BOM()
+			static const  char* UTF8_BOM()
 			{
-				static const unsigned char BOM[] = { 0xef, 0xbb, 0xbf };
+				static const  char BOM[] = { 0xef, 0xbb, 0xbf };
 				return BOM;
 			}
 
-			static const unsigned char* UTF16LE_BOM()
+			static const  char* UTF16LE_BOM()
 			{
-				static const unsigned char BOM[] = { 0xff, 0xfe, 0x00 };
+				static const  char BOM[] = { 0xff, 0xfe, 0x00 };
 				return BOM;
 			}
 
@@ -426,4 +426,52 @@ namespace mtl {
 		return to_wstring(raw_bytes,(int)len,fe.code_page);
 	}
 
+
+	inline std::string encode_str(const std::wstring& str, file_encoding& fe)
+	{
+		if (fe.code_page == CP_UTF8)
+		{
+			std::string utf8 = to_string(str);
+			if (fe.has_bom == false)
+			{
+				return utf8;
+			}
+			std::ostringstream oss;
+			oss.write(details::FileSniffer::UTF8_BOM(), 3);
+			oss << utf8;
+			return oss.str();
+		}
+		if (fe.code_page == CP_WINUNICODE)
+		{
+			if (fe.has_bom == false)
+			{
+				return std::string((char*)str.data(), str.size() * sizeof(wchar_t));
+			}
+			std::ostringstream oss;
+			oss.write(details::FileSniffer::UTF16LE_BOM(), 3);
+			oss.write((char*)str.data(), str.size() * sizeof(wchar_t));
+			return oss.str();
+		}
+
+		std::string result = to_string(str, fe.code_page);
+
+		return result;
+	}
+
+	inline std::string encode_utf8(const std::string& utf8, file_encoding& fe)
+	{
+		if (fe.code_page == CP_UTF8)
+		{
+			if (fe.has_bom == false)
+			{
+				return utf8;
+			}
+			std::ostringstream oss;
+			oss.write(details::FileSniffer::UTF8_BOM(), 3);
+			oss << utf8;
+			return oss.str();
+		}
+		std::wstring ws = to_wstring(utf8);
+		return encode_str(ws, fe);
+	}
 }

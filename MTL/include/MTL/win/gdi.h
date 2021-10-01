@@ -172,6 +172,20 @@ namespace mtl {
 
         void restore(int i = -1) { ::RestoreDC(hdc_, i); }
 
+        SIZE text_extent( const std::wstring& str )
+        {
+            SIZE result;
+            ::GetTextExtentPoint32(hdc_, str.c_str(), (int)str.size(), &result);
+            return result;
+        }
+
+        int text_width(const std::wstring& str)
+        {
+            SIZE result;
+            ::GetTextExtentPoint32(hdc_, str.c_str(), (int)str.size(), &result);
+            return result.cx;
+        }
+
     protected:
         std::list<HGDIOBJ>	obList_;
         HDC		hdc_;
