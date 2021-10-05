@@ -49,7 +49,12 @@ namespace mtl {
 		return std::wstring(path);
 	}
 
-
+	inline std::wstring current_working_directory()
+	{
+		wchar_t buf[MAX_PATH];
+		::GetCurrentDirectoryW(MAX_PATH, buf);
+		return std::wstring(buf);
+	}
 
 	inline std::wstring path_to_self_directory(const wchar_t* postfix = 0)
 	{

@@ -60,6 +60,11 @@
 #define IDM_SYNTAX_JS			703
 #define ID_MODE_SIMPLE          800
 #define ID_MODE_EDIT			801
+#define IDM_FILE_NEW			850
+#define IDM_FILE_OPEN			851
+
+#define IDM_EDIT_FIND_REGEX 900
+#define IDM_EDIT_REPLACE_REGEX 901
 
 #define IDM_ALIEN 1001
 #define IDM_APP 1002
@@ -130,7 +135,8 @@
 #define IDM_RESTORE 1067
 #define IDM_BROWSER 1068
 #define IDM_XML 1069
-
+#define IDM_TOGGLE_OWNER_DRAWN 1100
+#define IDM_HELP_BROWSER 1101
 
 #define IDC_MYICON				2
 #ifndef IDC_STATIC

@@ -2,9 +2,30 @@
 
 #include "mtl/sdk.h"
 #include "mtl/win32/mem.h"
+#include <windows.h>
+#include <time.h>
+
 
 namespace mtl
 {
+    inline void time_t_to_file_time(time_t t, FILETIME& ft)
+    {
+        LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000;
+        ft.dwLowDateTime = (DWORD)ll;
+        ft.dwHighDateTime = ll >> 32;
+    }
+
+    inline time_t file_time_to_time_t(const FILETIME& ft )
+    {
+        std::time_t ret = 0;
+        ULARGE_INTEGER ull;
+        ull.LowPart = ft.dwLowDateTime;
+        ull.HighPart = ft.dwHighDateTime;
+        ret = (ull.QuadPart / 10000000ULL - 11644473600ULL);
+        return ret;
+    }
+
+
     namespace detail {
 
         class ReadOverLap : public OVERLAPPED
@@ -171,14 +192,13 @@ namespace mtl
 
             if (handle != INVALID_HANDLE_VALUE)
             {
-                BY_HANDLE_FILE_INFORMATION fi;
-                ::ZeroMemory(&fi, sizeof(fi));
+                ::ZeroMemory(&fi_, sizeof(fi_));
 
-                BOOL r = ::GetFileInformationByHandle(handle, &fi);
+                BOOL r = ::GetFileInformationByHandle(handle, &fi_);
 
                 ULARGE_INTEGER uli;
-                uli.HighPart = fi.nFileSizeHigh;
-                uli.LowPart = fi.nFileIndexLow;
+                uli.HighPart = fi_.nFileSizeHigh;
+                uli.LowPart = fi_.nFileIndexLow;
 
                 fsize = uli.QuadPart;
                 return ERROR_SUCCESS;
@@ -244,6 +264,11 @@ namespace mtl
             }
 
             return *this;
+        }
+
+        const file_info& info() const
+        {
+            return fi_;
         }
 
         unsigned long long pos()
@@ -438,7 +463,7 @@ namespace mtl
         DWORD create_flags = FILE_ATTRIBUTE_NORMAL;
         HANDLE handle = INVALID_HANDLE_VALUE;
         unsigned long long fsize = 0;
-
+        mtl::file_info fi_;
     };
 
     std::string slurp(

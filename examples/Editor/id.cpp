@@ -1,6 +1,6 @@
 #include "mtl/ole/img.h"
 
-void load_resource_ids()
+static void load_resource_ids()
 {
     mtl::gui().add({
         { 101, "IDS_APP_TITLE" },
@@ -60,6 +60,10 @@ void load_resource_ids()
         { 703, "IDM_SYNTAX_JS" },
         { 800, "ID_MODE_SIMPLE" },
         { 801, "ID_MODE_EDIT" },
+        { 850, "IDM_FILE_NEW" },
+        { 851, "IDM_FILE_OPEN" },
+        { 900, "IDM_EDIT_FIND_REGEX" },
+        { 901, "IDM_EDIT_REPLACE_REGEX" },
         { 1001, "IDM_ALIEN" },
         { 1002, "IDM_APP" },
         { 1003, "IDM_EXIT" },
@@ -129,14 +133,12 @@ void load_resource_ids()
         { 1067, "IDM_RESTORE" },
         { 1068, "IDM_BROWSER" },
         { 1069, "IDM_XML" },
+        { 1100, "IDM_TOGGLE_OWNER_DRAWN" },
+        { 1101, "IDM_HELP_BROWSER" },
         { 2, "IDC_MYICON" },
         { -1, "IDC_STATIC" }
     });
 }
 
 
-static int unused = []()
-{
-    load_resource_ids();
-    return 0;
-}();
+static int unused = [](){ load_resource_ids(); return 1; }();

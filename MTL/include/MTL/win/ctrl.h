@@ -547,7 +547,7 @@ namespace mtl {
         HWND                                                       activeChild = nullptr;
         CLIPFORMAT			                                       dragTabFormat;
         punk<default_drop_target>                                  dropTarget;
-        tool_tip                                                  tooltip;
+        tool_tip                                                   tooltip;
         image_list			                                       imageList;
 
         tab_ctrl()
@@ -869,7 +869,11 @@ namespace mtl {
                 }
                 case WM_ERASEBKGND:
                 {
-                    return 1;
+                    if (colorTheme && colorTheme->enabled())
+                    {
+                        return 1;
+                    }
+                    return 0;
                 }
             }
             return ctrl<tab_ctrl>::wndProc(hwnd, message, wParam, lParam);
@@ -945,7 +949,7 @@ namespace mtl {
 
         virtual LRESULT wm_draw_item(LPDRAWITEMSTRUCT dis) override
         {
-            if (!this->colorTheme) return 0;
+            if (!this->colorTheme || !this->colorTheme->enabled()) return 0;
 
             HBRUSH br = nullptr;
             BOOL bSelected = (dis->itemID == (UINT)selected());
@@ -1212,7 +1216,7 @@ namespace mtl {
             }
         }
 
-        virtual void onColorThemeChanged()
+        virtual void on_color_theme_changed()
         {
             wnd::on_color_theme_changed();
             tooltip.set_color_theme(colorTheme);
@@ -1487,6 +1491,10 @@ namespace mtl {
 
         tool_bar& add_button(int iCmd, const wchar_t* label = 0, BYTE style = 0, BYTE state = TBSTATE_ENABLED, DWORD_PTR data = 0)
         {
+            if (!label)
+            {
+                label = gui().label(iCmd).c_str();
+            }
             size_t index = getBitmapIndex(iCmd);
             TBBUTTON tbButton;
             tbButton.dwData = data;

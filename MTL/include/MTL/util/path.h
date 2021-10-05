@@ -386,6 +386,16 @@ public:
         return ws;        
     }
 
+    operator bool () const
+    {
+        return !path_.empty();
+    }
+
+    operator std::wstring() const 
+    {
+        return str();
+    }
+
 private:
     const std::wstring path_;
 };

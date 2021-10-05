@@ -42,16 +42,16 @@ namespace mtl {
             frp_.Flags = flags;
             frp_.wReplaceWithLen = 0;
             frp_.hwndOwner = parent;
-            HWND hWnd = ::FindText(&frp_);
-            if (hWnd == 0)
+            HWND hWnd_ = ::FindText(&frp_);
+            if (hWnd_ == 0)
             {
                 DWORD err = CommDlgExtendedError();
                 std::wostringstream woss;
                 woss << L"e:" << err << std::endl;
                 ::OutputDebugString(woss.str().c_str());
             }
-            modeless_dlg().add(hWnd);
-            return hWnd;
+            modeless_dlg().add(hWnd_);
+            return hWnd_;
         }
 
         HWND replace(HWND parent, DWORD flags = FR_DOWN, const wchar_t* what = 0, const wchar_t* with = 0)
@@ -65,13 +65,23 @@ namespace mtl {
                 wcscpy_s(&with_, wcslen(with)+1, with);
             }
             frp_.Flags = flags;
+            frp_.lpstrReplaceWith = &with_;
+            frp_.wReplaceWithLen = (WORD)with_.size();
             frp_.hwndOwner = parent;
-            HWND hWnd = ::ReplaceText(&frp_);
-            modeless_dlg().add(hWnd);
-            return hWnd;
+            hWnd_ = ::ReplaceText(&frp_);
+            if (hWnd_ == 0)
+            {
+                DWORD err = CommDlgExtendedError();
+                std::wostringstream woss;
+                woss << L"e:" << err << std::endl;
+                ::OutputDebugString(woss.str().c_str());
+            }
+            modeless_dlg().add(hWnd_);
+            return hWnd_;
         }
 
     private:
+        HWND hWnd_ = nullptr;
         FINDREPLACE frp_;
         wbuff what_;
         wbuff with_;
@@ -370,7 +380,11 @@ namespace mtl {
         {
             DWORD result = 0;
             punk<IFileDialogCustomize> fdc(fd_);
-            HR hr = fdc->GetSelectedControlItem(what, &result);
+            HRESULT hr = fdc->GetSelectedControlItem(what, &result);
+            if (hr != S_OK)
+            {
+                return -1;
+            }
             return result;
         }
 

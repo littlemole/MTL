@@ -1,0 +1,27 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	C:/Users/mike/source/repos/MTL/examples/Editor/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20211003.0/
+ForAppending	id.js	/^var ForAppending = 8;$/;"	v
+ForReading	id.js	/^var ForReading = 1;$/;"	v
+ForWriting	id.js	/^var ForWriting = 2;$/;"	v
+arg	id.js	/^var arg = WScript.arguments(0);$/;"	v
+cols	id.js	/^    var cols = line.split(\/\\s\/);$/;"	v
+f	id.js	/^var f = fs.OpenTextFile(arg, ForReading, -1);$/;"	v
+fs	id.js	/^var fs = new ActiveXObject("Scripting.FileSystemObject");$/;"	v
+id	id.js	/^    var id = cols[2];$/;"	v
+ids_seen	id.js	/^var ids_seen = {};$/;"	v
+idstr	id.js	/^    var idstr = cols[1];$/;"	v
+item	id.js	/^    var item = "        { " + id + ", \\"" + idstr + "\\" }";$/;"	v
+items	id.js	/^var items = [];$/;"	v
+l	id.js	/^    var l = f.ReadLine();$/;"	v
+lines	id.js	/^var lines = [];$/;"	v
+output	id.js	/^var output = "#include \\"mtl\/ole\/img.h\\"\\r\\n\\r\\n";$/;"	v
+trim	id.js	/^var trim = function(s)$/;"	f

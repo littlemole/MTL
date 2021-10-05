@@ -537,6 +537,10 @@ namespace mtl {
             if (message == WM_SEARCH)
             {
                 FINDREPLACE* fp = (FINDREPLACE*)lParam;
+                if (fp->Flags & FR_DIALOGTERM)
+                {
+                    return 0;
+                }
                 this->wm_search(fp);
                 return 0;
             }
@@ -681,6 +685,16 @@ namespace mtl {
                 return result;
                 break;
             }
+            case WM_SYSCOMMAND:
+            {
+                if (wParam == SC_KEYMENU)
+                {
+                    on_alt_key();
+                    return 0;
+                }
+                return wnd::wndProc(hWnd, message, wParam, lParam);
+                break;
+            }
 
             default:
             {
@@ -708,6 +722,11 @@ namespace mtl {
                 (LPVOID)(W*)this
             );
             return handle;
+        }
+
+        virtual LRESULT on_alt_key()
+        {
+            return 0;
         }
 
         virtual LRESULT wm_command(int id)

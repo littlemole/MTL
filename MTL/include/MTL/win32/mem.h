@@ -441,52 +441,52 @@ namespace mtl {
     {
     public:
 
-        DWORD attributes()
+        DWORD attributes() const
         {
             return dwFileAttributes;
         }
 
-        FILETIME& creation_time()
+        const FILETIME& creation_time() const
         {
             return ftCreationTime;
         }
 
-        std::wstring created()
+        std::wstring created() const
         {
             return sys_time(creation_time());
         }
 
-        FILETIME& last_access_time()
+        const FILETIME& last_access_time() const
         {
             return ftLastAccessTime;
         }
 
-        std::wstring last_accessed()
+        std::wstring last_accessed() const
         {
             return sys_time(last_access_time());
         }
 
-        FILETIME& last_write_time()
+        const FILETIME& last_write_time() const
         {
             return ftLastWriteTime;
         }
 
-        std::wstring last_written()
+        std::wstring last_written() const
         {
             return sys_time(last_write_time());
         }
 
-        DWORD file_size_high()
+        DWORD file_size_high() const
         {
             return nFileSizeHigh;
         }
 
-        DWORD file_size_low()
+        DWORD file_size_low() const
         {
             return nFileSizeLow;
         }
 
-        unsigned long long size()
+        unsigned long long size() const
         {
             ULARGE_INTEGER uli;
             uli.HighPart = nFileSizeHigh;
@@ -494,7 +494,7 @@ namespace mtl {
             return uli.QuadPart;
         }
 
-        std::wstring file_size()
+        std::wstring file_size() const
         {
             LARGE_INTEGER li;
             li.HighPart = nFileSizeHigh;
@@ -502,14 +502,14 @@ namespace mtl {
             return file_size(li);
         }
 
-        static SYSTEMTIME file_time_to_sys_time(FILETIME& FileTime)
+        static SYSTEMTIME file_time_to_sys_time(const FILETIME& FileTime)
         {
             SYSTEMTIME st;
             ::FileTimeToSystemTime(&FileTime, &st);
             return st;
         }
 
-        static std::wstring sys_time(FILETIME& FileTime)
+        static std::wstring sys_time(const FILETIME& FileTime)
         {
             SYSTEMTIME st;
             if (!::FileTimeToSystemTime(&FileTime, &st))

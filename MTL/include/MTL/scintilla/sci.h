@@ -144,6 +144,11 @@ public:
 		return ctrl<scintilla_wnd>::wndProc(hwnd, message, wParam, lParam);
 	}
 
+	void notifications(int mask = SC_MODEVENTMASKALL)
+	{
+		send_msg(SCI_SETMODEVENTMASK, (WPARAM)mask, 0);
+	}
+
 	scintilla_wnd& set_code_page(int cp)
 	{
 		send_msg(SCI_SETCODEPAGE, (WPARAM)cp, (LPARAM)0);
@@ -455,11 +460,11 @@ public:
 			{
 				if ((options & FR_DOWN) == 0)
 				{
-					// nextSearchPos_-=2;
+					nextSearchPos_-=2;
 				}
 				else
 				{
-					// nextSearchPos_+=2;
+					nextSearchPos_+=2;
 				}
 			}
 
@@ -490,8 +495,7 @@ public:
 			return false;
 		}
 
-		//chrg.cpMin = r;
-		//chrg.cpMax = r + (long)what.size();
+		chrg = ft.chrgText;
 
 		if (!(options & FR_DOWN))
 			nextSearchPos_ = r - 1;

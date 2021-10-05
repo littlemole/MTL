@@ -214,13 +214,13 @@ namespace mtl {
 
 			static const  char* UTF8_BOM()
 			{
-				static const  char BOM[] = { 0xef, 0xbb, 0xbf };
+				static const  char BOM[] = { (char)0xef, (char)0xbb, (char)0xbf };
 				return BOM;
 			}
 
 			static const  char* UTF16LE_BOM()
 			{
-				static const  char BOM[] = { 0xff, 0xfe, 0x00 };
+				static const  char BOM[] = { (char)0xff,(char)0xfe, (char)0x00 };
 				return BOM;
 			}
 
@@ -233,6 +233,12 @@ namespace mtl {
 
 			file_encoding  getEncoding( const std::string& str,  const std::string& h)
 			{
+				int filter = IS_TEXT_UNICODE_UNICODE_MASK;
+				DWORD r = ::IsTextUnicode(str.data(), (int)str.size(), &filter);
+				if (r)
+				{
+					return file_encoding{ file_encoding::UNIX, CP_WINUNICODE, false, false };
+				}
 				punk<IMultiLanguage> ml;
 				HR hr = ml.create_object(CLSID_CMultiLanguage);
 
@@ -473,5 +479,55 @@ namespace mtl {
 		}
 		std::wstring ws = to_wstring(utf8);
 		return encode_str(ws, fe);
+	}
+
+	inline std::string unix2dos(const std::string& in)
+	{
+		std::ostringstream out;
+		if (in[0] == '\n')
+			out << "\r";
+
+		out << in[0];
+
+		size_t p = 1;
+		size_t len = in.size();
+
+		while ((p < len))
+		{
+			if (in[p] == '\n')
+
+				if (in[p - 1] != '\r')
+				{
+					out << "\r";
+				}
+
+			out << in[p];
+			p++;
+		}
+		return out.str();
+	}
+
+	inline std::string dos2unix(const std::string& in)
+	{
+		std::ostringstream out;
+		size_t p = 0;
+		size_t len = in.size();
+
+		while ((p < len))
+		{
+			if (in[p] == '\r')
+
+				if (p + 1 < len)
+
+					if (in[p + 1] == '\n')
+					{
+						p++;
+						continue;
+					}
+
+			out << in[p];
+			p++;
+		}
+		return out.str();
 	}
 }
