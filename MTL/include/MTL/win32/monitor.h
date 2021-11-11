@@ -23,6 +23,48 @@ namespace mtl {
 			watch(p);
 		}
 
+		monitor(const monitor& rhs) = delete;
+		monitor(monitor&& rhs)
+		{
+			onFileChanged = std::move(rhs.onFileChanged);
+			path = std::move(rhs.path);
+			done = rhs.done;
+
+			overTheLap = rhs.overTheLap;
+			rhs.overTheLap = nullptr;
+
+			fni = rhs.fni;
+			rhs.fni = nullptr;
+
+			fileHandle = rhs.fileHandle;
+			rhs.fileHandle = nullptr;
+		}
+
+		monitor& operator=(const monitor& rhs) = delete;
+
+		monitor& operator=(monitor&& rhs)
+		{
+			if (this == &rhs)
+			{
+				return *this;
+			}
+
+			onFileChanged = std::move(rhs.onFileChanged);
+			path = std::move(rhs.path);
+			done = rhs.done;
+
+			overTheLap = rhs.overTheLap;
+			rhs.overTheLap = nullptr;
+
+			fni = rhs.fni;
+			rhs.fni = nullptr;
+
+			fileHandle = rhs.fileHandle;
+			rhs.fileHandle = nullptr;
+
+			return *this;
+		}
+
 		~monitor()
 		{
 			stop();
@@ -95,7 +137,7 @@ namespace mtl {
 			std::wstring fn(fni->FileName, fni->FileNameLength / sizeof(wchar_t));
 			if (!fn.empty())
 			{
-				mon->onFileChanged.fire(fn);
+				mon->onFileChanged.fire(mon->path + L"\\" + fn );
 			}
 
 			DWORD ret = 0;
@@ -127,4 +169,54 @@ namespace mtl {
 		HANDLE fileHandle = nullptr;
 	};
 
+
+	class file_monitor
+	{
+	public:
+
+		std::wstring watch(const std::wstring& filepath, std::function<void()> cb)
+		{
+			auto dir = mtl::path(filepath).parent_dir();
+			if (dirMons_.count(dir) == 0)
+			{
+				dirMons_[dir].watch(dir);
+			}
+			
+			std::wstring token = dirMons_[dir].onFileChanged([this,cb](std::wstring path) 
+			{
+				queue_[path] = cb;
+				mtl::timer::set_timeout(500, [this]() 
+				{
+					auto q = queue_;
+					queue_.clear();
+
+					for (auto& it : q)
+					{
+						it.second();
+					}
+				});
+			});
+			return token;
+		}
+
+		void unwatch(const std::wstring& token, const std::wstring& filepath)
+		{
+			auto dir = mtl::path(filepath).parent_dir();
+
+			if (dirMons_.count(dir))
+			{
+				size_t s = dirMons_[dir].onFileChanged.unregister(token);
+				if (s == 0)
+				{
+					dirMons_[dir].stop();
+					dirMons_.erase(dir);
+				}
+			}
+		}
+
+	private:
+
+		std::map<std::wstring, std::function<void()>> queue_;
+		std::map<std::wstring, monitor> dirMons_;
+	};
 }

@@ -29,6 +29,7 @@
     <ClInclude Include="include\MTL\disp\bstr.h" />
     <ClInclude Include="include\MTL\disp\disp.h" />
     <ClInclude Include="include\MTL\disp\sf_array.h" />
+    <ClInclude Include="include\mtl\disp\typeinfo.h" />
     <ClInclude Include="include\MTL\disp\variant.h" />
     <ClInclude Include="include\MTL\fwd.h" />
     <ClInclude Include="include\MTL\mtl.h" />
@@ -59,6 +60,7 @@
     <ClInclude Include="include\MTL\script\script.h" />
     <ClInclude Include="include\MTL\sdk.h" />
     <ClInclude Include="include\MTL\util\base64.h" />
+    <ClInclude Include="include\mtl\util\event.h" />
     <ClInclude Include="include\MTL\util\path.h" />
     <ClInclude Include="include\MTL\util\rgb.h" />
     <ClInclude Include="include\MTL\util\str.h" />

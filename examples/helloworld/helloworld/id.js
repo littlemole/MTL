@@ -20,8 +20,8 @@ while(!f.AtEndOfStream)
 }
 f.Close();
 
-var output = "#include \"mtl/ole/img.h\"\r\n\r\n";
-output += "void load_resource_ids()\r\n";
+var output = "#include \"framework.h\"\r\n\r\n";
+output += "static void load_resource_ids()\r\n";
 output += "{\r\n";
 output += "    mtl::gui().add({\r\n";
 
@@ -56,6 +56,8 @@ output += items.join(",\r\n");
 output += "\r\n    });\r\n}\r\n\r\n";
 
 WScript.Echo(output);
+
+WScript.Echo("static int unused = [](){ load_resource_ids(); return 1; }();");
 
 //var WshShell = WScript.CreateObject ("WScript.Shell");
 //var cwd = WshShell.CurrentDirectory

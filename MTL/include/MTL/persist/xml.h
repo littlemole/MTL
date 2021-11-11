@@ -220,6 +220,19 @@ namespace mtl {
 			el->appendChild(*txt, nullptr);
 		}
 
+		inline void set_text(punk<IXMLDOMElement> el, std::wstring val)
+		{
+			punk<IXMLDOMDocument> doc;
+			HR hr = el->get_ownerDocument(&doc);
+
+			bstr value(mtl::ole_char(val.c_str()));
+
+			punk<IXMLDOMText> txt;
+			hr = doc->createTextNode(*value, &txt);
+
+			el->appendChild(*txt, nullptr);
+		}
+
 		inline void set_attribute(const meta::EntityName& n, const std::string& from, ElementPtr to)
 		{
 			punk<IXMLDOMDocument> doc;
@@ -233,11 +246,35 @@ namespace mtl {
 				HR hr = doc->createNode(variant(NODE_ATTRIBUTE), *bstr(n.name), *bstr(n.ns_uri()), &a);
 				
 				punk<IXMLDOMAttribute> at(a);
-				hr = to->setAttributeNode( *at, nullptr);				
+				hr = to->setAttributeNode( *at, nullptr);	
+				hr = a->put_nodeValue(mtl::variant(from.c_str()));
 			}
 			else
 			{
 				to->setAttribute(*bstr(n.name), variant(from.c_str()));
+			}
+		}
+
+		inline void set_attribute(const meta::EntityName& n, const std::wstring& from, ElementPtr to)
+		{
+			punk<IXMLDOMDocument> doc;
+
+			punk<IXMLDOMNode> node(to);
+
+
+			if (n.ns_uri())
+			{
+				punk<IXMLDOMNode> a;
+				HR hr = doc->createNode(variant(NODE_ATTRIBUTE), *bstr(n.name), *bstr(n.ns_uri()), &a);
+
+				punk<IXMLDOMAttribute> at(a);
+				hr = to->setAttributeNode(*at, nullptr);
+
+				hr = a->put_nodeValue(mtl::variant(mtl::ole_char(from.c_str())));
+			}
+			else
+			{
+				to->setAttribute(*bstr(n.name), variant(mtl::ole_char(from.c_str())));
 			}
 		}
 
@@ -350,6 +387,20 @@ namespace mtl {
 			return value.to_string();
 		}
 
+
+		inline std::wstring getChildElementWideText(punk<IXMLDOMElement> parent, const char* name, const char* ns_uri = nullptr)
+		{
+			punk<IXMLDOMElement> childNode = getChildElement(parent, name, ns_uri);
+			if (!childNode)
+			{
+				return L"";
+			}
+
+			bstr value;
+			childNode->get_text(&value);
+			return value.str();
+		}
+
 		inline void string2Xml(const meta::EntityName& n, const std::string& from, ElementPtr to)
 		{
 			if (!n.name) return;
@@ -364,6 +415,27 @@ namespace mtl {
 			if (el)
 			{
 				to->appendChild( *el, nullptr);
+				if (!from.empty())
+				{
+					set_text(el, from);
+				}
+			}
+		}
+
+		inline void string2Xml(const meta::EntityName& n, const std::wstring& from, ElementPtr to)
+		{
+			if (!n.name) return;
+
+			if (n.is_attribute())
+			{
+				set_attribute(n, from, to);
+				return;
+			}
+
+			ElementPtr el = createElement(n, to);
+			if (el)
+			{
+				to->appendChild(*el, nullptr);
 				if (!from.empty())
 				{
 					set_text(el, from);
@@ -410,6 +482,46 @@ namespace mtl {
 			return getChildElementText(from, name.name, name.ns_uri());
 		}
 
+		inline std::wstring fromXmlwstring(const meta::EntityName& name, ElementPtr from)
+		{
+			if (!name.name)
+			{
+				bstr txt;
+				HRESULT hr = from->get_text(&txt);
+				if (hr != S_OK) return L"";
+				return txt.str();
+			}
+
+			if (name.is_attribute())
+			{
+				if (name.ns_uri())
+				{
+					punk<IXMLDOMNode> n(from);
+					punk<IXMLDOMNamedNodeMap> nodes;
+					HRESULT hr = n->get_attributes(&nodes);
+					if (hr != S_OK) return L"";
+
+					punk<IXMLDOMNode> a;
+					hr = nodes->getQualifiedItem(*bstr(name.name), *bstr(name.ns_uri()), &a);
+					if (hr != S_OK) return L"";
+
+					bstr txt;
+					hr = a->get_text(&txt);
+					if (hr != S_OK) return L"";
+					return txt.str();
+				}
+				else
+				{
+					variant val;
+					from->getAttribute(*bstr(name.name), &val);
+					return val.to_wstring();
+				}
+			}
+
+			return getChildElementWideText(from, name.name, name.ns_uri());
+		}
+
+
 		///////////////////////////////////////////////////////////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -420,7 +532,17 @@ namespace mtl {
 			string2Xml(n, from, to);
 		}
 
+		inline void toXml(const meta::EntityName& n, const std::wstring& from, ElementPtr to)
+		{
+			string2Xml(n, from, to);
+		}
+
 		inline void toXml(const meta::EntityName& n, std::string& from, ElementPtr to)
+		{
+			string2Xml(n, from, to);
+		}
+
+		inline void toXml(const meta::EntityName& n, std::wstring& from, ElementPtr to)
 		{
 			string2Xml(n, from, to);
 		}
@@ -458,6 +580,12 @@ namespace mtl {
 		inline void fromXml(const meta::EntityName& name, ElementPtr from, std::string& to)
 		{
 			to = fromXml(name, from);
+		}
+
+
+		inline void fromXml(const meta::EntityName& name, ElementPtr from, std::wstring& to)
+		{
+			to = fromXmlwstring(name, from);
 		}
 
 		template<class T>

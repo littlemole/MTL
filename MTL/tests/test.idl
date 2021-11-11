@@ -19,6 +19,16 @@ uuid(a03d1420-b1ec-11d0-8c3a-00c04fc31d2f),
 };
 
 [
+object,//, dual, oleautomation,
+uuid(6FB050D8-438A-41B8-A56E-26D6F3444CE6),
+] interface ITestSimpleUnknown : IUnknown
+{
+HRESULT Count([out, retval] long* cnt);
+HRESULT Item([in] long index, [out, retval] long* cnt);
+
+};
+
+[
 object, dual, oleautomation,
 uuid(B555296F-D09B-4A4E-A148-E0715394A525),
 ] interface ISubObject : IDispatch
@@ -71,6 +81,31 @@ helpstring("Example Type Library"),
 
     importlib("stdole32.tlb");
 
+
+
+    [
+        object, oleautomation,
+        uuid(C54DDE14-1DF9-436D-B6EF-5BF023ED16E2),
+    ] interface ITestSimpleOleAout : IUnknown
+    {
+        HRESULT Count([out, retval] long* cnt);
+        HRESULT Item([in] long index, [out, retval] long* cnt);
+    };
+
+
+    [
+        //object,// oleautomation,
+        uuid(FFE85602-BA26-414A-870E-83CCFB74C95A),
+    ] dispinterface ITestSimpleDispatch
+    {
+        properties:
+        [id(3)] LONG Counter;
+        methods:
+        [id(2)] LONG Item1([in] long index2);
+    };
+
+
+
     [
      uuid(a03d1424-b1ec-11d0-8c3a-00c04fc31d2f),
      helpstring("Breakfast Component Class")
@@ -87,6 +122,7 @@ helpstring("Example Type Library"),
     coclass TestObject
     {
         [default] interface ITestObject;
+        interface ITestSimpleUnknown;
     };
 
     [

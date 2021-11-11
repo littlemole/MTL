@@ -1,6 +1,10 @@
+//#include "framework.h"
+
+#include "mtl/sdk.h"
+//#include "mtl/obj/impl.h"
 #include "mtl/ole/img.h"
 
-void load_resource_ids()
+static void load_resource_ids()
 {
     mtl::gui().add({
         { 2, "IDC_MYICON" },
@@ -19,6 +23,7 @@ void load_resource_ids()
         { 113, "IDM_MENU_A" },
         { 114, "IDM_MENU_B" },
         { 115, "IDM_MENU_C" },
+        { 116, "IDM_MENU_REFRESH" },
         { 1000, "IDC_CHECK_LOVE" },
         { 1001, "IDC_LIST_LOVE" },
         { 1002, "IDC_COMBO1" },
@@ -29,3 +34,4 @@ void load_resource_ids()
 }
 
 
+static int unused = [](){ load_resource_ids(); return 1; }();

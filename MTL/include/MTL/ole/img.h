@@ -1,8 +1,9 @@
 #pragma once
 
+#include "mtl/sdk.h"
 #include "mtl/punk.h"
 #include "mtl/win/gdi.h"
-#include "mtl/obj/impl.h"
+//#include "mtl/obj/impl.h"
 #include "mtl/persist/stream.h"
 #include <wincodec.h>
 
@@ -248,6 +249,10 @@ namespace mtl {
         HRSRC hrsrc = ::FindResource(mtl::module_instance(), MAKEINTRESOURCE(resId), type);
         if (!hrsrc)
         {
+            hrsrc = ::FindResource(mtl::module_instance(), MAKEINTRESOURCE(resId), L"IMAGE");
+        }
+        if (!hrsrc)
+        {
             return hbmpSplash;
         }
 
@@ -278,16 +283,21 @@ namespace mtl {
 
         void load(int resourceId,  CLSID decoder = CLSID_WICPngDecoder, const wchar_t* type = L"PNG")
         {
-            mtl::bitmap bmp = mtl::load_picture_from_resource(resourceId,type,decoder);
+            load(resourceId, resourceId, decoder, type);
+        }
+
+        void load(int image_id, int resourceId, CLSID decoder = CLSID_WICPngDecoder, const wchar_t* type = L"PNG")
+        {
+            mtl::bitmap bmp = mtl::load_picture_from_resource(resourceId, type, decoder);
 
             if (!*bmp) return;
 
             BITMAP bm;
             ::GetObject(*bmp, sizeof(bm), &bm);
 
-            id2bitmap_[resourceId] = *bmp;
+            id2bitmap_[image_id] = *bmp;
+            idSize2bitmap_[image_id][bm.bmWidth][bm.bmHeight] = *bmp;
             bitmaps_.push_back(std::move(bmp));
-            idSize2bitmap_[resourceId][bm.bmWidth][bm.bmHeight] = *bmp;
         }
 
         void load(const wchar_t* path)
@@ -299,9 +309,10 @@ namespace mtl {
 
             BITMAP bm;
             ::GetObject(*bmp, sizeof(bm), &bm);
+
             path2bitmap_[path] = *bmp;
-            bitmaps_.push_back(std::move(bmp));
             pathSize2bitmap_[path][bm.bmWidth][bm.bmHeight] = *bmp;
+            bitmaps_.push_back(std::move(bmp));
         }
 
         void load(int id, const wchar_t* path)
@@ -313,11 +324,12 @@ namespace mtl {
 
             BITMAP bm;
             ::GetObject(*bmp, sizeof(bm), &bm);
+
             path2bitmap_[path] = *bmp;
             id2bitmap_[id] = *bmp;
-            bitmaps_.push_back(std::move(bmp));
             idSize2bitmap_[id][bm.bmWidth][bm.bmHeight] = *bmp;
             pathSize2bitmap_[path][bm.bmWidth][bm.bmHeight] = *bmp;
+            bitmaps_.push_back(std::move(bmp));
         }
 
         void load(const std::vector<std::tuple<int, const wchar_t*>>& bmps)
@@ -340,8 +352,16 @@ namespace mtl {
             return path2bitmap_[path];
         }
 
-        HBITMAP get(int id)
+        HBITMAP get(int index)
         {
+            int id = index;
+            if (aliases_.count(id))
+            {
+                if (id2bitmap_.count(id) == 0)
+                {
+                    load(id, aliases_[id]);
+                }
+            }
             if (id2bitmap_.count(id) == 0)
             {
                 load(id);
@@ -383,8 +403,14 @@ namespace mtl {
             return result;
         }
 
-        HBITMAP get(int id, int w, int h)
+        HBITMAP get(int index, int w, int h)
         {
+            int id = index;
+            if (aliases_.count(id))
+            {
+                load(id,aliases_[id]);
+            }
+
             if (id2bitmap_.count(id) == 0)
             {
                 load(id);
@@ -416,6 +442,11 @@ namespace mtl {
             return result;
         }
 
+        void alias(int src, int dest)
+        {
+            aliases_[src] = dest;
+        }
+
     private:
 
         std::wstring imgPath_;
@@ -424,6 +455,7 @@ namespace mtl {
         std::map<int, HBITMAP> id2bitmap_;
         std::map<int, std::map<int, std::map<int, HBITMAP>>> idSize2bitmap_;
         std::map<std::wstring, std::map<int, std::map<int, HBITMAP>>> pathSize2bitmap_;
+        std::map<int, int> aliases_;
     };
 
 
@@ -486,25 +518,47 @@ namespace mtl {
             id2string[id] = to_wstring(str);
             string2id[to_wstring(str)] = id;
 
-            //the_bitmap_cache().load(id);
+            mtl::wbuff buf(1024);
+            int r = ::LoadString(mtl::module_instance(), id, buf, (int)buf.size());
+            if (r)
+            {
+                id2label[id] = buf.toString();
+            }
         }
 
+        void add_ribbon(int id, const std::wstring& str, int label_id, int image_id = 0)
+        {
+            id2string[id] = str;
+            string2id[str] = id;
+
+            if (label_id)
+            {
+                mtl::wbuff buf(1024);
+                int r = ::LoadString(mtl::module_instance(), label_id, buf, (int)buf.size());
+                if (r)
+                {
+                    id2label[id] = buf.toString();
+                }
+            }
+            if (image_id)
+            {
+                //the_bitmap_cache().load(id,image_id, CLSID_WICPngDecoder, L"IMAGE");
+                the_bitmap_cache().alias(id, image_id);
+            }
+        }
+        /* dosn't do anything with img ?
         void add(int id, const std::string& str, const std::wstring& label, const std::wstring& img)
         {
             id2string[id] = to_wstring(str);
             id2label[id] = label;
             string2id[to_wstring(str)] = id;
-
-            //the_bitmap_cache().load(id, img.c_str());
         }
-
+        */
         void add(int id, const std::string& str, const std::wstring& label)
         {
             id2string[id] = to_wstring(str);
             id2label[id] = label;
             string2id[to_wstring(str)] = id;
-
-           // the_bitmap_cache().load(id);
         }
 
         const std::wstring& id_string(int id) 
@@ -671,7 +725,49 @@ namespace mtl {
     };
 
 
+    inline mtl::bitmap screenshot(HWND hWnd, int width, int height, bool clientOnly = true)
+    {
+        mtl::wnd_dc dc(hWnd);
+        RECT r;
+        if (clientOnly)
+        {
+            ::GetClientRect(hWnd, &r);
+        }
+        else
+        {
+            ::GetWindowRect(hWnd, &r);
+        }
+        int w = r.right - r.left;
+        int h = r.bottom - r.top;
+        auto bmp = mtl::bitmap::make_transparent_dib_section(w, h);
+        //mtl::bitmap bmp = ::CreateCompatibleBitmap(*dc, w, h);
 
+        {
+            mtl::compatible_dc cdc(*dc);
+            cdc.select(*bmp);
+
+            BOOL b = ::PrintWindow(hWnd, *cdc, clientOnly);
+        }
+
+        double dw = w <= width ? w : width;
+        double ratio = (double) w / (double)h;
+        double dh = dw / ratio;
+
+        if (dh > height)
+        {
+            dh = h <= height ? h: height;
+            dw =  dh*ratio;
+        }
+
+        auto result = mtl::bitmap::make_transparent_dib_section(width, height);
+        {
+            mtl::compatible_dc cdc(*dc);
+            cdc.select(*result);
+
+            cdc.stretch_blit(*bmp, 0, 0, (int) dw, (int) dh);
+        }
+        return result;
+    }
 }
 
 // eeek C helper macros

@@ -1,6 +1,3 @@
-// Editor.cpp : Defines the entry point for the application.
-//
-
 #include "Editor.h"
 #include "MTL/scintilla/sci.h"
 #include "MTL/win32/monitor.h"
@@ -183,12 +180,15 @@ class EditorDocument
 public:
 	std::wstring id;
 	TextFile textFile;
+	std::wstring fileWatchToken;
 };
 
 
 class FileService
 {
 public:
+
+	mtl::file_monitor monitor;
 
 	mtl::path find(const std::wstring& relative_path)
 	{
@@ -379,12 +379,17 @@ class EditorModel
 {
 public:
 
+	mtl::event<void()> onUpdate;
+	mtl::event<void(std::wstring, std::wstring)> onFileChanged;
+
 	EditorModel( FileService& fileService, RotService rotService, ScriptService& scriptService)
 		: fileService_(fileService),
 		  rotService_(rotService),
 		  scriptService_(scriptService)
 	{
 		instanceId = mtl::new_guid();
+
+
 	}
 
 	std::wstring instanceId;
@@ -393,12 +398,12 @@ public:
 	std::map<std::wstring, std::shared_ptr<EditorDocument>> documents;
 
 	EditorDocument openNew();
-	EditorDocument transferTab(const std::wstring& from);
-	IO_ERROR openPath(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb);
-	void openBytes(const std::wstring& id, TextFile& textFile);
+	EditorDocument transferDocument(const std::wstring& from);
+	IO_ERROR openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb);
+	void insertDocument(const std::wstring& id, TextFile& textFile);
 	void saveDocument(std::wstring id, std::wstring path, int enc, EOL_TYPE eol, std::string utf8, std::function<void(IO_ERROR)> cb);
-	void removeDoc(const std::wstring& id, const std::wstring& active);
-
+	void removeDocument(const std::wstring& id, const std::wstring& active);
+	void reloadFile(const std::wstring& id, std::function<void(std::string)> cb);
 private:
 	FileService& fileService_;
 	RotService& rotService_;
@@ -411,6 +416,10 @@ private:
 class MyStatusBar : public mtl::status_bar
 {
 public:
+
+	enum PARTS {
+		FILENAME, SEP, ENCODING, EOL, LINE, POS
+	};
 
 	mtl::font font;
 	mtl::font fontSmall;
@@ -659,24 +668,13 @@ public:
 	mtl::default_layout				layout;
 
 	mtl::menu						menu;
-	mtl::font						menuFont;
-	COLORREF						menuTextColor = RGB(0x35, 0x39, 0x44);
-	COLORREF						menuBkgColor = RGB(0x55, 0x59, 0x64);
-	COLORREF						menuSelectedColor = RGB(0xEA, 0xEA, 0xEA); 
-	mtl::brush						bkgBrush;
-	mtl::brush						txtBrush;
-	mtl::brush						selectBrush;
 
 	int								padding = 6;
+
 
 	MainWindow()
 	{
 		mtl::font_desc fontDesc(L"Lucida Console", 14);
-		menuFont = fontDesc.create();
-
-		bkgBrush = mtl::brush(menuBkgColor);
-		txtBrush = mtl::brush(menuTextColor);
-		selectBrush = mtl::brush(menuSelectedColor);
 	}
 
 	virtual LRESULT wm_command(int id) override
@@ -699,7 +697,8 @@ public:
 
 	virtual LRESULT wm_destroy() override
 	{
-		onCmd.fire(IDM_EXIT);
+		//onCmd.fire(IDM_EXIT);
+		::PostQuitMessage(0);
 		return 0;
 	}
 
@@ -748,30 +747,27 @@ class EditorView
 {
 public:
 
-
 	MainWindow				mainWnd;
-	mtl::tab_ctrl			tabControl;
 	MyStatusBar				statusBar;
-	mtl::splitter			splitter;
-	mtl::bitmap				bitmap;
-	mtl::image_list			imageList;
-	mtl::font				font;
-	mtl::font				smallFont;
-	mtl::monitor			monitor;
+
+	mtl::tab_ctrl			tabControl;
 	mtl::tool_tip			tooltip;
 	mtl::search_dlg			searchDlg;
 	mtl::tool_bar			toolBar;
 
-	mtl::punk<mtl::default_drop_target> dropTarget;
+	mtl::font				font;
+	mtl::font				smallFont;
+
+	COLORREF				textColor = RGB(0xEA, 0xEA, 0xEA);
+	COLORREF				bkgColor = RGB(0x55, 0x59, 0x64);
+	COLORREF				selectedColor = RGB(0x75, 0x79, 0x84);
+	COLORREF				selectedBkgColor = RGB(0xEA, 0xEA, 0xEA);
 
 	std::shared_ptr<mtl::color_theme>	colorTheme;
 
-	std::map<std::wstring, std::shared_ptr<mtl::scintilla_wnd>> documentViews;
+	mtl::punk<mtl::default_drop_target> dropTarget;
 
-	COLORREF						textColor = RGB(0xEA, 0xEA, 0xEA);
-	COLORREF						bkgColor = RGB(0x55, 0x59, 0x64);
-	COLORREF						selectedColor = RGB(0x75, 0x79, 0x84);
-	COLORREF						selectedBkgColor = RGB(0xEA, 0xEA, 0xEA);
+	std::map<std::wstring, std::shared_ptr<mtl::scintilla_wnd>> documentViews;
 
 
 	std::shared_ptr<mtl::scintilla_wnd> createEditorWnd(std::wstring id, std::wstring path, std::string utf8)
@@ -793,51 +789,14 @@ public:
 
 		documentViews[id] = scintilla;
 
-
-		HICON icon = mtl::shell::file_icon(path);
-		mainWnd.set_icon(icon);
-
 		std::wstring title = mtl::path(path).filename();
 		tabControl.add({ title, path, id }, scintilla->handle);
 
 		return scintilla;
 	}
 
-	void setUpAssets(const wchar_t* path)
-	{
-		mtl::the_bitmap_cache().img_path(path);
-		/*
-		// prepare menu command labels, ids and images
-		mtl::gui().add({
-			{ MTL_ID(ID_FILE), L"File", L"document.png" },
-			{ MTL_ID(ID_EDIT), L"Edit", L"edit-copy.png" },
-			{ MTL_ID(ID_HELP), L"Help", L"info.png" },
-		//	{ MTL_ID(IDM_EXIT), L"Exit", L"application-exit.png" },
-			{ MTL_ID(IDM_ABOUT), L"About", L"Help-browser.png" },
-			{ MTL_ID(ID_FILE_OPEN), L"Open File", L"document-open.png" },
-			{ MTL_ID(ID_FILE_OPEN_DIR), L"Open File", L"document-open.png" },
-			{ MTL_ID(ID_FILE_NEW), L"Save File", L"document-new.png" },
-			{ MTL_ID(ID_FILE_SAVE), L"Save File As", L"document-save.png" },
-			{ MTL_ID(ID_FILE_SAVE_AS), L"New File", L"document-save-as.png" },
-			{ MTL_ID(ID_FILE_PRINT), L"Print File", L"document-print.png" },
-			{ MTL_ID(ID_EDIT_CUT), L"Cut", L"edit-cut.png" },
-			{ MTL_ID(ID_EDIT_COPY), L"Copy", L"edit-copy.png" },
-			{ MTL_ID(ID_EDIT_PASTE), L"Paste", L"edit-paste.png" },
-			{ MTL_ID(ID_EDIT_UNDO), L"Undo", L"edit-cut.png" },
-			{ MTL_ID(ID_EDIT_REDO), L"Redo", L"edit-redo.png" },
-			{ MTL_ID(ID_EDIT_COLOR), L"Insert Color", L"alien.png" },
-			{ MTL_ID(ID_EDIT_FIND), L"Find", L"edit-undo.png" },
-			{ MTL_ID(ID_EDIT_REPLACE), L"Replace", L"edit-find-replace.png" },
-			{ MTL_ID(ID_EDIT_FIND_REGEX), L"Find Regex", L"edit-find.png" },
-			{ MTL_ID(ID_EDIT_REPLACE_REGEX), L"Replace Régex", L"edit-find-replace.png" },
-			{ MTL_ID(ID_EDIT_RUN), L"Run", L"alien.png" },
-			{ MTL_ID(ID_VIEW_SHOW_DIR), L"Show Explorer Tree", L"folder.png" }
 
-		});
-		*/
-	}
-
-	std::wstring removeDoc(const std::wstring& id)
+	std::wstring removeDocumentView(const std::wstring& id)
 	{
 		if (documentViews.count(id) == 0) return L"";
 
@@ -860,14 +819,11 @@ public:
 			index = index < 0 ? (int)documentViews.size() - 1 : index;
 			std::wstring firstId = tabControl.item(index).id;
 			return firstId;
-			//model.activeDocument = firstId;
-			//HICON icon = mtl::shell::file_icon(model.documents[firstId]->textFile.filename);
-			//view.mainWnd.set_icon(icon);
 		}
 
 	}
 
-	void updateStatus(EditorDocument& doc)//std::wstring id, std::wstring path, int cp, EOL_TYPE eol)
+	void updateStatus(EditorDocument& doc)
 	{
 		auto sci = documentViews[doc.id];
 		int pos = sci->pos();
@@ -887,21 +843,20 @@ public:
 			line_buf,
 			pos_buf
 			});
+
+		HICON icon = mtl::shell::file_icon(doc.textFile.filename);
+		mainWnd.set_icon(icon);
+
+		std::wstringstream woss;
+		woss << L"Editor - " << mtl::path(doc.textFile.filename).filename();
+		mainWnd.set_text(woss.str());
 	}
 	
 	EditorView()
-		: /* mainWnd(menuBar), / *menu(IDC_EDITOR), */ imageList(16, 16)
 	{
-		setUpAssets(mtl::path_to_self_directory(L"\\img").c_str());
+		mtl::the_bitmap_cache().img_path(L"\\img");
 
-		dropTarget = mtl::drop_target(tabControl.dragTabFormat);
-
-		monitor.watch(mtl::path_to_self_directory(L"\\img"));
-		monitor.onFileChanged( [this](std::wstring file)
-		{
-			::MessageBox( *mainWnd, file.c_str(), L"Monitor", 0);
-			monitor.stop();
-		});
+		dropTarget = mtl::drop_target(tabControl.dragTabFormat, DROPEFFECT_MOVE);
 
 		mtl::font_desc fontDesc(L"Lucida Console", 14);
 		font = fontDesc.create();
@@ -940,6 +895,7 @@ public:
 				{ IDM_ABOUT}
 			}}
 		});
+
 		//mainWnd.menu.item(ID_EDIT_COPY).checked = true;
 
 		// create main window
@@ -964,7 +920,6 @@ public:
 
 		RECT tabRect = r1;
 		tabControl.create(IDC_TABCONTROL, L"", *mainWnd, tabRect, TCS_FLATBUTTONS | TCS_TABS | CCS_NODIVIDER | CCS_NOPARENTALIGN | WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TCS_OWNERDRAWFIXED);
-
 		tabControl.enable_dragdrop();
 		tabControl.set_color_theme(colorTheme);
 
@@ -974,28 +929,22 @@ public:
 		statusBar.create(IDC_STATUSBAR, L"Status", hWnd, r1, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CCS_NOPARENTALIGN);// | CCS_NODIVIDER);
 		statusBar.set_color_theme(colorTheme);
 		statusBar.comboBoxSyntax.set_color_theme(colorTheme);
-		//statusBar.set_text(L"STATUS");
-		statusBar.set_status({ L"STATUS", L"",L"INS", L"DOS", L"Line 221", L"Pos 18", L"XXXXXXXXXXXXXXXXXXXXXXXXXXXX" });
-
-
-		// create splitter at given initial position and given width
-		r1.left = 200;
-		r1.right = 208;
+		statusBar.set_status({ L"STATUS", L"",L"INS", L"DOS", L"Line 221", L"Pos 18" });
 
 		// set the layout
 		mainWnd.layout = {							// Default Layout with a
 			{										//  vector<Widget> of
-				{
-					*toolBar,
-					mtl::layout::style::NORTH
+				{									//   Widget holding 
+					*toolBar,						//    toolbar
+					mtl::layout::style::NORTH		//    docked to NORTH
 				},
 				{									//   Widget holding a
 					*statusBar,						//    statusbar
 					mtl::layout::style::SOUTH		//    docked to SOUTH
 				},									//  and
-				{
-					*tabControl,
-					mtl::layout::style::FILL
+				{									//   widget
+					*tabControl,					//    tabcontrol
+					mtl::layout::style::FILL		//    taking remaining space
 				}
 			}
 		};
@@ -1015,8 +964,6 @@ public:
 
 };
 
-// Controller handles User Input
-// Controller owns Model and View
 
 class EditorController;
 
@@ -1101,18 +1048,14 @@ public:
 	}
 };
 
-template<class ... Args>
-class sinks : public mtl::sink<Args> ...
-{
-public:
+/* ----------------------------------------------- */
 
-};
+// Controller handles User Input
+// Controller owns Model and View
 
 class EditorController 
 {
 public:
-
-//	std::wstring activeDocument;
 
 	FileService& fileService;
 	RotService& rotService;
@@ -1124,274 +1067,73 @@ public:
 	mtl::rotten<IMTLEditor> editor;
 	mtl::punk<mtl::active_script> scripting;
 
-	//std::map<std::wstring, std::wstring> documentPaths;
+	// sinks for demo purpose
+	// real value of sink is for
+	// subscribers with shorter lifetime
+	// than emitters - handles event
+	// notification deregistration
 
 	mtl::sink<int()> with;
 	mtl::sink<void(FINDREPLACE*)> whenFind;
 	mtl::sink<void(FINDREPLACE*)> whenReplace;
 	mtl::sink<UINT(NMTOOLBAR*)> onToolbar;
 
-	bool regexSearch = false;
-
-	void removeDoc(const std::wstring& id)
+	void removeDocument(const std::wstring& id)
 	{
 		if (model.documents.count(id) == 0) return;
 
-		std::wstring active = view.removeDoc(id);
+		std::wstring active = view.removeDocumentView(id);
 
-		model.removeDoc(id,active);
+		model.removeDocument(id,active);
 
 		if (!model.activeDocument.empty())
 		{
-			HICON icon = mtl::shell::file_icon(model.documents[model.activeDocument]->textFile.filename);
-			view.mainWnd.set_icon(icon);
+			view.updateStatus(*model.documents[active]);
 		}
+
 	}
-	/*
-	void removeDoc(const std::wstring & id)
+
+	void transferDocument(const std::wstring& from, int to = -1)
 	{
-		if (model.documents.count(id) == 0) return;
-
-		auto scintilla = view.documentViews[id];
-		scintilla->destroy();
-
-		view.documentViews.erase(id);
-		model.documents.erase(id);
-//		documentPaths.erase(id);
-
-		view.tabControl.remove(id);
-		if (view.documentViews.size() == 0)
-		{
-			model.activeDocument = L"";
-			HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
-			view.mainWnd.set_icon(hIcon);
-			view.statusBar.set_status({ L"open a document ..." });
-		}
-		else
-		{
-			int index = view.tabControl.selected();
-			index = index < 0 ? (int)view.documentViews.size()-1 : index;
-			std::wstring firstId = view.tabControl.item(index).id;
-			model.activeDocument = firstId;
-			HICON icon = mtl::shell::file_icon(model.documents[firstId]->textFile.filename);
-			view.mainWnd.set_icon(icon);
-		}
-	}
-	*/
-
-	void transferTab(const std::wstring& from, int to = -1)
-	{
-		EditorDocument document = model.transferTab(from);
+		EditorDocument document = model.transferDocument(from);
 
 		if (document.id.empty()) return;
 
-		/*
-		auto info = mtl::split(from, ':');
-		if (info.size() != 2)
-		{
-			return;
-		}
-
-		std::wstring instanceId = info[0];
-		std::wstring documentId = info[1];
-
-		mtl::punk<IMTLEditor> remoteEditor = mtl::rot::object<IMTLEditor>(__uuidof(MTLEditor), instanceId);
-		if (!remoteEditor) return;
-
-		mtl::punk<IMTLEditorDocuments> docs;
-		HRESULT hr = remoteEditor->get_documents(&docs);
-		if (!docs) return;
-
-		mtl::punk<IMTLEditorDocument> doc;
-		mtl::variant vId{ mtl::ole_char(from.c_str()) };
-		docs->item(vId, &doc);
-		if (!doc) return;
-
-		mtl::bstr fn;
-		doc->get_filename(&fn);
-		mtl::bstr content;
-		doc->get_content(&content);
-
-		std::wostringstream woss;
-		woss << editor.id() << L":" << documentId;
-
-		std::wstring newId = woss.str();
-
-		std::string utf8 = content.to_string();
-		TextFile textFile;
-		textFile.fileEncoding.code_page = CP_UTF8;
-		textFile.fileEncoding.eol = mtl::file_encoding::UNIX;
-		textFile.fileEncoding.has_bom = false;
-		textFile.fileEncoding.is_binary = false;
-		textFile.filename = fn.str();
-		textFile.last_written = 0;
-		textFile.readonly = false;
-		textFile.size = utf8.size();
-		textFile.utf8 = utf8;
-		*/
-
-		//std::wostringstream woss;
-	//	woss << editor.id() << L":" << document.id;
-
-//std::wstring newId = woss.str();
-
-		openBytes(document);// .id, document.textFile.filename, document.textFile);
-
-		//docs->remove(vId);
+		insertDocument(document);
 	}
 
-	void openBytes(EditorDocument doc)//const std::wstring& id, const std::wstring& path, TextFile& textFile)
+	void openFile(const std::wstring& path, bool readOnly, long enc)
 	{
-		//model.activeDocument = id;
-		model.openBytes(doc.id, doc.textFile);
+		model.openFile(path, readOnly, enc, [this](EditorDocument doc)
+		{
+			insertDocument(doc);
+		});
+	}
 
-		auto scintilla = view.createEditorWnd(doc.id,doc.textFile.filename,doc.textFile.utf8);
 
-//		view.documentViews[id] = scintilla;
+	void insertDocument(EditorDocument doc)
+	{
+		model.insertDocument(doc.id, doc.textFile);
 
-//		model.documents[id] = std::make_shared<EditorDocument>(id, textFile);
+		auto scintilla = view.createEditorWnd(doc.id, doc.textFile.filename, doc.textFile.utf8);
 
-//		scintilla->set_text(textFile.utf8);
-
-		scintilla->onNotify(SCN_MODIFIED, [this,id = doc.id](NMHDR* nmhdr)
+		scintilla->onNotify(SCN_MODIFIED, [this, id = doc.id](NMHDR* nmhdr)
 		{
 			view.updateStatus(*model.documents[id]);
-			//model.updateStatus(id);
-			/*
-			SCNotification* notify = (SCNotification*)nmhdr;
-			if (notify->nmhdr.code == SCN_MODIFIED)
-			{
-				int pos = sci->pos();
-				int line = sci->line_from_pos(pos);
-				int line_pos = pos - sci->pos_from_line(line);
-				std::wstring path = model.documents[id]->textFile.filename;
-				int cp = model.documents[id]->textFile.fileEncoding.code_page;
-				EOL_TYPE eol = (EOL_TYPE)model.documents[id]->textFile.fileEncoding.eol;
-
-				view.statusBar.set_status({
-					path, L"",
-					encodings().item(encodings().index(cp)).second,
-					eol == EOL_UNIX ? L"UNIX" : L" DOS",
-					std::wstring(L"Line ") + std::to_wstring(line),
-					std::wstring(L"Pos ") + std::to_wstring(line_pos)
-					});
-			}
-			*/
 		});
 
-		scintilla->onNotify(SCN_UPDATEUI, [this,id = doc.id](NMHDR* nmhdr)
+		scintilla->onNotify(SCN_UPDATEUI, [this, id = doc.id](NMHDR* nmhdr)
 		{
 			view.updateStatus(*model.documents[id]);
-//			model.updateStatus(id);
-			/*
-			SCNotification* notify = (SCNotification*)nmhdr;
-			//if (notify->nmhdr.code == SCN_MODIFIED)
-			{
-				int pos = sci->pos();
-				int line = sci->line_from_pos(pos);
-				int line_pos = pos - sci->pos_from_line(line);
-				std::wstring path = model.documents[id]->textFile.filename;
-				int cp = model.documents[id]->textFile.fileEncoding.code_page;
-				EOL_TYPE eol = (EOL_TYPE)model.documents[id]->textFile.fileEncoding.eol;
-
-				wchar_t line_buf[100];
-				swprintf_s(line_buf, 100, L"Line %4i", line );
-
-				wchar_t pos_buf[100];
-				swprintf_s(pos_buf, 100, L"Pos %3i", line_pos);
-
-				view.statusBar.set_status({
-					path, L"",
-					encodings().item(encodings().index(cp)).second,
-					eol == EOL_UNIX ? L"UNIX" : L" DOS",
-					line_buf,
-					pos_buf
-					});
-			}
-			*/
 		});
 
 		view.updateStatus(*model.documents[doc.id]);
-
-//		model.updateStatus(doc.id);
-
-		/*
-		view.statusBar.set_text(path);
-
-		std::wstring enc = encodings().item(encodings().index(textFile.fileEncoding.code_page)).second;
-
-		view.statusBar.set_status({ 
-			path, L"",
-			enc,
-			textFile.fileEncoding.eol == mtl::file_encoding::UNIX ? L"UNIX" : L"DOS",
-			L"Line 221", L"Pos 18", 
-			L"XXXXXXXXXXXXXXXXXXXXXXXXXXXX" 
-		});
-
-		scintilla->show();
-
-		scintilla->load_xml(mtl::path_to_self_directory(L"\\styles.xml"));
-		scintilla->set_lexer(SCLEX_CPP);
-		scintilla->set_keywords(0, scintilla->xmlStyleSets.styleSet[8].keywords[0]);
-		scintilla->colorize();
-		*/
-		/*
-		HICON icon = mtl::shell::file_icon(model.documents[id]->textFile.filename);
-		view.mainWnd.set_icon(icon);
-
-		std::wstring title = mtl::path(path).filename();
-		view.tabControl.add( { title, path, id }, scintilla->handle );
-		*/
-	}
-
-	void openPath(const std::wstring& path, bool readOnly, long enc)
-	{
-		model.openPath(path, readOnly, enc, [this](EditorDocument doc)
-		{
-			openBytes(doc);
-		});
-
-		/*
-		FileService fs;
-
-		IO_ERROR ie = fs.read(path, enc, readOnly, [this, path](IO_ERROR e, TextFile textFile)
-		{
-			if (e == IO_ERROR_SUCCESS)
-			{
-				std::wostringstream woss;
-				woss << editor.id() << ":" << mtl::new_guid();
-				std::wstring id = woss.str();
-
-				openBytes(id, path, textFile);
-			}
-		});
-		*/
 	}
 
 	void openNew()
 	{
 		EditorDocument doc = model.openNew();
-		/*
-		std::wostringstream woss;
-		woss << editor.id() << ":" << mtl::new_guid();
-		std::wstring id = woss.str();
-
-		std::wstring fn = L"New File.txt";
-
-		TextFile textFile;
-		textFile.filename = fn;
-		textFile.last_written = time(0);
-		textFile.readonly = false;
-		textFile.size = 0;
-		textFile.fileEncoding.code_page = CP_UTF8;
-		textFile.fileEncoding.eol = mtl::file_encoding::UNIX;
-		textFile.fileEncoding.has_bom = false;
-		textFile.fileEncoding.is_binary = false;
-
-		EditorDocument doc;
-		doc.id = id;
-		*/
-		openBytes(doc);// id, fn, textFile);
+		insertDocument(doc);
 	}
 
 	void saveDocument(std::wstring id, std::wstring path, long enc, EOL_TYPE eol)
@@ -1400,6 +1142,18 @@ public:
 		model.saveDocument(id, path, enc, eol, utf8, [this,path](IO_ERROR io) 
 		{
 			view.statusBar.set_text( std::wstring(L"file saved to ") + path);
+		});
+	}
+
+	void reloadFile(const std::wstring& id)
+	{
+		model.reloadFile(id, [this, id](std::string utf8)
+		{
+			if (model.documents.count(id) == 0) return;
+
+			view.documentViews[id]->set_text(utf8);
+			view.documentViews[id]->colorize();
+
 		});
 	}
 
@@ -1416,38 +1170,34 @@ public:
 		mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(this));
 		editor = mtlEditor;
 
-		if (opt.has(L"open"))
+
+		model.onFileChanged([this](std::wstring id, std::wstring path) 
 		{
-			for (auto& uid : opt.args())
+			mtl::dialog	dlgFileChanged;
+			dlgFileChanged.onInitDlg([this,path](mtl::dialog& dlg) 
 			{
-				transferTab(uid, -1);
-			}
-		}
+				std::wostringstream woss;
+				woss << L"File " << path << " changed on Disk.\r\n\r\nReload File?";
+				dlg.set_dlg_item_text(IDC_FILE_CHANGED_LABEL, woss.str());
+				//::SetWindowText(dlg.get_dlg_item(IDC_FILE_CHANGED_LABEL), woss.str().c_str());
+				//::SetWindowText(::GetDlgItem(dlg, IDC_FILE_CHANGED_LABEL), woss.str().c_str());
 
-		if (opt.has(L"split"))
-		{
-			for (auto& uid : opt.args())
+				std::wostringstream woss2;
+				woss2 << L"File " << mtl::path(path).filename() << " changed on Disk!";
+				//::SetWindowText(dlg, woss2.str().c_str());
+				dlg.set_text(woss2.str());
+
+			});
+
+			if (IDOK == dlgFileChanged.show_modal(IDD_FILE_CHANGED, *view.mainWnd))
 			{
-				RECT wa = mtl::work_area(*view.mainWnd);
-
-				int w = wa.right - wa.left;
-				int nw = w / 2;
-				wa.left = wa.left + nw;
-				wa.right = wa.left + nw;
-				view.mainWnd.move(wa);
-				transferTab(uid, -1);
+				reloadFile(id);
 			}
-		}
+			
+		});
 
-		if (opt.has(L"file"))
-		{
-			for (auto& p : opt.args())
-			{
-				openPath(p,false,-1);
-			}
-		}
-
-
+		/* example for dynamic tooltip ! */
+		/*
 		view.tooltip.onNotify(TTN_GETDISPINFO, [this](NMHDR* nmhdr)
 		{
 			HWND hwndFrom = nmhdr->hwndFrom;
@@ -1467,16 +1217,7 @@ public:
 			}
 
 		});
-
-		view.mainWnd.onCmd(IDM_FOLDER, [this]()
-		{
-			mtl::pick_folder folderPicker;
-			std::wstring path = folderPicker.choose(view.mainWnd.handle);
-			if (!path.empty())
-			{
-				//view.folderWnd.path(path);
-			}
-		});
+		*/
 
 		view.mainWnd.onCmd(IDM_ABOUT, [this]() 
 		{
@@ -1484,6 +1225,36 @@ public:
 			dlg.show_modal(IDD_ABOUTBOX, *view.mainWnd);
 
 		});
+
+		view.statusBar.onLeftClick( MyStatusBar::EOL, [this]() 
+		{
+			mtl::menu m;
+			m.create_popup();
+			mtl::menu_builder mb(m, 20, 20);
+			mb.add({
+				{IDM_EOL_WIN32}, {IDM_EOL_UNIX}
+				});
+
+			m.popup(*view.mainWnd);
+		});
+		/*
+		view.statusBar.onNotify(NM_CLICK, [this](NMHDR* nmhdr) 
+		{
+			NMMOUSE* nm = (NMMOUSE*)nmhdr;
+			if (nm->dwItemSpec == 3)
+			{
+				//::MessageBox(*view.mainWnd, L"EOL", L"LOL", 0);
+				mtl::menu m;
+				m.create_popup();
+				mtl::menu_builder mb(m, 20, 20);
+				mb.add({
+					{IDM_EOL_WIN32}, {IDM_EOL_UNIX}
+				});
+
+				m.popup(*view.mainWnd);
+			}
+		});
+		*/
 
 		with(view.mainWnd.onCmd)
 			.when(IDM_SAVE)
@@ -1513,7 +1284,7 @@ public:
 		{
 			if (model.activeDocument.empty()) return;
 
-			regexSearch = false;			
+			model.regexSearch = false;			
 			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
 			HWND hWnd = view.searchDlg.find(*view.mainWnd);
 			::SetWindowText(hWnd, L"Search");
@@ -1525,7 +1296,7 @@ public:
 		{
 			if (model.activeDocument.empty()) return;
 
-			regexSearch = true;
+			model.regexSearch = true;
 			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
 			HWND hWnd = view.searchDlg.find(*view.mainWnd);
 			::SetWindowText(hWnd, L"RegExp Find");
@@ -1537,7 +1308,7 @@ public:
 		{
 			if (model.activeDocument.empty()) return;
 
-			regexSearch = false;
+			model.regexSearch = false;
 			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
 			HWND hWnd = view.searchDlg.replace(*view.mainWnd);
 			::SetWindowText(hWnd, L"Replace");
@@ -1549,7 +1320,7 @@ public:
 		{
 			if (model.activeDocument.empty()) return;
 
-			regexSearch = true;
+			model.regexSearch = true;
 			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
 			HWND hWnd = view.searchDlg.replace(*view.mainWnd);
 			::SetWindowText(hWnd, L"RegExp Replace");
@@ -1573,7 +1344,7 @@ public:
 			if (model.activeDocument.empty()) return;
 
 			DWORD flags = fr->Flags;
-			if (regexSearch == true)
+			if (model.regexSearch == true)
 			{
 				flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
 			}
@@ -1590,7 +1361,7 @@ public:
 			if (model.activeDocument.empty()) return;
 
 			DWORD flags = fr->Flags;
-			if (regexSearch == true)
+			if (model.regexSearch == true)
 			{
 				flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
 			}
@@ -1639,6 +1410,22 @@ public:
 			view.mainWnd.menu.item(ID_EDIT_PASTE).check(toggle);
 		});
 
+		view.mainWnd.onCmd(IDM_FILE_OPEN, [this]()
+		{
+			MyFileDialog fd(0);
+
+			fd.filter({ { L"all files (*.*)", L"*.*"} });
+			fd.encoding(CP_UTF8);
+
+			HRESULT hr = fd.open(*view.mainWnd);
+			if (hr == S_OK)
+			{
+				std::wstring path = fd.path();
+				bool ro = fd.readOnly();
+				long enc = fd.encoding();
+				openFile(path, ro, enc);
+			}
+		});
 
 		view.toolBar.onCommand(IDM_FILE_OPEN, [this]()
 		{
@@ -1653,7 +1440,7 @@ public:
 				std::wstring path = fd.path();
 				bool ro = fd.readOnly();
 				long enc = fd.encoding();
-				openPath(path,ro,enc);
+				openFile(path,ro,enc);
 			}
 
 		});
@@ -1713,7 +1500,7 @@ public:
 
 		view.tabControl.onCloseTab( [this](std::wstring id) 
 		{
-			removeDoc(id);
+			removeDocument(id);
 		});
 
 		view.tabControl.onNotify(NM_CLICK, [this](NMHDR* hmhdr) 
@@ -1732,8 +1519,10 @@ public:
 			
 			::OutputDebugString(L"SELECT: view.tabControl.onSelect\r\n");
 
-			HICON icon = mtl::shell::file_icon(model.documents[item.id]->textFile.filename);
-			view.mainWnd.set_icon(icon);
+			//HICON icon = mtl::shell::file_icon(model.documents[item.id]->textFile.filename);
+			//view.mainWnd.set_icon(icon);
+
+			view.updateStatus(*model.documents[item.id]);
 		});
 
 		view.tabControl.onDropExternal([this](int index_to, IDataObject* d)
@@ -1746,9 +1535,76 @@ public:
 
 			//::MessageBox(0, id.c_str(), id.c_str(), 0);
 
-			transferTab(from, index_to);
+			transferDocument(from, index_to);
 		});
 
+		static UINT chromeFormat = ::RegisterClipboardFormat(L"Chromium Web Custom MIME Data Format");
+//static UINT tabTextFormat = ::RegisterClipboardFormat(L"text/xml");
+		static UINT taintFormat = ::RegisterClipboardFormat(L"chromium/x-renderer-taint");
+
+		static UINT urlFormat = ::RegisterClipboardFormat(CFSTR_INETURLW);
+
+		view.tabControl.onPopulateDataObj([this](mtl::tab_ctrl::tab& tab, IDataObject* dao)
+		{
+			//static UINT chromeFormat = ::RegisterClipboardFormat(L"Chromium Web Custom MIME Data Format");
+			//static UINT tabTextFormat = ::RegisterClipboardFormat(L"text/xml");
+			//static UINT taintFormat = ::RegisterClipboardFormat(L"chromium/x-renderer-taint");
+
+			//mtl::format_etc fe(tabTextFormat);
+			/*
+			mtl::stg_medium stgm(tab.id);
+			mtl::format_etc_unicodetext etcu;
+			dao->SetData(&etcu, &stgm, FALSE);
+
+			mtl::format_etc_text etct;
+			std::string utf8 = mtl::to_string(tab.id);
+			mtl::stg_medium stgm_utf8(utf8);
+			dao->SetData(&etct, &stgm_utf8, FALSE);
+			*/
+			//return;
+
+			std::wstring json = tab.id;// L"{ \"id\" : \"42\" }";
+
+			mtl::format_etc fetaint(taintFormat);
+			char b = 0;
+			mtl::stg_medium stgm_taint( (void*)&b,1,  GMEM_MOVEABLE | GMEM_NODISCARD);
+			dao->SetData(&fetaint, &stgm_taint, FALSE);
+
+			mtl::format_etc furl(urlFormat);
+			mtl::stg_medium stgm_url( std::wstring(L"mte://") + tab.id);
+			dao->SetData(&furl, &stgm_url, FALSE);
+
+
+			/*
+			mtl::format_etc fec(chromeFormat);
+			std::wstringstream woss;
+			DWORD s = (json.size()+0) *1;
+			//			woss.write((wchar_t*)&s,sizeof(DWORD)/2);
+						//woss << L'\0';
+			DWORD c = 1;
+			woss.write((wchar_t*)&c, sizeof(DWORD) / 2);
+			//woss << L'\0';
+			std::wstring type(L"text-some");
+			DWORD ts = (type.size()+0) * 1;
+			woss.write((wchar_t*)&ts, sizeof(DWORD) / 2);
+			woss << type << L'\0';
+//			woss << L'\t' << L'\0' << L"text/json" << L'\0';// << L'&' << L'\0' << tab.id;
+			woss.write((wchar_t*)&s, sizeof(DWORD) / 2);
+			woss << json << L'\0';
+
+			std::wstring payload = woss.str();
+			DWORD ps = (payload.size()+0)*1;
+			std::wostringstream woss2;
+			woss2.write( (wchar_t*)&ps, sizeof(DWORD) / 2);
+			woss2.write(payload.c_str(), payload.size());
+
+			std::wstring ws = woss2.str();
+
+			char* a = (char*)(ws.data());
+			mtl::stg_medium stgm_chrome(ws);
+			dao->SetData(&fec, &stgm_chrome, FALSE);
+			*/
+		});
 
 		view.dropTarget->onDrop([this](IDataObject* ido, DWORD keyState, DWORD& effect)
 		{
@@ -1774,7 +1630,7 @@ public:
 				}
 				else
 				{
-					transferTab(id, -1);
+					transferDocument(id, -1);
 				}
 				return;
 			}
@@ -1784,7 +1640,7 @@ public:
 				auto v = dov.dropFiles();
 				for (auto& i : v)
 				{
-					openPath(i,false,-1);
+					openFile(i,false,-1);
 				}
 				return;
 			}
@@ -1820,8 +1676,58 @@ public:
 				return;
 			}
 		});
+
+		if (opt.has(L"open"))
+		{
+			for (auto uid : opt.args())
+			{
+				uid = mtl::url_unescape(uid);
+				if (!uid.empty() && uid.back() == '/')
+				{
+					uid = uid.substr(0, uid.size() - 1);
+				}
+				//::MessageBox(*view.mainWnd, uid.c_str(), L"/open", 0);
+				if (uid.starts_with(L"mte://"))
+				{
+					//uid = mtl::url_unescape(uid);
+					uid = uid.substr(6);
+				}
+				if (uid.starts_with(L"{"))
+				{
+					transferDocument(uid, -1);
+					return;
+				}
+				openFile(uid, false, -1);
+			}
+		}
+
+		if (opt.has(L"split"))
+		{
+			for (auto& uid : opt.args())
+			{
+				RECT wa = mtl::work_area(*view.mainWnd);
+
+				int w = wa.right - wa.left;
+				int nw = w / 2;
+				wa.left = wa.left + nw;
+				wa.right = wa.left + nw;
+				view.mainWnd.move(wa);
+				transferDocument(uid, -1);
+			}
+		}
+
+		if (opt.has(L"file"))
+		{
+			for (auto& p : opt.args())
+			{
+				openFile(p, false, -1);
+			}
+		}
 	}
 };
+
+
+/* ------------------------------------------------- */
 
 
 HRESULT __stdcall MTLEditorDocument::get_documentId(BSTR* docId) 
@@ -1893,7 +1799,7 @@ HRESULT __stdcall MTLEditorDocuments::remove(VARIANT idx)
 		auto id = vv.to_wstring();
 		if (controller->model.documents.count(id))
 		{
-			controller->removeDoc(id);
+			controller->removeDocument(id);
 		}
 	}
 	return S_OK;
@@ -1903,16 +1809,18 @@ HRESULT __stdcall MTLEditorDocuments::remove(VARIANT idx)
 /* ------------------------------------ */
 
 
-void EditorModel::removeDoc(const std::wstring& id,  const std::wstring& active)
+void EditorModel::removeDocument(const std::wstring& id,  const std::wstring& active)
 {
 	if (documents.count(id) == 0) return;
 
 	activeDocument = active;
 
+	fileService_.monitor.unwatch(documents[id]->fileWatchToken, documents[id]->textFile.filename);
+
 	documents.erase(id);
 }
 
-EditorDocument EditorModel::transferTab(const std::wstring& from)
+EditorDocument EditorModel::transferDocument(const std::wstring& from)
 {
 	return rotService_.transferTab(this->instanceId, from);
 	/*EditorDocument result;
@@ -1981,10 +1889,21 @@ void EditorModel::updateStatus(std::wstring id)
 }
 */
 
-void EditorModel::openBytes(const std::wstring& id, TextFile& textFile)
+void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 {
 	activeDocument = id;
 	documents[id] = std::make_shared<EditorDocument>(id, textFile);
+
+	std::wstring token = fileService_.monitor.watch(
+		textFile.filename,
+		[this,id]() 
+		{
+			if (documents.count(id) == 0) return;
+
+			std::wstring path = documents[id]->textFile.filename;
+			this->onFileChanged.fire(id, path);
+		}
+	);
 
 	/*
 	auto scintilla = view_.createEditorWnd(id, path, textFile.utf8);
@@ -2017,7 +1936,7 @@ void EditorModel::openBytes(const std::wstring& id, TextFile& textFile)
 	*/
 }
 
-IO_ERROR EditorModel::openPath(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb)
+IO_ERROR EditorModel::openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb)
 {
 	IO_ERROR ie = fileService_.read(path, enc, readOnly, [this, cb](IO_ERROR e, TextFile textFile)
 	{
@@ -2091,6 +2010,27 @@ void EditorModel::saveDocument(std::wstring id, std::wstring path, int enc, EOL_
 	});
 }
 
+void EditorModel::reloadFile(const std::wstring& id, std::function<void(std::string)> cb)
+{
+	if (documents.count(id) == 0)
+	{
+		return;
+	}
+
+	std::wstring path = documents[id]->textFile.filename;
+	bool readOnly = documents[id]->textFile.readonly;
+	long enc = documents[id]->textFile.fileEncoding.code_page;
+	openFile(path, readOnly, enc, [this,id,cb](EditorDocument doc) 
+	{
+		if (documents.count(id) == 0)
+		{
+			return;
+		}
+
+		cb(doc.textFile.utf8);
+	});
+}
+
 /* ------------------------------------------- */
 
 // go WinMain, go!
@@ -2121,5 +2061,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	EditorController controller(opt, fileService, rotService, scriptService);
 
-	return app.run();
+	mtl::accelerator() = mtl::accelerators( *controller.view.mainWnd, IDC_EDITOR);
+
+	return app.run(mtl::accelerator());
 }

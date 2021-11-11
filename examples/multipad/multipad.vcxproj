@@ -6,7 +6,6 @@
     <VcpkgInstalledDir>..\..\vcpkg_installed</VcpkgInstalledDir>
   </PropertyGroup>
   <Import Project="..\..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('..\..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets')" />
-  
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -129,7 +128,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>urlmon.lib;Pathcch.lib;Shlwapi.lib;Windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>urlmon.lib;Pathcch.lib;Shlwapi.lib;Windowscodecs.lib;Dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

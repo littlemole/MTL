@@ -164,7 +164,80 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="document-new.png" />
+    <Image Include="document-open.png" />
+    <Image Include="document-save.png" />
     <Image Include="Editor.ico" />
+    <Image Include="img\alien.png" />
+    <Image Include="img\Application-default-icon.png" />
+    <Image Include="img\application-exit.png" />
+    <Image Include="img\applications-graphics.png" />
+    <Image Include="img\Applications-system.png" />
+    <Image Include="img\base64.png" />
+    <Image Include="img\cascades.png" />
+    <Image Include="img\cpp.png" />
+    <Image Include="img\debug-run.png" />
+    <Image Include="img\debug-step-into.png" />
+    <Image Include="img\debug-step-out.png" />
+    <Image Include="img\debug-step-over.png" />
+    <Image Include="img\debug-step.png" />
+    <Image Include="img\delete-comment.png" />
+    <Image Include="img\Dialog-error-round.png" />
+    <Image Include="img\document-close.png" />
+    <Image Include="img\document-new.png" />
+    <Image Include="img\document-open.png" />
+    <Image Include="img\document-print.png" />
+    <Image Include="img\document-properties.png" />
+    <Image Include="img\document-revert.png" />
+    <Image Include="img\document-save-as.png" />
+    <Image Include="img\document-save.png" />
+    <Image Include="img\document.png" />
+    <Image Include="img\dot.png" />
+    <Image Include="img\edit-copy.png" />
+    <Image Include="img\edit-cut.png" />
+    <Image Include="img\edit-find-replace.png" />
+    <Image Include="img\edit-find.png" />
+    <Image Include="img\edit-paste.png" />
+    <Image Include="img\edit-redo.png" />
+    <Image Include="img\edit-select-all.png" />
+    <Image Include="img\edit-undo.png" />
+    <Image Include="img\Emblem-system.png" />
+    <Image Include="img\Emblem-unreadable.png" />
+    <Image Include="img\folder-new.png" />
+    <Image Include="img\folder.png" />
+    <Image Include="img\Go-jump.png" />
+    <Image Include="img\Go-next.png" />
+    <Image Include="img\Go-previous.png" />
+    <Image Include="img\go-up.png" />
+    <Image Include="img\Help-browser.png" />
+    <Image Include="img\html-file.png" />
+    <Image Include="img\info.png" />
+    <Image Include="img\java.png" />
+    <Image Include="img\javascript.png" />
+    <Image Include="img\json.png" />
+    <Image Include="img\markdown.png" />
+    <Image Include="img\msdos.png" />
+    <Image Include="img\pause.png" />
+    <Image Include="img\perl.png" />
+    <Image Include="img\preferences-desktop.png" />
+    <Image Include="img\preferences-system-windows.png" />
+    <Image Include="img\Preferences-system.png" />
+    <Image Include="img\python.png" />
+    <Image Include="img\shebang.png" />
+    <Image Include="img\start.png" />
+    <Image Include="img\stop.png" />
+    <Image Include="img\svg.png" />
+    <Image Include="img\system-run.png" />
+    <Image Include="img\system-search.png" />
+    <Image Include="img\tile.png" />
+    <Image Include="img\unix.png" />
+    <Image Include="img\utilities-terminal.png" />
+    <Image Include="img\View-fullscreen.png" />
+    <Image Include="img\View-refresh.png" />
+    <Image Include="img\view-restore.png" />
+    <Image Include="img\web-browser.png" />
+    <Image Include="img\xml.png" />
+    <Image Include="res\front.jpg" />
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +262,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">id.cpp</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">resource.h</AdditionalInputs>
     </CustomBuild>
+    <None Include="Editor.tlb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

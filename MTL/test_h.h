@@ -51,6 +51,13 @@ typedef interface ITestLongCollection ITestLongCollection;
 #endif 	/* __ITestLongCollection_FWD_DEFINED__ */
 
 
+#ifndef __ITestSimpleUnknown_FWD_DEFINED__
+#define __ITestSimpleUnknown_FWD_DEFINED__
+typedef interface ITestSimpleUnknown ITestSimpleUnknown;
+
+#endif 	/* __ITestSimpleUnknown_FWD_DEFINED__ */
+
+
 #ifndef __ISubObject_FWD_DEFINED__
 #define __ISubObject_FWD_DEFINED__
 typedef interface ISubObject ISubObject;
@@ -63,6 +70,20 @@ typedef interface ISubObject ISubObject;
 typedef interface ITestObject ITestObject;
 
 #endif 	/* __ITestObject_FWD_DEFINED__ */
+
+
+#ifndef __ITestSimpleOleAout_FWD_DEFINED__
+#define __ITestSimpleOleAout_FWD_DEFINED__
+typedef interface ITestSimpleOleAout ITestSimpleOleAout;
+
+#endif 	/* __ITestSimpleOleAout_FWD_DEFINED__ */
+
+
+#ifndef __ITestSimpleDispatch_FWD_DEFINED__
+#define __ITestSimpleDispatch_FWD_DEFINED__
+typedef interface ITestSimpleDispatch ITestSimpleDispatch;
+
+#endif 	/* __ITestSimpleDispatch_FWD_DEFINED__ */
 
 
 #ifndef __MyLongCollection_FWD_DEFINED__
@@ -259,6 +280,98 @@ EXTERN_C const IID IID_ITestLongCollection;
 
 
 #endif 	/* __ITestLongCollection_INTERFACE_DEFINED__ */
+
+
+#ifndef __ITestSimpleUnknown_INTERFACE_DEFINED__
+#define __ITestSimpleUnknown_INTERFACE_DEFINED__
+
+/* interface ITestSimpleUnknown */
+/* [uuid][object] */ 
+
+
+EXTERN_C const IID IID_ITestSimpleUnknown;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("6FB050D8-438A-41B8-A56E-26D6F3444CE6")
+    ITestSimpleUnknown : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE Count( 
+            /* [retval][out] */ long *cnt) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE Item( 
+            /* [in] */ long index,
+            /* [retval][out] */ long *cnt) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct ITestSimpleUnknownVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ITestSimpleUnknown * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ITestSimpleUnknown * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ITestSimpleUnknown * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *Count )( 
+            ITestSimpleUnknown * This,
+            /* [retval][out] */ long *cnt);
+        
+        HRESULT ( STDMETHODCALLTYPE *Item )( 
+            ITestSimpleUnknown * This,
+            /* [in] */ long index,
+            /* [retval][out] */ long *cnt);
+        
+        END_INTERFACE
+    } ITestSimpleUnknownVtbl;
+
+    interface ITestSimpleUnknown
+    {
+        CONST_VTBL struct ITestSimpleUnknownVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ITestSimpleUnknown_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ITestSimpleUnknown_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ITestSimpleUnknown_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ITestSimpleUnknown_Count(This,cnt)	\
+    ( (This)->lpVtbl -> Count(This,cnt) ) 
+
+#define ITestSimpleUnknown_Item(This,index,cnt)	\
+    ( (This)->lpVtbl -> Item(This,index,cnt) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ITestSimpleUnknown_INTERFACE_DEFINED__ */
 
 
 #ifndef __ISubObject_INTERFACE_DEFINED__
@@ -630,6 +743,213 @@ EXTERN_C const IID IID_ITestObject;
 
 
 EXTERN_C const IID LIBID_ExampleLib;
+
+#ifndef __ITestSimpleOleAout_INTERFACE_DEFINED__
+#define __ITestSimpleOleAout_INTERFACE_DEFINED__
+
+/* interface ITestSimpleOleAout */
+/* [uuid][oleautomation][object] */ 
+
+
+EXTERN_C const IID IID_ITestSimpleOleAout;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("C54DDE14-1DF9-436D-B6EF-5BF023ED16E2")
+    ITestSimpleOleAout : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE Count( 
+            /* [retval][out] */ long *cnt) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE Item( 
+            /* [in] */ long index,
+            /* [retval][out] */ long *cnt) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct ITestSimpleOleAoutVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ITestSimpleOleAout * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ITestSimpleOleAout * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ITestSimpleOleAout * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *Count )( 
+            ITestSimpleOleAout * This,
+            /* [retval][out] */ long *cnt);
+        
+        HRESULT ( STDMETHODCALLTYPE *Item )( 
+            ITestSimpleOleAout * This,
+            /* [in] */ long index,
+            /* [retval][out] */ long *cnt);
+        
+        END_INTERFACE
+    } ITestSimpleOleAoutVtbl;
+
+    interface ITestSimpleOleAout
+    {
+        CONST_VTBL struct ITestSimpleOleAoutVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ITestSimpleOleAout_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ITestSimpleOleAout_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ITestSimpleOleAout_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ITestSimpleOleAout_Count(This,cnt)	\
+    ( (This)->lpVtbl -> Count(This,cnt) ) 
+
+#define ITestSimpleOleAout_Item(This,index,cnt)	\
+    ( (This)->lpVtbl -> Item(This,index,cnt) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ITestSimpleOleAout_INTERFACE_DEFINED__ */
+
+
+#ifndef __ITestSimpleDispatch_DISPINTERFACE_DEFINED__
+#define __ITestSimpleDispatch_DISPINTERFACE_DEFINED__
+
+/* dispinterface ITestSimpleDispatch */
+/* [uuid] */ 
+
+
+EXTERN_C const IID DIID_ITestSimpleDispatch;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+
+    MIDL_INTERFACE("FFE85602-BA26-414A-870E-83CCFB74C95A")
+    ITestSimpleDispatch : public IDispatch
+    {
+    };
+    
+#else 	/* C style interface */
+
+    typedef struct ITestSimpleDispatchVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ITestSimpleDispatch * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ITestSimpleDispatch * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ITestSimpleDispatch * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfoCount )( 
+            ITestSimpleDispatch * This,
+            /* [out] */ UINT *pctinfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfo )( 
+            ITestSimpleDispatch * This,
+            /* [in] */ UINT iTInfo,
+            /* [in] */ LCID lcid,
+            /* [out] */ ITypeInfo **ppTInfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
+            ITestSimpleDispatch * This,
+            /* [in] */ REFIID riid,
+            /* [size_is][in] */ LPOLESTR *rgszNames,
+            /* [range][in] */ UINT cNames,
+            /* [in] */ LCID lcid,
+            /* [size_is][out] */ DISPID *rgDispId);
+        
+        /* [local] */ HRESULT ( STDMETHODCALLTYPE *Invoke )( 
+            ITestSimpleDispatch * This,
+            /* [annotation][in] */ 
+            _In_  DISPID dispIdMember,
+            /* [annotation][in] */ 
+            _In_  REFIID riid,
+            /* [annotation][in] */ 
+            _In_  LCID lcid,
+            /* [annotation][in] */ 
+            _In_  WORD wFlags,
+            /* [annotation][out][in] */ 
+            _In_  DISPPARAMS *pDispParams,
+            /* [annotation][out] */ 
+            _Out_opt_  VARIANT *pVarResult,
+            /* [annotation][out] */ 
+            _Out_opt_  EXCEPINFO *pExcepInfo,
+            /* [annotation][out] */ 
+            _Out_opt_  UINT *puArgErr);
+        
+        END_INTERFACE
+    } ITestSimpleDispatchVtbl;
+
+    interface ITestSimpleDispatch
+    {
+        CONST_VTBL struct ITestSimpleDispatchVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ITestSimpleDispatch_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ITestSimpleDispatch_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ITestSimpleDispatch_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ITestSimpleDispatch_GetTypeInfoCount(This,pctinfo)	\
+    ( (This)->lpVtbl -> GetTypeInfoCount(This,pctinfo) ) 
+
+#define ITestSimpleDispatch_GetTypeInfo(This,iTInfo,lcid,ppTInfo)	\
+    ( (This)->lpVtbl -> GetTypeInfo(This,iTInfo,lcid,ppTInfo) ) 
+
+#define ITestSimpleDispatch_GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)	\
+    ( (This)->lpVtbl -> GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId) ) 
+
+#define ITestSimpleDispatch_Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)	\
+    ( (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+#endif 	/* __ITestSimpleDispatch_DISPINTERFACE_DEFINED__ */
+
 
 EXTERN_C const CLSID CLSID_MyLongCollection;
 

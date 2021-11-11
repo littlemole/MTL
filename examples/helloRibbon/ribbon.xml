@@ -1,0 +1,158 @@
+<Application xmlns="http://schemas.microsoft.com/windows/2009/Ribbon">
+  <Application.Commands>
+    
+    <Command Name="cmdExit" Id="5001" Symbol="ID_CMD_EXIT" Keytip="X" >
+      <Command.LabelTitle>
+        <String Content="Exit" Id="5002" Symbol="ID_CMD_EXIT_LABEL" />
+      </Command.LabelTitle>
+      <Command.TooltipTitle>
+        <String Content="Exit the application" Id="5003" Symbol="ID_CMD_EXIT_TIP" />
+      </Command.TooltipTitle>
+      <Command.LargeImages>
+        <Image  Id="5004" Symbol="ID_CMD_EXIT_IMG" Source="img/application-exit.png" MinDPI="96" />
+      </Command.LargeImages>
+      <Command.SmallImages>
+        <Image Source="img/application-exit.png" MinDPI="96" />
+      </Command.SmallImages>
+    </Command>
+
+    <Command Name="cmdNew" LabelTitle="New" Id="5002" Symbol="ID_CMD_NEW" TooltipTitle="New Document" Keytip="N" >
+      <Command.LargeImages>
+        <Image Source="img/document-new.png" MinDPI="96" />
+      </Command.LargeImages>
+      <Command.SmallImages>
+        <Image Source="img/document-new.png" MinDPI="96" />
+      </Command.SmallImages>
+    </Command>
+
+    <Command Name="cmdOpen" LabelTitle="Open" Id="5003" Symbol="ID_CMD_OPEN" TooltipTitle="Open Document" Keytip="O" >
+      <Command.LargeImages>
+        <Image Source="img/document-open.png" MinDPI="96" />
+      </Command.LargeImages>
+      <Command.SmallImages>
+        <Image Source="img/document-open.png" MinDPI="96" />
+      </Command.SmallImages>
+    </Command>
+
+    <Command Name="cmdSplit" LabelTitle="Split" Id="5004" Symbol="ID_CMD_SPLIT" TooltipTitle="Split" Keytip="O" >
+      <Command.LargeImages>
+        <Image Source="img/alien.png" MinDPI="96" />
+      </Command.LargeImages>
+      <Command.SmallImages>
+        <Image Source="img/alien.png" MinDPI="96" />
+      </Command.SmallImages>
+    </Command>
+
+    <Command Name="cmdSpinner" LabelTitle="Zoom" Id="5005" Symbol="ID_CMD_ZOOM"></Command>
+
+    <Command Name="cmdSyntax" LabelTitle="Syntax" Id="5006" Symbol="ID_CMD_SYNTAX">
+      <Command.TooltipTitle>Syntax Highlite Mode</Command.TooltipTitle>
+      <Command.TooltipDescription>Select Syntax Highlite Mode</Command.TooltipDescription>
+      <Command.LargeImages>
+        <Image Source="img/alien.png"/>
+      </Command.LargeImages>
+    </Command>    
+
+    <Command Name="first" LabelTitle="First" Id="5501" Symbol="ID_CMD_FIRST"></Command>
+    <Command Name="second" LabelTitle="Second" Id="5502" Symbol="ID_CMD_SECOND"></Command>
+    <Command Name="third" LabelTitle="Third" Id="5503" Symbol="ID_CMD_THIRD"></Command>
+    <Command Name="fourth" LabelTitle="Fourth" Id="5504" Symbol="ID_CMD_FOURTH"></Command>
+
+    <Command Name="syntaxPlain" LabelTitle="Plain" Id="5605" Symbol="ID_CMD_PLAIN">
+      <Command.LargeImages>
+        <Image Source="img/alien.png" MinDPI="96" />
+      </Command.LargeImages>
+      <Command.SmallImages>
+        <Image Source="img/alien.png" MinDPI="96" />
+      </Command.SmallImages>
+    </Command>
+    <Command Name="syntaxHtml" LabelTitle="HTML" Id="5602" Symbol="ID_CMD_HTML"></Command>
+    <Command Name="syntaxJavascript" LabelTitle="JavaScript" Id="5603" Symbol="ID_CMD_JAVASCRIPT"></Command>
+    <Command Name="cmdBOM" LabelTitle="BOM" Id="5606" Symbol="ID_CMD_BOM"></Command>
+    <Command Name="cmdDrop" LabelTitle="DROP" Id="5607" Symbol="ID_CMD_DROP"></Command>
+
+  </Application.Commands>
+  
+  <Application.Views>
+    <Ribbon>
+      <Ribbon.ApplicationMenu>
+        <ApplicationMenu>
+          <MenuGroup>
+            <SplitButton CommandName="cmdSplit" >
+              <Button CommandName="cmdExit" />
+              <Button CommandName="cmdOpen" />
+            </SplitButton>
+            <Button CommandName="cmdExit" />
+          </MenuGroup>
+        </ApplicationMenu>
+      </Ribbon.ApplicationMenu>
+      <Ribbon.Tabs>
+        <Tab>
+          <Tab.ScalingPolicy>
+            <ScalingPolicy>
+              <ScalingPolicy.IdealSizes>
+                <Scale Group="first" Size="Large"/>
+                <!--
+                <Scale Group="second" Size="Large"/>
+                <Scale Group="third" Size="Large"/>
+                -->
+                <Scale Group="fourth" Size="Large"/>
+                
+              </ScalingPolicy.IdealSizes>
+              <!--
+              <Scale Group="forth" Size="Medium"/>
+              <Scale Group="forth" Size="Small"/>
+              <Scale Group="third" Size="Medium"/>
+              <Scale Group="second" Size="Medium"/>
+              <Scale Group="third" Size="Small"/>
+              <Scale Group="second" Size="Small"/>
+              <Scale Group="forth" Size="Popup"/>
+              <Scale Group="third" Size="Popup"/>
+              <Scale Group="second" Size="Popup"/>
+              -->
+              <Scale Group="first" Size="Medium"/>
+            </ScalingPolicy>
+          </Tab.ScalingPolicy>
+          
+          <Group CommandName="first"
+                   SizeDefinition="ThreeButtons-OneBigAndTwoSmall">
+              <Button CommandName="cmdExit" />
+              <ToggleButton CommandName="cmdNew" />
+              <Button CommandName="cmdOpen" />
+          </Group>
+          <Group CommandName="second"
+                SizeDefinition="ThreeButtons-OneBigAndTwoSmall">
+            <SplitButton CommandName="cmdSplit" >
+              <Button CommandName="cmdExit" />
+              <Button CommandName="cmdOpen" />
+            </SplitButton>
+            <Button CommandName="cmdOpen" />
+            <Button CommandName="cmdExit" />
+          </Group>
+          <Group CommandName="third">
+            <Spinner
+              CommandName="cmdSpinner"/>
+            <CheckBox CommandName="cmdBOM" />
+          </Group>
+          <Group CommandName="fourth">
+            <ComboBox
+              CommandName="cmdSyntax"
+             IsEditable="false"
+                                   IsAutoCompleteEnabled="false"
+                                   ResizeType="VerticalResize">
+            </ComboBox>
+          </Group>
+          <Group CommandName="fifth">
+            <DropDownGallery CommandName="cmdSyntax">
+              
+            </DropDownGallery>
+            <DropDownButton CommandName="cmdDrop">
+              <Button CommandName="cmdExit" />
+              <ToggleButton CommandName="cmdNew" />
+            </DropDownButton>
+          </Group>
+        </Tab>
+      </Ribbon.Tabs>
+    </Ribbon>
+  </Application.Views>
+</Application>

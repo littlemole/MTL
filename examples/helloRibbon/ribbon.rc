@@ -1,0 +1,159 @@
+// ******************************************************************************
+// * This is an automatically generated file containing the ribbon resource for *
+// * your application.                                                          *
+// ******************************************************************************
+
+#include ".\ribbon.h"
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_EXIT_LABEL L"Exit" /* LabelTitle ID_CMD_EXIT_LABEL: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_EXIT_Keytip_RESID L"X" /* Keytip ID_CMD_EXIT_Keytip_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_EXIT_TIP L"Exit the application" /* TooltipTitle ID_CMD_EXIT_TIP: (null) */
+END
+
+ID_CMD_EXIT_SmallImages_96__RESID    IMAGE    "img\\application-exit.png" /* SmallImages ID_CMD_EXIT_SmallImages_96__RESID: (null) */
+ID_CMD_EXIT_IMG    IMAGE    "img\\application-exit.png" /* LargeImages ID_CMD_EXIT_IMG: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_NEW_LabelTitle_RESID L"New" /* LabelTitle ID_CMD_NEW_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_NEW_Keytip_RESID L"N" /* Keytip ID_CMD_NEW_Keytip_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_NEW_TooltipTitle_RESID L"New Document" /* TooltipTitle ID_CMD_NEW_TooltipTitle_RESID: (null) */
+END
+
+ID_CMD_NEW_SmallImages_96__RESID    IMAGE    "img\\document-new.png" /* SmallImages ID_CMD_NEW_SmallImages_96__RESID: (null) */
+ID_CMD_NEW_LargeImages_96__RESID    IMAGE    "img\\document-new.png" /* LargeImages ID_CMD_NEW_LargeImages_96__RESID: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_OPEN_LabelTitle_RESID L"Open" /* LabelTitle ID_CMD_OPEN_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_OPEN_Keytip_RESID L"O" /* Keytip ID_CMD_OPEN_Keytip_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_OPEN_TooltipTitle_RESID L"Open Document" /* TooltipTitle ID_CMD_OPEN_TooltipTitle_RESID: (null) */
+END
+
+ID_CMD_OPEN_SmallImages_96__RESID    IMAGE    "img\\document-open.png" /* SmallImages ID_CMD_OPEN_SmallImages_96__RESID: (null) */
+ID_CMD_OPEN_LargeImages_96__RESID    IMAGE    "img\\document-open.png" /* LargeImages ID_CMD_OPEN_LargeImages_96__RESID: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_SPLIT_LabelTitle_RESID L"Split" /* LabelTitle ID_CMD_SPLIT_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SPLIT_Keytip_RESID L"O" /* Keytip ID_CMD_SPLIT_Keytip_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SPLIT_TooltipTitle_RESID L"Split" /* TooltipTitle ID_CMD_SPLIT_TooltipTitle_RESID: (null) */
+END
+
+ID_CMD_SPLIT_SmallImages_96__RESID    IMAGE    "img\\alien.png" /* SmallImages ID_CMD_SPLIT_SmallImages_96__RESID: (null) */
+ID_CMD_SPLIT_LargeImages_96__RESID    IMAGE    "img\\alien.png" /* LargeImages ID_CMD_SPLIT_LargeImages_96__RESID: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_ZOOM_LabelTitle_RESID L"Zoom" /* LabelTitle ID_CMD_ZOOM_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SYNTAX_LabelTitle_RESID L"Syntax" /* LabelTitle ID_CMD_SYNTAX_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SYNTAX_TooltipTitle_RESID L"Syntax Highlite Mode" /* TooltipTitle ID_CMD_SYNTAX_TooltipTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SYNTAX_TooltipDescription_RESID L"Select Syntax Highlite Mode" /* TooltipDescription ID_CMD_SYNTAX_TooltipDescription_RESID: (null) */
+END
+
+ID_CMD_SYNTAX_LargeImages_RESID    IMAGE    "img\\alien.png" /* LargeImages ID_CMD_SYNTAX_LargeImages_RESID: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_FIRST_LabelTitle_RESID L"First" /* LabelTitle ID_CMD_FIRST_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_SECOND_LabelTitle_RESID L"Second" /* LabelTitle ID_CMD_SECOND_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_THIRD_LabelTitle_RESID L"Third" /* LabelTitle ID_CMD_THIRD_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_FOURTH_LabelTitle_RESID L"Fourth" /* LabelTitle ID_CMD_FOURTH_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_PLAIN_LabelTitle_RESID L"Plain" /* LabelTitle ID_CMD_PLAIN_LabelTitle_RESID: (null) */
+END
+
+ID_CMD_PLAIN_SmallImages_96__RESID    IMAGE    "img\\alien.png" /* SmallImages ID_CMD_PLAIN_SmallImages_96__RESID: (null) */
+ID_CMD_PLAIN_LargeImages_96__RESID    IMAGE    "img\\alien.png" /* LargeImages ID_CMD_PLAIN_LargeImages_96__RESID: (null) */
+STRINGTABLE 
+BEGIN
+    ID_CMD_HTML_LabelTitle_RESID L"HTML" /* LabelTitle ID_CMD_HTML_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_JAVASCRIPT_LabelTitle_RESID L"JavaScript" /* LabelTitle ID_CMD_JAVASCRIPT_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_BOM_LabelTitle_RESID L"BOM" /* LabelTitle ID_CMD_BOM_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CMD_DROP_LabelTitle_RESID L"DROP" /* LabelTitle ID_CMD_DROP_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    fifth_LabelTitle_RESID L"Label:fifth" /* LabelTitle fifth_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    InternalCmd2_LabelTitle_RESID L"Label:InternalCmd2" /* LabelTitle InternalCmd2_LabelTitle_RESID: (null) */
+END
+
+STRINGTABLE 
+BEGIN
+    InternalCmd4_LabelTitle_RESID L"Label:InternalCmd4" /* LabelTitle InternalCmd4_LabelTitle_RESID: (null) */
+END
+
+APPLICATION_RIBBON    UIFILE    "ribbon.bml"

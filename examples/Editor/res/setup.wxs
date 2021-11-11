@@ -94,7 +94,27 @@
             </RegistryKey>
 
             <RegistryKey Root="HKCU" Key="Software\Classes\*\shell\mtlEditor\Shell\Cmd2\command">
-              <RegistryValue Type="string" Value='"C:\Users\mike\source\repos\MTL\x64\Debug\Editor.exe" /split "%1"'/>
+              <RegistryValue Type="string" Value='"[COMPATH]\Editor.exe" /split "%1"'/>
+            </RegistryKey>
+
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\mte">
+              <RegistryValue Type="string" Value='"URL: mte Protocol"'/>
+              <RegistryValue Type="string" Name="URL Protocol" Value=""/>
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\mte\DefaultIcon">
+              <RegistryValue Type="string" Value='mte.exe'/>
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\mte\shell">
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\mte\shell\open">
+            </RegistryKey>
+
+            <RegistryKey Root="HKCU" Key="Software\Classes\mte\shell\open\command">
+              <RegistryValue Type="string" Value='"[COMPATH]\Editor.exe" "/open" "%1"'/>
             </RegistryKey>
 
           </Component>

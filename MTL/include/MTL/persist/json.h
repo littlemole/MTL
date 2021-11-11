@@ -3,8 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
-//C:\Users\mike\source\repos\vcpkg\installed\x64-windows\include
 #include "metacpp/meta.h"
+#include "mtl/win32/uni.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -122,8 +122,15 @@ namespace meta {
 			to[name] = from;
 		}
 
+		inline void toJson(const char* name, const std::wstring& from, json& to)
+		{
+			to[name] = mtl::to_string(from);
+		}
 
-
+		inline void toJson(const char* name, std::wstring& from, json& to)
+		{
+			to[name] = mtl::to_string(from);
+		}
 
 		inline void toJson(const char* name, const long long int& from, json& to)
 		{
@@ -181,6 +188,22 @@ namespace meta {
 			if (from.count(name))
 			{
 				t = from[name];
+			}
+		}
+
+		inline void fromJson(const char* name, const json& from, std::wstring& t)
+		{
+			if (!name)
+			{
+				std::string s = from;
+				t = mtl::to_wstring(s);
+				return;
+			}
+
+			if (from.count(name))
+			{
+				std::string s = from[name];
+				t = mtl::to_wstring(s);
 			}
 		}
 

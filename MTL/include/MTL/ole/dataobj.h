@@ -342,7 +342,7 @@ namespace mtl {
 		const T& t, 
 		DWORD effect = DROPEFFECT_COPY | DROPEFFECT_MOVE, 
 		DWORD* pEffect = nullptr, 
-		IDropSource* drop = *MTL::dropSource()
+		IDropSource* drop = *mtl::dropSource()
 	)
 	{
 		DWORD tmp;
@@ -361,7 +361,7 @@ namespace mtl {
 		const T& t,
 		DWORD effect = DROPEFFECT_COPY | DROPEFFECT_MOVE,
 		DWORD* pEffect = nullptr,
-		IDropSource* drop = *MTL::dropSource()
+		IDropSource* drop = *mtl::dropSource()
 	)
 	{
 		DWORD tmp;
@@ -620,26 +620,44 @@ namespace mtl {
 			: fe(f), effect(ef) 
 		{}
 
-		HRESULT virtual __stdcall Drop(IDataObject* ido, DWORD grfKeyState, POINTL, DWORD* pEffect)
+		HRESULT virtual __stdcall Drop(IDataObject* ido, DWORD grfKeyState, POINTL, DWORD* pEffect) override
 		{
-			DWORD effect = *pEffect;
-			onDrop.fire(ido, grfKeyState,effect);
+			DWORD eff = *pEffect;
+			onDrop.fire(ido, grfKeyState,eff);
 			*pEffect = effect;
+			return S_OK;
+		}
+
+		HRESULT virtual __stdcall DragEnter(IDataObject*, DWORD grfKeyState, POINTL, DWORD* pEffect) override
+		{
+			//*pEffect = DROPEFFECT_COPY;
+			*pEffect = effect;
+			if (grfKeyState & MK_SHIFT) *pEffect = DROPEFFECT_MOVE;
+			if (grfKeyState & MK_CONTROL) *pEffect = DROPEFFECT_MOVE;
+			return S_OK;
+		}
+
+		HRESULT virtual __stdcall DragOver(DWORD grfKeyState, POINTL, DWORD* pEffect) override
+		{
+			//*pEffect = DROPEFFECT_COPY;
+			*pEffect = effect;
+			if (grfKeyState & MK_SHIFT) *pEffect = DROPEFFECT_MOVE;
+			if (grfKeyState & MK_CONTROL) *pEffect = DROPEFFECT_MOVE;
 			return S_OK;
 		}
 	};
 
-	inline punk<default_drop_target> drop_target(format_etc fe)
+	inline punk<default_drop_target> drop_target(format_etc fe, DWORD ef = DROPEFFECT_COPY)
 	{
-		punk<default_drop_target> target(new default_drop_target(fe));
+		punk<default_drop_target> target(new default_drop_target(fe,ef));
 		return target;
 	}
 
 
-	inline punk<default_drop_target> drop_target(CLIPFORMAT cf)
+	inline punk<default_drop_target> drop_target(CLIPFORMAT cf, DWORD ef = DROPEFFECT_COPY)
 	{
 		format_etc fe(cf);
-		return drop_target(fe);
+		return drop_target(fe,ef);
 	}
 
 }

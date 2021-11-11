@@ -18,6 +18,7 @@
 #define IDM_MENU_A						113
 #define IDM_MENU_B						114
 #define IDM_MENU_C						115
+#define IDM_MENU_REFRESH				116
 #define IDC_CHECK_LOVE                  1000
 #define IDC_LIST_LOVE                   1001
 #define IDC_COMBO1                      1002

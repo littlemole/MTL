@@ -96,12 +96,12 @@ namespace mtl {
 
 		struct format
 		{
-			format(int id, const wchar_t* desc)
+			format(int id, const std::wstring& desc)
 				: format_id(id), description(desc)
 			{}
 
 			int format_id;
-			const wchar_t* description;
+			std::wstring description;
 		};
 
 		static std::map<int, const wchar_t*>& format_description()
@@ -165,7 +165,8 @@ namespace mtl {
 				case CF_LOCALE:
 				case CF_DIBV5:
 				{
-					result.push_back(format(f, format_description()[f]));
+					const wchar_t* desc = format_description()[f];
+					result.push_back(format(f, desc));
 					break;
 				}
 
@@ -176,8 +177,7 @@ namespace mtl {
 
 					if (c > 0)
 					{
-						std::wstring title(buf, c);
-						result.push_back(format(f, title.c_str()));
+						result.push_back(format(f,std::wstring(buf,c)));
 					}
 				}
 				}

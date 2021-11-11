@@ -380,10 +380,10 @@ namespace mtl {
         HWND show_modeless(int lpTemplate, HWND hWndParent)
         {
             isModal_ = false;
-            HWND hWnd = ::CreateDialogParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &dialog::dialogProcedure, (LPARAM)(this));
+            handle = ::CreateDialogParam(module_instance(), MAKEINTRESOURCE(lpTemplate), hWndParent, &dialog::dialogProcedure, (LPARAM)(this));
 
-            modeless_dlg().add(hWnd);
-            return hWnd;
+            modeless_dlg().add(handle);
+            return handle;
         }
 
         LRESULT show_modal(int lpTemplate, HWND hWndParent)
@@ -660,13 +660,14 @@ namespace mtl {
             move(x, y, w, h);
         }
 
-        virtual void on_init()
-        {
-
-        }
-
         event<int()> onClick;
         event<int()> onEndDlg;
+        event<void(dialog&)> onInitDlg;
+
+        virtual void on_init()
+        {
+            onInitDlg.fire(*this);
+        }
 
         LRESULT wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
@@ -757,6 +758,7 @@ namespace mtl {
             }
             modeless_dlg().remove(handle);
             ::DestroyWindow(handle);
+            handle = nullptr;
             return n;
         }
 

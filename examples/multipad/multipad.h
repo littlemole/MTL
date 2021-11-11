@@ -2,6 +2,7 @@
 
 #include "MTL/sdk.h"
 #include "framework.h"
+#include "MTL/obj/impl.h"
 #include "MTL/win32/module.h"
 #include "MTL/win32/mem.h"
 #include "MTL/win/app.h"

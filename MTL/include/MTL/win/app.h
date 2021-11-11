@@ -19,9 +19,9 @@ namespace mtl {
             return  ui_thread().run();
         }        
 
-        int run(HWND acceleree, mtl::accelerators accel)
+        int run(mtl::accelerators& accel)
         {
-            return  ui_thread().run(acceleree, accel);
+            return  ui_thread().run(accel);
         }
 
 /* MSG msg;
@@ -39,8 +39,8 @@ namespace mtl {
             return (int)msg.wParam;
         }
         */
-    private:
-        HACCEL hAccelTable_ = nullptr;
+  //  private:
+   //     HACCEL hAccelTable_ = nullptr;
     };
 
 }

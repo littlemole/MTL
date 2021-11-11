@@ -37,27 +37,21 @@ public:
 
 void load_resource_ids();
 
+
+
 class MainWindow : public mtl::window<MainWindow>
 {
 public:
 
 	mtl::menu	menu;
 	mtl::button butt;
+	mtl::list_view listview;
 	AboutDlg aboutDlg;
 
+	mtl::list_view::data_src data_source;
 
 	MainWindow()
 	{
-		//load_resource_ids();
-		/*
-		mtl::gui().add({
-			{ MTL_ID(IDM_FILE)}, //L"File" },
-			{ MTL_ID(IDM_EXIT)}, //L"Exit" },
-			{ MTL_ID(IDM_HELP)}, //L"Help" },			
-			{ MTL_ID(IDM_ABOUT)},// L"About" }
-		});
-		*/
-
 		menu.create();
 		mtl::menu_builder mb(menu);
 		mb.add({{
@@ -66,14 +60,16 @@ public:
 					{IDM_MENU_B },
 					{IDM_MENU_C }
 				}},
+				{ IDM_MENU_REFRESH },
 				{ IDM_EXIT }
 			}},
 			{ IDM_HELP, {{ IDM_ABOUT}} }
 		});
+
 		// set menu implicitly on window class
 		//mtl::wc<MainWindow>().set_menu(IDC_HELLOWORLD);
 
-		// peload jpeg image for display
+		// preload jpeg image for display
 		mtl::the_bitmap_cache().load(IDI_JPEG, CLSID_WICJpegDecoder, L"JPEG" );
 
 		// create and show window
@@ -81,17 +77,66 @@ public:
 		show();
 
 	}
+	
+	void enum_clipboard()
+	{
+		auto formats = mtl::clipboard::enumerate();
+		
+		std::vector<std::vector<std::wstring>> rows;
 
+		int i = 0;
+		for (auto& f : formats) 
+		{			
+			std::wstring preview;
+			switch (f.format_id)
+			{
+			case CF_TEXT :
+			{
+				preview = mtl::to_wstring(mtl::clipboard::as_string(f.format_id));
+				break;
+			}
+			case CF_UNICODETEXT:
+			{
+				preview = mtl::clipboard::as_wstring(f.format_id);
+				break;
+			}
+			case CF_OEMTEXT:
+			{
+				preview = mtl::to_wstring(mtl::clipboard::as_string(f.format_id));
+				break;
+			}
+			}
+
+			std::vector<std::wstring> row { std::to_wstring(f.format_id), f.description, preview };
+			rows.push_back(row);
+			i++;
+		}
+		
+		data_source.set({ L"ID", L"Format", L"Preview" }, rows);
+
+		data_source.attach(listview);
+		
+	}
+	
 	virtual LRESULT wm_create() override
 	{
 		// create chld button
-		RECT r = { 0,0,120,40 };
-		butt.create(IDC_BUTT,L"click me", handle, r,WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON);
+		RECT r = client_rect();
+		listview.create(IDC_BUTT, L"click me", handle, r, WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_SINGLESEL| LVS_EDITLABELS, LVS_EX_TRANSPARENTBKGND|LVS_EX_JUSTIFYCOLUMNS|LVS_EX_CHECKBOXES| LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT);// LVS_EX_AUTOSIZECOLUMNS);
+		//LVS_EDITLABELS
 
-		butt.onCommand(IDC_BUTT, [this]()
+		enum_clipboard();
+
+		listview.onActivate([this](NMITEMACTIVATE* nmia) 
 		{
-			::MessageBox(handle, L"click", L"clack", 0);
+			::MessageBox(handle, listview.get_item(nmia->iItem).c_str(), L"activate", 0);
 		});
+
+		listview.onClick([this](NMITEMACTIVATE* nmia)
+		{
+			set_text(listview.get_item(nmia->iItem));
+		});
+
 		return 0;
 	}
 
@@ -117,6 +162,21 @@ public:
 				}
 				break;
 			}
+			case IDM_MENU_REFRESH:
+			{
+				enum_clipboard();
+				break;
+			}
+			case IDM_MENU_B:
+			{
+				data_source[0][0] = L"OVERRIDE";
+				break;
+			}
+			case IDM_MENU_C:
+			{
+				::MessageBox(handle, data_source[0][0].value.c_str(), L"VALUE", 0);
+				break;
+			}
 			case IDM_EXIT:
 			{
 				// kill ourselves
@@ -130,7 +190,6 @@ public:
 
 	virtual LRESULT wm_draw(HDC hdc, RECT& bounds) override
 	{
-//		HBITMAP bmp = mtl::the_bitmap_cache().get(IDI_JPEG, 500, 314);
 		HBITMAP bmp = mtl::gui().bitmap(IDI_JPEG);// , 500, 314);
 
 		mtl::dc dc(hdc);
@@ -142,6 +201,7 @@ public:
 	virtual LRESULT wm_size(RECT& clientRect) override
 	{
 		RECT r = { 0,0,0,0 };
+		listview.move(clientRect);
 //		do nothing here
 //		layout.do_layout(clientRect, r);
 		return 0;
@@ -166,13 +226,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     mtl::STA enter;
+	mtl::Win32CommonControls cc;
 
     mtl::application app(hInstance);
 
 	MainWindow mainWnd;
 
-	mtl::accelerators acc({{ 'T', IDM_ABOUT, FCONTROL|FVIRTKEY }});
-	return app.run(*mainWnd, acc);
+	mtl::accelerators acc;
+	acc.create({ { 'T', IDM_ABOUT, FCONTROL | FVIRTKEY } });
+	return app.run( acc);
 
 }
 

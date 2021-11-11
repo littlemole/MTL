@@ -1,9 +1,11 @@
 #pragma once
 
+#include "mtl/sdk.h"
 #include "mtl/punk.h"
 #include "mtl/win32/uni.h"
 #include "mtl/win32/mem.h"
 #include "mtl/util/path.h"
+#include "mtl/obj/impl.h"
 
 #include <objidl.h>
 #include <ShlObj.h>

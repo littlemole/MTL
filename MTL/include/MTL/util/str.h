@@ -103,4 +103,13 @@ namespace mtl
         }
         return elems;
     }
+
+    inline std::wstring url_unescape(const std::wstring& str)
+    {
+        DWORD unescaped = 2047;
+        mtl::wbuff buf(2048);
+        HRESULT hr = ::UrlUnescape((wchar_t*)str.c_str(), buf, &unescaped, 0);
+
+        return buf.toString();
+    }
 }

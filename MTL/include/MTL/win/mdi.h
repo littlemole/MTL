@@ -298,6 +298,8 @@ namespace mtl {
 
         mtl::menu menu;
 
+        mtl::event<void(mdi_child*)> onActivate;
+
         mdi_child()
         {
             auto& clazz = wc<mdi_child>();
@@ -444,6 +446,7 @@ namespace mtl {
                         ::SendMessage(::GetParent(hWnd), WM_MDISETMENU, (WPARAM)*menu, (LPARAM)viewMenu);
                         ::DrawMenuBar(frameWnd);
                     }
+                    onActivate.fire(this);
                 }
                 else // deactivated
                 {

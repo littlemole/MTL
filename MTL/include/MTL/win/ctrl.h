@@ -178,7 +178,7 @@ namespace mtl {
             return handle;
         }
 
-        static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+        static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         {
             LONG_PTR l = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
             if (!l)
@@ -265,6 +265,24 @@ namespace mtl {
     class status_bar : public ctrl<status_bar>
     {
     public:
+
+        mtl::event<int()> onLeftClick;
+        mtl::event<int()> onRightClick;
+
+        status_bar()
+        {
+            onNotify(NM_CLICK, [this](NMHDR* nmhdr) 
+            {
+                NMMOUSE* nm = (NMMOUSE*)nmhdr;
+                onLeftClick.fire((int)nm->dwItemSpec);
+            });
+
+            onNotify(NM_RCLICK, [this](NMHDR* nmhdr)
+            {
+                NMMOUSE* nm = (NMMOUSE*)nmhdr;
+                onLeftClick.fire((int)nm->dwItemSpec);
+            });
+        }
 
         void set_status(std::vector<std::wstring> parts)
         {
@@ -581,7 +599,7 @@ namespace mtl {
         void enable_dragdrop()
         {
             dragTabFormat = ::RegisterClipboardFormat(L"MTLTabDragDropCustomClipBoardFormat");
-            dropTarget = drop_target(dragTabFormat);
+            dropTarget = drop_target(dragTabFormat, DROPEFFECT_MOVE);
 
             dropTarget->onDrop([this](IDataObject* ido, DWORD keyState, DWORD& effect)
             {
@@ -608,10 +626,11 @@ namespace mtl {
 
                 onPopulateDataObj.fire(c, *obj);
 
+
                 HRESULT hr = ::DoDragDrop(
                     *obj,
                     *drop_source(),
-                    //DROPEFFECT_COPY | 
+                    DROPEFFECT_COPY | 
                     DROPEFFECT_MOVE,
                     &effect
                 );
@@ -763,6 +782,8 @@ namespace mtl {
         {
             RECT r = window_rect();
             LRESULT res = send_msg(TCM_ADJUSTRECT, FALSE, (LPARAM)&r);
+            //r.right -= 2;
+            //r.bottom -= 2;
             return r;
         }
 
@@ -1234,7 +1255,7 @@ namespace mtl {
             ::SetWindowLong(handle, GWL_STYLE, style);
         }
 
-        virtual HWND createWindow(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu)
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
         {
             auto& wndClass = wc<tab_ctrl>();
 
@@ -1253,7 +1274,7 @@ namespace mtl {
             subclass();
 
             RECT rp;
-            ::GetClientRect(parent, &r);
+            ::GetClientRect(parent, &rp);
             tooltip.create(1, parent, rp, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP);
 
             tooltip.add(parent, *this);
@@ -2006,5 +2027,401 @@ namespace mtl {
     };
 
 
+    class list_view;
+
+    template<>
+    class window_class<list_view>
+    {
+    public:
+        const wchar_t* name()
+        {
+            return WC_LISTVIEW;
+        }
+    };
+
+    class list_view : public ctrl<list_view>
+    {
+    public:
+
+        mtl::event<void(NMITEMACTIVATE*)> onActivate;
+        mtl::event<void(NMITEMACTIVATE*)> onClick;
+        mtl::event<void(int id, std::wstring, bool&)> onLabelEdited;
+
+        mtl::sink<void(int, int, std::wstring)> with;
+
+        class data_src
+        {
+        public:
+
+            class data_cell
+            {
+            public:
+                int id = 0;
+                int subitem = 0;
+                std::wstring value;
+
+                data_cell& operator=(const std::wstring& str)
+                {
+                    value = str;
+                    onChange.fire(id, subitem, value);
+                    return *this;
+                }
+
+                mtl::event<void(int, int, std::wstring)> onChange;
+            };
+
+            class data_row 
+            {
+            public:
+                int id = 0;
+                std::vector<data_cell> cells;
+
+                data_cell& operator[](int id)
+                {
+                    return cells[id];
+                }
+            };
+
+            std::vector<std::wstring> headers;
+            std::vector<data_row> rows;
+
+            mtl::event<void(int, int, std::wstring)> onChange;
+
+            mtl::sink<void(int id, std::wstring, bool&)> with;
+
+            data_row& operator[](int id)
+            {
+                return rows[id];
+            }
+
+            data_src()
+            {}
+
+            data_src(const std::vector<std::wstring>& h)
+                : headers(h)
+            {}
+
+            data_src(const std::vector<std::wstring>& h, const std::vector<std::vector<std::wstring>>& data)
+                : headers(h)
+            {
+                for (size_t i = 0; i < data.size(); i++)
+                {
+                    std::vector<data_cell> items;
+                    for (size_t j = 0; j < data[i].size(); j++)
+                    {
+                        data_cell d((int)i, (int)j, data[i][j]);
+                        d.onChange([this](int id, int subitem, std::wstring value) 
+                        {
+                            onChange.fire(id, subitem, value);
+                        });
+                        items.push_back(d);
+                    }
+                    rows.push_back(data_row( (int)i,items));
+                }
+            }
+
+            data_src& set(const std::vector<std::wstring>& h, const std::vector<std::vector<std::wstring>>& data)
+            {
+                headers = h;
+                rows.clear();
+                for (size_t i = 0; i < data.size(); i++)
+                {
+                    std::vector<data_cell> items;
+
+                    for (size_t j = 0; j < data[i].size(); j++)
+                    {
+                        data_cell d{ (int)i, (int)j, data[i][j] };
+                        d.onChange([this](int id, int subitem, std::wstring value)
+                        {
+                            onChange.fire(id, subitem, value);
+                        });                       
+                        items.push_back(d);
+                    }
+                    data_row dr{ (int)i, items };
+                    rows.push_back(dr);
+                }
+                return *this;
+            }
+
+            void attach(list_view& listview)
+            {
+                with.clear();
+                listview.with.clear();
+                listview.clear();
+
+                listview.add_columns(headers);
+                for (auto& row : rows)
+                {
+                    listview.add_row(row);
+                }
+
+                listview
+                    .with(onChange)
+                    .then( [this,&listview] (int id, int subitem, std::wstring value) 
+                {
+                    listview.set_item(id, value, subitem);
+                });
+
+                with(listview.onLabelEdited)
+                    .then( [this] (int id, std::wstring txt, bool& accept)
+                {
+                    rows[id].cells[0].value = txt;
+                    accept = true;
+                });
+            }
+        };
+
+        list_view& add_column(int index, const std::wstring& txt)
+        {
+            LVCOLUMN lvc;
+            lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; //
+
+            lvc.iOrder = 0;
+            lvc.iSubItem = 0;
+            lvc.pszText = (wchar_t*)txt.c_str();
+            lvc.cx = 100;
+            lvc.fmt = LVCFMT_LEFT;
+
+            int r = ListView_InsertColumn(handle, index, &lvc);
+
+            column_count_++;
+            return *this;
+        }
+
+        list_view& add_columns(const std::vector<std::wstring>& columns)
+        {
+            if (column_count_) return *this;
+
+            int i = 0;
+            for (auto& col : columns)
+            {
+                add_column(i,col);
+                i++;
+            }
+            return *this;
+        }
+
+        int count()
+        {
+            return (int)ListView_GetItemCount(handle);
+        }
+
+        int selected(int i = -1, int f = LVNI_SELECTED)
+        {
+            return (int)ListView_GetNextItem(handle, i, f);
+        }
+
+        int selected_count()
+        {
+            return (int)ListView_GetSelectedCount(handle);
+        }
+
+        bool is_checked(int id)
+        {
+            return ListView_GetCheckState(handle,id);
+        }
+
+        void set_checked(int id, bool status)
+        {
+            ListView_SetCheckState(handle,id,status);
+        }
+
+        std::wstring get_item(int i, int subItem = 0)
+        {
+            mtl::wbuff buf(1024);
+
+            LVITEM lvI;
+            ::ZeroMemory(&lvI, sizeof(lvI));
+            lvI.mask = LVIF_TEXT;
+            lvI.pszText = buf;
+            lvI.cchTextMax = (int) buf.size();
+            lvI.iSubItem = subItem;
+            lvI.iItem = i;
+
+            ListView_GetItem(handle, &lvI);
+            return buf.toString();
+        }
+
+        list_view& add_item(const std::wstring& item, int index = -1)
+        {
+            LVITEM lvI;
+
+            if (index == -1) index = count();
+
+            lvI.pszText = (wchar_t*)item.c_str();// LPSTR_TEXTCALLBACK; // Sends an LVN_GETDISPINFO message.
+            lvI.mask = LVIF_TEXT | LVIF_STATE; //LVIF_IMAGE
+            lvI.stateMask = 0;
+            lvI.iSubItem = 0;
+            lvI.state = 0;
+
+            lvI.iItem = index;
+            lvI.iImage = 0;
+
+            int r = ListView_InsertItem(handle, &lvI);
+            return *this;
+        }
+
+
+        list_view& set_item(int index ,const std::wstring& item, int subitem = 0)
+        {
+            LVITEM lvI;
+
+            if (index == -1) index = count()-1;
+
+            lvI.pszText = (wchar_t*)item.c_str();// LPSTR_TEXTCALLBACK; // Sends an LVN_GETDISPINFO message.
+            lvI.mask = LVIF_TEXT | LVIF_STATE; //LVIF_IMAGE
+            lvI.stateMask = 0;
+            lvI.iSubItem = subitem;
+            lvI.state = 0;
+
+            lvI.iItem = index;
+            lvI.iImage = 0;
+
+            BOOL b = ListView_SetItem(handle, &lvI);
+            return *this;
+        }
+
+
+
+        list_view& set_param(int index, LPARAM lParam)
+        {
+            LVITEM lvI;
+
+            if (index == -1) index = count() - 1;
+
+            lvI.pszText = 0;// (wchar_t*)item.c_str();// LPSTR_TEXTCALLBACK; // Sends an LVN_GETDISPINFO message.
+            lvI.mask = LVIF_PARAM; //LVIF_IMAGE
+            lvI.stateMask = 0;
+            lvI.iSubItem = 0;
+            lvI.state = 0;
+
+            lvI.iItem = index;
+            lvI.iImage = 0;
+            lvI.lParam = lParam;
+
+            ListView_SetItem(handle, &lvI);
+            return *this;
+        }
+
+
+        LPARAM get_param(int index)
+        {        
+            LVITEM lvI;
+
+            if (index == -1) index = count() - 1;
+
+            lvI.pszText = 0;// (wchar_t*)item.c_str();// LPSTR_TEXTCALLBACK; // Sends an LVN_GETDISPINFO message.
+            lvI.mask = LVIF_PARAM; //LVIF_IMAGE
+            lvI.stateMask = 0;
+            lvI.iSubItem = 0;
+            lvI.state = 0;
+
+            lvI.iItem = index;
+            lvI.iImage = 0;
+            lvI.lParam = 0;
+
+            ListView_GetItem(handle, &lvI);
+            return lvI.lParam;
+        }
+
+        list_view& add_row(const std::vector<std::wstring>& items)
+        {
+            if (items.empty()) return *this;
+
+            add_item(items[0]);
+
+            for (size_t i = 1; i < items.size(); i++)
+            {
+                set_item(-1, items[i], (int) i);
+            }
+
+            return *this;
+        }
+
+        list_view& add_row(const data_src::data_row& row)
+        {
+            if (row.cells.empty()) return *this;
+
+            add_item(row.cells[0].value);// , row.cells[0].id);
+
+            for (size_t i = 1; i < row.cells.size(); i++)
+            {
+                set_item(-1, row.cells[i].value, (int)i);
+            }
+
+            return *this;
+        }
+
+        list_view& clear()
+        {
+            BOOL b = ListView_DeleteAllItems(handle);
+            return *this;
+        }
+
+
+    protected:
+
+        int column_count_ = 0;
+
+        virtual LRESULT wm_notify(int id, NMHDR* nmhdr) override
+        {
+            onNotify.fire(nmhdr->code, nmhdr);
+
+            if (nmhdr->code == LVN_BEGINLABELEDIT)
+            {
+                return FALSE;
+            }
+            if (nmhdr->code == LVN_ENDLABELEDIT)
+            {
+                NMLVDISPINFO* nmdisp = (NMLVDISPINFO*)nmhdr;
+                std::wstring ws = nmdisp->item.pszText;
+
+                bool accept = true;
+                onLabelEdited.fire(nmdisp->item.iItem, ws, accept);
+
+                if (accept) return TRUE;
+                return FALSE;
+            }
+            if (nmhdr->code == LVN_ITEMACTIVATE)
+            {
+                NMITEMACTIVATE* nma = (NMITEMACTIVATE*)nmhdr;
+                onActivate.fire(nma);
+            }
+            if (nmhdr->code == NM_CLICK)
+            {
+                NMITEMACTIVATE* nma = (NMITEMACTIVATE*)nmhdr;
+                onClick.fire(nma);
+            }
+            return 0;
+        }
+        
+        virtual HWND create_window(const wchar_t* title, HWND parent, RECT& r, int style, int exStyle, HMENU menu) override
+        {
+            auto& wndClass = wc<list_view>();
+
+            handle = ::CreateWindowEx(
+                0,
+                wndClass.name(),
+                title,
+                style,
+                r.left, r.top, r.right - r.left, r.bottom - r.top,
+                parent,
+                menu,
+                module_instance(),
+                (LPVOID)this
+            );
+
+            // NO? 
+            subclass();
+            show(SW_SHOW);
+            wm_create();
+
+            ListView_SetExtendedListViewStyle(handle, exStyle);
+                // LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT);// | LVS_EX_GRIDLINES);
+
+            return handle;
+        }
+        
+    };
 }
 

@@ -3,6 +3,7 @@
 static void load_resource_ids()
 {
     mtl::gui().add({
+        { 2, "IDC_MYICON" },
         { 101, "IDS_APP_TITLE" },
         { 110, "IDR_MAINFRAME" },
         { 111, "IDD_EDITOR_DIALOG" },
@@ -14,6 +15,7 @@ static void load_resource_ids()
         { 123, "ID_FILE" },
         { 124, "ID_EDIT" },
         { 125, "ID_HELP" },
+        { 129, "IDD_FILE_CHANGED" },
         { 130, "ID_FILE_OPEN" },
         { 131, "ID_FILE_OPEN_DIR" },
         { 132, "ID_FILE_SAVE" },
@@ -135,7 +137,7 @@ static void load_resource_ids()
         { 1069, "IDM_XML" },
         { 1100, "IDM_TOGGLE_OWNER_DRAWN" },
         { 1101, "IDM_HELP_BROWSER" },
-        { 2, "IDC_MYICON" },
+        { 1200, "IDC_FILE_CHANGED_LABEL" },
         { -1, "IDC_STATIC" }
     });
 }

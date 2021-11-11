@@ -9,10 +9,12 @@
 #include "MTL/util/path.h"
 #include "MTL/obj/localserver.h"
 #include "MTL/persist/persist.h"
+#include "mtl/persist/json.h"
 #include "MTL/win32/mem.h"
 #include "MTL/persist/stgm.h"
 #include "MTL/util/path.h"
 #include "MTL/ole/dataobj.h"
+#include "mtl/disp/typeinfo.h"
 
 //#include "metacpp/xml.h"
 #include "../test_h.h"
@@ -499,3 +501,30 @@ TEST_F(StreamTest, testDispTypeLibLoadingStreamPersistStorageErrorInfo)
     hr = sei->InterfaceSupportsErrorInfo(IID_IUnknown);
     EXPECT_EQ(S_FALSE, hr);
 }
+
+
+TEST_F(StreamTest, parsetypelib) 
+{
+    auto lib = mtl::load_typelib(mtl::path_to_self());
+
+    //auto json = meta::toJson(lib);
+   // std::string str = JSON::stringify(json);
+
+   // std::cout << str << std::endl;
+
+   // mtl::typelib::MetaParam mp{ L"int", L"param1" };
+
+    //auto json = meta::toXml(mp);
+    mtl::punk<IXMLDOMDocument> xml = mtl::toXml(lib);
+
+    mtl::bstr xmlStr;
+    xml->get_xml(&xmlStr);
+
+    std::wcout << xmlStr.str() << std::endl;
+
+    auto json = meta::toJson(lib);
+    std::string s = JSON::stringify(json);
+
+    std::cout << s << std::endl;
+}
+

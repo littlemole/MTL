@@ -1184,7 +1184,13 @@ namespace mtl {
         UINT_PTR timeout(int milisecs, std::function<void()> cb)
         {
             cancel();
-            id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
+            id = set_timeout(milisecs, cb);
+            return id;
+        }
+
+        static UINT_PTR set_timeout(int milisecs, std::function<void()> cb)
+        {
+            UINT_PTR id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
             timers()[id] = cb;
             return id;
         }
@@ -1193,15 +1199,22 @@ namespace mtl {
         {
             if (id)
             {
+                cancel(id);
+                id = 0;
+            }
+        }
+
+        static void cancel(UINT_PTR id)
+        {
+            if (id)
+            {
                 if (timers().count(id))
                 {
                     timers().erase(id);
                 }
                 ::KillTimer(nullptr, id);
-                id = 0;
             }
         }
-
     private:
 
         static void timerProc(

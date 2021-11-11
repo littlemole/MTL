@@ -1,0 +1,19 @@
+Windows Registry Editor Version 5.00
+
+; ##################################
+; moe 
+; ##################################
+
+[HKEY_CURRENT_USER\Software\Classes\mte]
+@="URL: mte Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\mte\DefaultIcon]
+@="mte.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\mte\shell]
+
+[HKEY_CURRENT_USER\Software\Classes\mte\shell\open]
+
+[HKEY_CURRENT_USER\Software\Classes\mte\shell\open\command]
+@="\"C:\\Users\\mike\\source\\repos\\MTL\\x64\\Debug\\Editor.exe\" \"/open\" \"%1\""

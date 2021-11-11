@@ -90,6 +90,7 @@ namespace mtl {
 		void do_layout(RECT& r, RECT& p) override;
 	};
 
+
 	class splitter : public window<splitter>
 	{
 	public:

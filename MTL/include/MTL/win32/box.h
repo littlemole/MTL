@@ -48,25 +48,15 @@ namespace mtl {
         accelerators()
         {}
 
-        accelerators(int id)
+        accelerators(HWND wnd, int id)
+            : hWnd(wnd)
         {
             load(id);
         }
 
-        accelerators(ACCEL* accels, int size)
-        {
-            if(size == 0) throw std::string("accel size == 0");
-            bool b = create(accels,size);
-             if(!b) throw std::string("accels create failed");
-        }
-
-        accelerators(std::vector<accel> accels)
-        {
-            if(accels.empty()) throw std::string("accel empty");
-            bool b = create(accels);
-            if(!b) throw std::string("accel create failed");
-
-        }
+        accelerators(HWND wnd)
+            : hWnd(wnd)
+        {}
 
         ~accelerators()
         {
@@ -77,6 +67,7 @@ namespace mtl {
         {
             if(rhs.accel_ == nullptr) return;
 
+            hWnd = rhs.hWnd;
             int s = ::CopyAcceleratorTable(rhs.accel_,nullptr,0);
             ACCEL* acc = new ACCEL[s];
             ::CopyAcceleratorTable(rhs.accel_,acc,s);
@@ -89,6 +80,9 @@ namespace mtl {
         {
             accel_ = rhs.accel_;
             rhs.accel_ = nullptr;
+
+            hWnd = rhs.hWnd;
+            rhs.hWnd = nullptr;
         }
 
         accelerators& operator=(const accelerators& rhs)
@@ -102,6 +96,7 @@ namespace mtl {
                 return *this;
             }
 
+            hWnd = rhs.hWnd;
             int s = ::CopyAcceleratorTable(rhs.accel_,nullptr,0);
             ACCEL* acc = new ACCEL[s];
             ::CopyAcceleratorTable(rhs.accel_,acc,s);
@@ -120,6 +115,9 @@ namespace mtl {
 
             accel_ = rhs.accel_;
             rhs.accel_ = nullptr;
+
+            hWnd = rhs.hWnd;
+            rhs.hWnd = nullptr;
 
             return *this;
         }
@@ -158,8 +156,6 @@ namespace mtl {
             return create( (ACCEL*)&accels[0], (int)accels.size());
         }
 
-        
-
         void free()
         {
             if(accel_)
@@ -167,6 +163,7 @@ namespace mtl {
                 ::DestroyAcceleratorTable(accel_);
                 accel_ = nullptr;
             }
+            //hWnd = nullptr;
         }
 
         HACCEL operator*()
@@ -180,10 +177,31 @@ namespace mtl {
             accel_ = nullptr;
             return result;
         }
-    private:
 
+        HWND handle()
+        {
+            return hWnd;
+        }
+
+        bool translate(MSG& msg) const
+        {
+            if (::TranslateAccelerator(hWnd, accel_, &msg))
+            {
+                return true;
+            }
+            return false;
+        }
+
+    private:
+        HWND hWnd = nullptr;
         HACCEL accel_ = nullptr;
     };
+
+    inline accelerators& accelerator()
+    {
+        static accelerators acc;
+        return acc;
+    }
 
     template<class T>
     class thread_box;
@@ -193,7 +211,7 @@ namespace mtl {
     {
     public:
 
-        accelerators keyboardAccelerators;
+       // accelerators keyboardAccelerators;
         HWND hWnd = nullptr;
 
         using task_t = std::function<void()>;
@@ -285,15 +303,11 @@ namespace mtl {
             return run(msg_handler);
         }
 
-        int run(HWND wnd, accelerators accels)
+        int run(accelerators& accels)
         {
-            keyboardAccelerators = std::move(accels);
-            hWnd = wnd;
-
-            auto msg_handler = [this](MSG& msg)
+            auto msg_handler = [this,accels](MSG& msg)
             {
-                if(*keyboardAccelerators == nullptr) throw std::string("!!");
-                if(!TranslateAccelerator(hWnd, *keyboardAccelerators, &msg))
+                if(!accels.translate(msg))
                 {
                     ::TranslateMessage(&msg);
                     ::DispatchMessage(&msg);
@@ -387,7 +401,7 @@ namespace mtl {
         std::deque<task_t> queue_;
         HANDLE event_;
     };
-
+    /*
     template<class ... Args>
     class thread_box<void(Args...)>
     {
@@ -506,7 +520,7 @@ namespace mtl {
         std::deque<task_t> queue_;
         HANDLE event_;
     };
-
+    */
     inline thread_box<void()>& ui_thread()
     {
         static thread_box<void()> uithread;
@@ -524,6 +538,6 @@ namespace mtl {
         std::thread t(fun,std::forward<Args>(args)... );
         t.detach();
     }
-
+    
 }
 
