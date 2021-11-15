@@ -7,6 +7,8 @@
 #include <commctrl.h>
 
 #include <set>
+#include <thread>
+#include <mutex>
 
 namespace mtl {
 
@@ -1191,6 +1193,10 @@ namespace mtl {
         static UINT_PTR set_timeout(int milisecs, std::function<void()> cb)
         {
             UINT_PTR id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
+
+            std::mutex& m = getMutex();
+            std::lock_guard<std::mutex> guard(m);
+
             timers()[id] = cb;
             return id;
         }
@@ -1208,14 +1214,25 @@ namespace mtl {
         {
             if (id)
             {
+                ::KillTimer(nullptr, id);
+
+                std::mutex& m = getMutex();
+                std::lock_guard<std::mutex> guard(m);
+
                 if (timers().count(id))
                 {
                     timers().erase(id);
                 }
-                ::KillTimer(nullptr, id);
             }
         }
+
     private:
+
+        static std::mutex& getMutex()
+        {
+            static std::mutex m;
+            return m;
+        }
 
         static void timerProc(
             HWND,
@@ -1225,6 +1242,10 @@ namespace mtl {
         )
         {
             ::KillTimer(nullptr, id);
+
+            std::mutex& m = getMutex();
+            std::lock_guard<std::mutex> guard(m);
+
             if (timers().count(id) == 0)
             {
                 return;
