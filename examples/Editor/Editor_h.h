@@ -65,6 +65,13 @@ typedef interface IMTLEditor IMTLEditor;
 #endif 	/* __IMTLEditor_FWD_DEFINED__ */
 
 
+#ifndef __IMTLScriptHostObject_FWD_DEFINED__
+#define __IMTLScriptHostObject_FWD_DEFINED__
+typedef interface IMTLScriptHostObject IMTLScriptHostObject;
+
+#endif 	/* __IMTLScriptHostObject_FWD_DEFINED__ */
+
+
 #ifndef __MTLEditor_FWD_DEFINED__
 #define __MTLEditor_FWD_DEFINED__
 
@@ -546,6 +553,136 @@ EXTERN_C const IID IID_IMTLEditor;
 
 
 #endif 	/* __IMTLEditor_INTERFACE_DEFINED__ */
+
+
+#ifndef __IMTLScriptHostObject_INTERFACE_DEFINED__
+#define __IMTLScriptHostObject_INTERFACE_DEFINED__
+
+/* interface IMTLScriptHostObject */
+/* [dual][oleautomation][object][helpstring][uuid] */ 
+
+
+EXTERN_C const IID IID_IMTLScriptHostObject;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("4F2CB374-9FA4-4135-A98C-C82B0F425CD6")
+    IMTLScriptHostObject : public IDispatch
+    {
+    public:
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Import( 
+            /* [in] */ BSTR value) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IMTLScriptHostObjectVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IMTLScriptHostObject * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IMTLScriptHostObject * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfoCount )( 
+            IMTLScriptHostObject * This,
+            /* [out] */ UINT *pctinfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfo )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ UINT iTInfo,
+            /* [in] */ LCID lcid,
+            /* [out] */ ITypeInfo **ppTInfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ REFIID riid,
+            /* [size_is][in] */ LPOLESTR *rgszNames,
+            /* [range][in] */ UINT cNames,
+            /* [in] */ LCID lcid,
+            /* [size_is][out] */ DISPID *rgDispId);
+        
+        /* [local] */ HRESULT ( STDMETHODCALLTYPE *Invoke )( 
+            IMTLScriptHostObject * This,
+            /* [annotation][in] */ 
+            _In_  DISPID dispIdMember,
+            /* [annotation][in] */ 
+            _In_  REFIID riid,
+            /* [annotation][in] */ 
+            _In_  LCID lcid,
+            /* [annotation][in] */ 
+            _In_  WORD wFlags,
+            /* [annotation][out][in] */ 
+            _In_  DISPPARAMS *pDispParams,
+            /* [annotation][out] */ 
+            _Out_opt_  VARIANT *pVarResult,
+            /* [annotation][out] */ 
+            _Out_opt_  EXCEPINFO *pExcepInfo,
+            /* [annotation][out] */ 
+            _Out_opt_  UINT *puArgErr);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *Import )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ BSTR value);
+        
+        END_INTERFACE
+    } IMTLScriptHostObjectVtbl;
+
+    interface IMTLScriptHostObject
+    {
+        CONST_VTBL struct IMTLScriptHostObjectVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IMTLScriptHostObject_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IMTLScriptHostObject_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IMTLScriptHostObject_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IMTLScriptHostObject_GetTypeInfoCount(This,pctinfo)	\
+    ( (This)->lpVtbl -> GetTypeInfoCount(This,pctinfo) ) 
+
+#define IMTLScriptHostObject_GetTypeInfo(This,iTInfo,lcid,ppTInfo)	\
+    ( (This)->lpVtbl -> GetTypeInfo(This,iTInfo,lcid,ppTInfo) ) 
+
+#define IMTLScriptHostObject_GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)	\
+    ( (This)->lpVtbl -> GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId) ) 
+
+#define IMTLScriptHostObject_Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)	\
+    ( (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr) ) 
+
+
+#define IMTLScriptHostObject_Import(This,value)	\
+    ( (This)->lpVtbl -> Import(This,value) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IMTLScriptHostObject_INTERFACE_DEFINED__ */
 
 
 

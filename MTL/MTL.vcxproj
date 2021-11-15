@@ -81,6 +81,9 @@
     <ClInclude Include="include\MTL\win\gdi.h" />
     <ClInclude Include="include\MTL\win\layout.h" />
     <ClInclude Include="include\MTL\win\mdi.h" />
+    <ClInclude Include="include\mtl\win\rib.h" />
+    <ClInclude Include="include\mtl\win\taskbar.h" />
+    <ClInclude Include="include\mtl\win\taskdlg.h" />
     <ClInclude Include="include\MTL\win\wc.h" />
     <ClInclude Include="include\MTL\win\wnd.h" />
   </ItemGroup>

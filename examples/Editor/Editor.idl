@@ -68,6 +68,23 @@ interface IMTLEditor : IDispatch
 
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////
+// IMTLScriptHostObject
+////////////////////////////////////////////////////////////////////////////////////
+[
+	uuid(4F2CB374-9FA4-4135-A98C-C82B0F425CD6),
+	helpstring("IMTLScriptHostObject"),
+	object, oleautomation, dual
+]
+interface IMTLScriptHostObject : IDispatch
+{
+
+	[id(2),  helpstring("Import")]
+	HRESULT Import([in] BSTR value);
+
+}
+
 [
 	uuid(0F7E34D4-236B-421E-8437-B9ADA59D60AE),
 	version(1.0),
@@ -90,5 +107,6 @@ library MTLEditor
 		[default] interface     IMTLEditor;
 		interface IMTLEditorDocuments;
 		interface IMTLEditorDocument;
+		interface IMTLScriptHostObject;
 	}
 }

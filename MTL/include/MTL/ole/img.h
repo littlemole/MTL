@@ -39,7 +39,7 @@ namespace mtl {
 
             hr = ::WICConvertBitmapSource(GUID_WICPixelFormat32bppPBGRA, ipFrame, &ipBitmap);
             return ipBitmap;
-        }
+        } 
 
         inline punk<IWICBitmapSource> load_bitmap_source_from_stream(IStream* stream, CLSID decoder)
         {

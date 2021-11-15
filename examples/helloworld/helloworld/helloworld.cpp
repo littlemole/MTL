@@ -122,7 +122,11 @@ public:
 	{
 		// create chld button
 		RECT r = client_rect();
-		listview.create(IDC_BUTT, L"click me", handle, r, WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_SINGLESEL| LVS_EDITLABELS, LVS_EX_TRANSPARENTBKGND|LVS_EX_JUSTIFYCOLUMNS|LVS_EX_CHECKBOXES| LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT);// LVS_EX_AUTOSIZECOLUMNS);
+		listview.create(IDC_LIST, L"", handle, r, WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_SINGLESEL| LVS_EDITLABELS, LVS_EX_TRANSPARENTBKGND|LVS_EX_JUSTIFYCOLUMNS|LVS_EX_CHECKBOXES| LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT);// LVS_EX_AUTOSIZECOLUMNS);
+
+		r.left = r.right - 128;
+		r.bottom = r.top + 128;
+		butt.create(IDC_BUTT, L"click me", *listview, r, WS_VISIBLE | WS_CHILD| BS_DEFPUSHBUTTON,0);// LVS_EX_AUTOSIZECOLUMNS);
 		//LVS_EDITLABELS
 
 		enum_clipboard();
@@ -135,6 +139,14 @@ public:
 		listview.onClick([this](NMITEMACTIVATE* nmia)
 		{
 			set_text(listview.get_item(nmia->iItem));
+		});
+
+		butt.onCommand(BN_CLICKED, [this]() {
+			::MessageBox(handle, L"CLICK", L"CLCIKER", 0);
+		});		
+		
+		butt.onCommand(IDC_BUTT, [this]() {
+			::MessageBox(handle, L"CLICK", L"CLCIKER", 0);
 		});
 
 		return 0;
@@ -202,6 +214,12 @@ public:
 	{
 		RECT r = { 0,0,0,0 };
 		listview.move(clientRect);
+
+		RECT rc = clientRect;
+		rc.left = rc.right - 128;
+		rc.bottom = rc.top + 128;
+		butt.move(rc);
+
 //		do nothing here
 //		layout.do_layout(clientRect, r);
 		return 0;

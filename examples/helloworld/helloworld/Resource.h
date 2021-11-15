@@ -24,6 +24,7 @@
 #define IDC_COMBO1                      1002
 #define IDC_COMBO_LOVE                  1003
 #define IDC_BUTT						1004
+#define IDC_LIST						1005
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

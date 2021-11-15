@@ -1,8 +1,4 @@
-//#include "framework.h"
-
-#include "mtl/sdk.h"
-//#include "mtl/obj/impl.h"
-#include "mtl/ole/img.h"
+#include "framework.h"
 
 static void load_resource_ids()
 {
@@ -29,6 +25,7 @@ static void load_resource_ids()
         { 1002, "IDC_COMBO1" },
         { 1003, "IDC_COMBO_LOVE" },
         { 1004, "IDC_BUTT" },
+        { 1005, "IDC_LIST" },
         { -1, "IDC_STATIC" }
     });
 }

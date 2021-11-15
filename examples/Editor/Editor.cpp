@@ -8,12 +8,14 @@
 #include "MTL/obj/impl.h"
 #include "MTL/disp/disp.h"
 #include "MTL/disp/variant.h"
+#include "MTL/disp/bstr.h"
 #include "MTL/obj/localserver.h"
 #include "MTL/obj/marshall.h"
 #include "MTL/util/str.h"
 #include "MTL/script/script.h"
 #include "Editor_h.h"
 #include <Uxtheme.h>
+#include <queue>
 
 /*
 
@@ -362,13 +364,150 @@ public:
 
 };
 
+class Timeout
+{
+public:
+	unsigned int ts = 0;
+
+	bool operator< (const Timeout& rhs)
+	{
+		return ts > rhs.ts;
+	}
+};
+
+class Timeouts
+{
+public:
+
+	Timeouts()
+	{}
+
+	~Timeouts()
+	{
+		if (worker_.joinable())
+		{
+			worker_.join();
+		}
+	}
+
+private:
+
+	std::priority_queue<Timeout> timeouts;
+
+	std::thread worker_;
+	mtl::thread_box<void()> box_;
+
+	void threadfun()
+	{
+		mtl::MTA enter;
+		box_.wait(100);
+
+	
+	}
+};
+
+class Script
+{
+public:
+
+	Script(const std::wstring& s);
+
+	mtl::punk<IUnknown> hostObj;
+	mtl::punk<mtl::active_script> scripting;
+	Timeouts timeouts;
+
+	bool run(mtl::punk<IUnknown> obj)
+	{
+		scripting = new mtl::active_script(L"JScript");
+		scripting->add_named_object( *obj, L"mte");
+		scripting->add_named_object(*hostObj, L"", SCRIPTITEM_GLOBALMEMBERS| SCRIPTITEM_ISVISIBLE);
+		scripting->run_script(source_);
+
+		return true;
+	}
+
+	void importSource(std::string content)
+	{
+		mtl::punk<IActiveScriptParse> asp(*scripting->activeScript);
+		mtl::variant varResult;
+		if (asp)
+		{
+			EXCEPINFO ei;
+			::ZeroMemory(&ei, sizeof(ei));
+
+			HRESULT hr = asp->ParseScriptText(
+				*mtl::bstr(content),
+				NULL, 0, 0, 1, 0,
+				SCRIPTTEXT_ISPERSISTENT | SCRIPTTEXT_ISVISIBLE,
+				&varResult,
+				&ei
+			);
+		}
+	}
+
+private:
+	std::wstring source_;
+};
+
 
 class ScriptService
 {
 public:
 
-	mtl::punk<mtl::active_script> scripting;
+	ScriptService()
+	{
+	}
 
+	~ScriptService()
+	{
+		worker_.join();
+	}
+
+
+	void start(mtl::punk<IUnknown> unk)
+	{
+		worker_ = std::thread(&ScriptService::threadfun, this, mtl::proxy<IUnknown>(unk) );
+	}
+
+	void stop()
+	{
+		if (worker_.joinable())
+		{
+			box_.stop();
+		}
+	}
+
+	void run(std::wstring scriptSource)
+	{
+		box_.submit([this, scriptSource]()
+		{
+			Script* script = new Script(scriptSource);
+			std::wstring id = mtl::new_guid();
+			scripts[id] = std::unique_ptr<Script>(script);
+			bool done = scripts[id]->run(unk_);
+			if (done)
+			{
+				scripts.erase(id);
+			}
+		});
+	}
+
+private:
+
+	void threadfun( mtl::proxy<IUnknown> p)
+	{
+		mtl::STA enter;
+
+		unk_ = *p;
+		box_.run();
+		unk_.release();
+	}
+
+	mtl::punk<IUnknown> unk_;
+	std::thread worker_;
+	mtl::thread_box<void()> box_;
+
+	std::map<std::wstring, std::unique_ptr<Script>> scripts;
 };
 
 
@@ -697,8 +836,8 @@ public:
 
 	virtual LRESULT wm_destroy() override
 	{
-		//onCmd.fire(IDM_EXIT);
-		::PostQuitMessage(0);
+		onCmd.fire(IDM_EXIT);
+//		::PostQuitMessage(0);
 		return 0;
 	}
 
@@ -915,6 +1054,7 @@ public:
 		toolBar.add_button(IDM_FILE_OPEN);
 		toolBar.add_button(IDM_SAVE,0, BTNS_DROPDOWN);
 		toolBar.add_button(IDM_EDIT_FIND,0, BTNS_DROPDOWN);
+		toolBar.add_button(IDM_RUN);
 		toolBar.set_color_theme(colorTheme);
 
 
@@ -1001,6 +1141,27 @@ public:
 	virtual HRESULT __stdcall remove(VARIANT idx) override;
 };
 
+class MTLScriptHostObject :
+	public mtl::implements<MTLScriptHostObject(mtl::dual<IMTLScriptHostObject>)>
+{
+public:
+
+	MTLScriptHostObject(Script* script)
+		: script_(script)
+	{}
+
+	virtual HRESULT Import(BSTR value)
+	{
+		std::string s = mtl::slurp(mtl::bstr_view(value).str());
+		script_->importSource(s);
+		return S_OK;
+	}
+
+private:
+	Script* script_ = nullptr;
+};
+
+
 
 class MTLEditor :
 	public mtl::implements<MTLEditor(mtl::dual<IMTLEditor>)>
@@ -1064,8 +1225,8 @@ public:
 	EditorModel model;
 	EditorView view;
 
-	mtl::rotten<IMTLEditor> editor;
-	mtl::punk<mtl::active_script> scripting;
+	mtl::punk<IMTLEditor> editor;
+	//mtl::punk<mtl::active_script> scripting;
 
 	// sinks for demo purpose
 	// real value of sink is for
@@ -1158,17 +1319,17 @@ public:
 	}
 
 
-	EditorController(mtl::options& opt,FileService& fs, RotService& rs, ScriptService sc)
+	EditorController(mtl::options& opt,FileService& fs, RotService& rs, ScriptService& sc)
 		: fileService(fs), 
 		  rotService(rs), 
 		  scriptService(sc), 
-		  model(fs, rs, sc), 
-		  editor(__uuidof(MTLEditor),model.instanceId)
+		  model(fs, rs, sc)
+		  //editor(__uuidof(MTLEditor),model.instanceId)
 	{
-		scripting = new mtl::active_script(L"JScript");
+		//scripting = new mtl::active_script(L"JScript");
 
-		mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(this));
-		editor = mtlEditor;
+		//mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(this));
+		//editor = mtlEditor;
 
 
 		model.onFileChanged([this](std::wstring id, std::wstring path) 
@@ -1327,14 +1488,16 @@ public:
 		});
 
 
-		view.mainWnd.onCmd(ID_EDIT_RUN, [this]()
+		view.toolBar.onCommand(IDM_RUN, [this]()
 		{
 			if (model.activeDocument.empty()) return;
 
-			mtl::punk<IMTLEditor> editor(*this->editor);
-			scripting->add_named_object(*editor, L"moe");
+			//mtl::punk<IMTLEditor> editor(*this->editor);
+			//scripting->add_named_object(*editor, L"moe");
 			std::string utf8 = view.documentViews[model.activeDocument]->get_text();
-			scripting->run_script(mtl::to_wstring(utf8));
+			scriptService.run( mtl::to_wstring(utf8) );
+
+			//scripting->run_script(mtl::to_wstring(utf8));
 
 		});
 
@@ -1484,9 +1647,12 @@ public:
 			}
 		});
 
-		view.mainWnd.onCmd(IDM_EXIT, []()
+		view.mainWnd.onCmd(IDM_EXIT, [this]()
 		{
+//			view.mainWnd.destroy();
+			scriptService.stop();
 			::PostQuitMessage(0);
+
 		});
 
 		view.tabControl.onDragOut([this](std::wstring id)
@@ -2053,15 +2219,37 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		{ L"open", L"split"}
 	);
 
-	mtl::application app(hInstance);
+	int r = 0;
 
-	FileService fileService;
-	RotService rotService;
-	ScriptService scriptService;
+	{
+		mtl::application app(hInstance);
 
-	EditorController controller(opt, fileService, rotService, scriptService);
 
-	mtl::accelerator() = mtl::accelerators( *controller.view.mainWnd, IDC_EDITOR);
+		FileService fileService;
+		RotService rotService;
+		ScriptService scriptService;
 
-	return app.run(mtl::accelerator());
+		EditorController controller(opt, fileService, rotService, scriptService);
+
+		mtl::rotten<IMTLEditor> editor(__uuidof(MTLEditor), controller.model.instanceId);
+		mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(&controller));
+		editor = mtlEditor;
+		controller.editor = *editor;
+
+		scriptService.start(controller.editor);
+
+
+		mtl::accelerator() = mtl::accelerators(*controller.view.mainWnd, IDC_EDITOR);
+
+		r = app.run(mtl::accelerator());
+	}
+	return r;
+}
+
+
+Script::Script(const std::wstring& s)
+	: source_(s)
+{
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this));
+	host.query_interface( &hostObj );
 }

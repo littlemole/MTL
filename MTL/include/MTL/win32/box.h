@@ -203,9 +203,13 @@ namespace mtl {
         return acc;
     }
 
+
+    // THERE IS ONLY ONE THREADBOX !!!
     template<class T>
     class thread_box;
 
+    // IDEA: submit with timeout, default = now()
+    // priority_queue based on timeout
     template<>
     class thread_box<void()>
     {
@@ -324,6 +328,12 @@ namespace mtl {
             {
                 HANDLE handles = event_;
                 DWORD r = ::MsgWaitForMultipleObjectsEx(1, &handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE | MWMO_ALERTABLE);
+
+                if (r == WAIT_TIMEOUT)
+                {
+
+                    continue;
+                }
                 if (r == WAIT_IO_COMPLETION)
                 {
                     continue;
@@ -331,19 +341,19 @@ namespace mtl {
 
                 if (r == WAIT_OBJECT_0)
                 {
-                    pull();
-                    continue;
+                   pull();
+                   continue;
+                }
+
+                if (!::GetMessage(&msg, 0, 0, 0))
+                {
+                    break;
                 }
 
                 if (!::IsWindow(msg.hwnd))
                 {
                     OutputDebugString(L"INVALID WIND\r\n");
                     //continue;
-                }
-
-                if (!::GetMessage(&msg, 0, 0, 0))
-                {
-                    break;
                 }
 
                 if (modeless_dlg().is_dialog_message(msg))

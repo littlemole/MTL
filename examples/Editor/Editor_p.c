@@ -105,6 +105,13 @@ extern const MIDL_SERVER_INFO IMTLEditor_ServerInfo;
 extern const MIDL_STUBLESS_PROXY_INFO IMTLEditor_ProxyInfo;
 
 
+extern const MIDL_STUB_DESC Object_StubDesc;
+
+
+extern const MIDL_SERVER_INFO IMTLScriptHostObject_ServerInfo;
+extern const MIDL_STUBLESS_PROXY_INFO IMTLScriptHostObject_ProxyInfo;
+
+
 extern const USER_MARSHAL_ROUTINE_QUADRUPLE NDR64_UserMarshalRoutines[ WIRE_MARSHAL_TABLE_SIZE ];
 extern const USER_MARSHAL_ROUTINE_QUADRUPLE UserMarshalRoutines[ WIRE_MARSHAL_TABLE_SIZE ];
 
@@ -310,6 +317,9 @@ static const Editor_MIDL_PROC_FORMAT_STRING Editor__MIDL_ProcFormatString =
 /* 232 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
+	/* Procedure Import */
+
+
 	/* Procedure SayHello */
 
 /* 234 */	0x33,		/* FC_AUTO_HANDLE */
@@ -328,11 +338,17 @@ static const Editor_MIDL_PROC_FORMAT_STRING Editor__MIDL_ProcFormatString =
 /* 256 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 258 */	NdrFcShort( 0x0 ),	/* 0 */
 
+	/* Parameter value */
+
+
 	/* Parameter message */
 
 /* 260 */	NdrFcShort( 0x8b ),	/* Flags:  must size, must free, in, by val, */
 /* 262 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
 /* 264 */	NdrFcShort( 0x4bc ),	/* Type Offset=1212 */
+
+	/* Return value */
+
 
 	/* Return value */
 
@@ -1296,6 +1312,21 @@ static const unsigned short IMTLEditor_FormatStringOffsetTable[] =
 
 
 
+/* Object interface: IMTLScriptHostObject, ver. 0.0,
+   GUID={0x4F2CB374,0x9FA4,0x4135,{0xA9,0x8C,0xC8,0x2B,0x0F,0x42,0x5C,0xD6}} */
+
+#pragma code_seg(".orpc")
+static const unsigned short IMTLScriptHostObject_FormatStringOffsetTable[] =
+    {
+    (unsigned short) -1,
+    (unsigned short) -1,
+    (unsigned short) -1,
+    (unsigned short) -1,
+    234
+    };
+
+
+
 #endif /* defined(_M_AMD64)*/
 
 
@@ -1334,8 +1365,28 @@ extern const USER_MARSHAL_ROUTINE_QUADRUPLE UserMarshalRoutines[ WIRE_MARSHAL_TA
 
 typedef 
 NDR64_FORMAT_CHAR
-__midl_frag196_t;
-extern const __midl_frag196_t __midl_frag196;
+__midl_frag200_t;
+extern const __midl_frag200_t __midl_frag200;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
+__midl_frag199_t;
+extern const __midl_frag199_t __midl_frag199;
+
+typedef 
+struct _NDR64_USER_MARSHAL_FORMAT
+__midl_frag198_t;
+extern const __midl_frag198_t __midl_frag198;
+
+typedef 
+struct 
+{
+    struct _NDR64_PROC_FORMAT frag1;
+    struct _NDR64_PARAM_FORMAT frag2;
+    struct _NDR64_PARAM_FORMAT frag3;
+}
+__midl_frag197_t;
+extern const __midl_frag197_t __midl_frag197;
 
 typedef 
 struct _NDR64_CONSTANT_IID_FORMAT
@@ -1411,26 +1462,6 @@ struct
 }
 __midl_frag182_t;
 extern const __midl_frag182_t __midl_frag182;
-
-typedef 
-struct _NDR64_POINTER_FORMAT
-__midl_frag180_t;
-extern const __midl_frag180_t __midl_frag180;
-
-typedef 
-struct _NDR64_USER_MARSHAL_FORMAT
-__midl_frag179_t;
-extern const __midl_frag179_t __midl_frag179;
-
-typedef 
-struct 
-{
-    struct _NDR64_PROC_FORMAT frag1;
-    struct _NDR64_PARAM_FORMAT frag2;
-    struct _NDR64_PARAM_FORMAT frag3;
-}
-__midl_frag178_t;
-extern const __midl_frag178_t __midl_frag178;
 
 typedef 
 struct _NDR64_CONSTANT_IID_FORMAT
@@ -2227,8 +2258,94 @@ NDR64_FORMAT_UINT32
 __midl_frag1_t;
 extern const __midl_frag1_t __midl_frag1;
 
-static const __midl_frag196_t __midl_frag196 =
+static const __midl_frag200_t __midl_frag200 =
 0x5    /* FC64_INT32 */;
+
+static const __midl_frag199_t __midl_frag199 =
+{ 
+/* *FLAGGED_WORD_BLOB */
+    0x21,    /* FC64_UP */
+    (NDR64_UINT8) 0 /* 0x0 */,
+    (NDR64_UINT16) 0 /* 0x0 */,
+    &__midl_frag6
+};
+
+static const __midl_frag198_t __midl_frag198 =
+{ 
+/* wireBSTR */
+    0xa2,    /* FC64_USER_MARSHAL */
+    (NDR64_UINT8) 128 /* 0x80 */,
+    (NDR64_UINT16) 0 /* 0x0 */,
+    (NDR64_UINT16) 7 /* 0x7 */,
+    (NDR64_UINT16) 8 /* 0x8 */,
+    (NDR64_UINT32) 8 /* 0x8 */,
+    (NDR64_UINT32) 0 /* 0x0 */,
+    &__midl_frag199
+};
+
+static const __midl_frag197_t __midl_frag197 =
+{ 
+/* Import */
+    { 
+    /* Import */      /* procedure Import */
+        (NDR64_UINT32) 2883907 /* 0x2c0143 */,    /* auto handle */ /* IsIntrepreted, [object], ClientMustSize, HasReturn, ServerCorrelation */
+        (NDR64_UINT32) 24 /* 0x18 */ ,  /* Stack size */
+        (NDR64_UINT32) 0 /* 0x0 */,
+        (NDR64_UINT32) 8 /* 0x8 */,
+        (NDR64_UINT16) 0 /* 0x0 */,
+        (NDR64_UINT16) 0 /* 0x0 */,
+        (NDR64_UINT16) 2 /* 0x2 */,
+        (NDR64_UINT16) 0 /* 0x0 */
+    },
+    { 
+    /* value */      /* parameter value */
+        &__midl_frag198,
+        { 
+        /* value */
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            (NDR64_UINT16) 0 /* 0x0 */,
+            0
+        },    /* MustSize, MustFree, [in], ByValue */
+        (NDR64_UINT16) 0 /* 0x0 */,
+        8 /* 0x8 */,   /* Stack offset */
+    },
+    { 
+    /* HRESULT */      /* parameter HRESULT */
+        &__midl_frag200,
+        { 
+        /* HRESULT */
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            (NDR64_UINT16) 0 /* 0x0 */,
+            0
+        },    /* [out], IsReturn, Basetype, ByValue */
+        (NDR64_UINT16) 0 /* 0x0 */,
+        16 /* 0x10 */,   /* Stack offset */
+    }
+};
 
 static const __midl_frag195_t __midl_frag195 =
 { 
@@ -2302,7 +2419,7 @@ static const __midl_frag192_t __midl_frag192 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -2397,7 +2514,7 @@ static const __midl_frag187_t __midl_frag187 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -2492,93 +2609,7 @@ static const __midl_frag182_t __midl_frag182 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
-        { 
-        /* HRESULT */
-            0,
-            0,
-            0,
-            0,
-            1,
-            1,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            (NDR64_UINT16) 0 /* 0x0 */,
-            0
-        },    /* [out], IsReturn, Basetype, ByValue */
-        (NDR64_UINT16) 0 /* 0x0 */,
-        16 /* 0x10 */,   /* Stack offset */
-    }
-};
-
-static const __midl_frag180_t __midl_frag180 =
-{ 
-/* *FLAGGED_WORD_BLOB */
-    0x21,    /* FC64_UP */
-    (NDR64_UINT8) 0 /* 0x0 */,
-    (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag6
-};
-
-static const __midl_frag179_t __midl_frag179 =
-{ 
-/* wireBSTR */
-    0xa2,    /* FC64_USER_MARSHAL */
-    (NDR64_UINT8) 128 /* 0x80 */,
-    (NDR64_UINT16) 0 /* 0x0 */,
-    (NDR64_UINT16) 7 /* 0x7 */,
-    (NDR64_UINT16) 8 /* 0x8 */,
-    (NDR64_UINT32) 8 /* 0x8 */,
-    (NDR64_UINT32) 0 /* 0x0 */,
-    &__midl_frag180
-};
-
-static const __midl_frag178_t __midl_frag178 =
-{ 
-/* SayHello */
-    { 
-    /* SayHello */      /* procedure SayHello */
-        (NDR64_UINT32) 2883907 /* 0x2c0143 */,    /* auto handle */ /* IsIntrepreted, [object], ClientMustSize, HasReturn, ServerCorrelation */
-        (NDR64_UINT32) 24 /* 0x18 */ ,  /* Stack size */
-        (NDR64_UINT32) 0 /* 0x0 */,
-        (NDR64_UINT32) 8 /* 0x8 */,
-        (NDR64_UINT16) 0 /* 0x0 */,
-        (NDR64_UINT16) 0 /* 0x0 */,
-        (NDR64_UINT16) 2 /* 0x2 */,
-        (NDR64_UINT16) 0 /* 0x0 */
-    },
-    { 
-    /* message */      /* parameter message */
-        &__midl_frag179,
-        { 
-        /* message */
-            1,
-            1,
-            0,
-            1,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            (NDR64_UINT16) 0 /* 0x0 */,
-            0
-        },    /* MustSize, MustFree, [in], ByValue */
-        (NDR64_UINT16) 0 /* 0x0 */,
-        8 /* 0x8 */,   /* Stack offset */
-    },
-    { 
-    /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -2640,7 +2671,7 @@ static const __midl_frag167_t __midl_frag167 =
     0x21,    /* FC64_UP */
     (NDR64_UINT8) 8 /* 0x8 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag196
+    &__midl_frag200
 };
 
 static const __midl_frag164_t __midl_frag164 =
@@ -2817,7 +2848,7 @@ static const __midl_frag136_t __midl_frag136 =
     0x21,    /* FC64_UP */
     (NDR64_UINT8) 16 /* 0x10 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag180
+    &__midl_frag199
 };
 
 static const __midl_frag135_t __midl_frag135 =
@@ -3022,7 +3053,7 @@ static const __midl_frag107_t __midl_frag107 =
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
         (NDR64_UINT32) 4 /* 0x4 */,
-        &__midl_frag196
+        &__midl_frag200
     }
 };
 
@@ -4097,7 +4128,7 @@ static const __midl_frag55_t __midl_frag55 =
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
         (NDR64_UINT32) 8 /* 0x8 */,
-        &__midl_frag180
+        &__midl_frag199
     }
 };
 
@@ -4429,7 +4460,7 @@ static const __midl_frag30_t __midl_frag30 =
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 3 /* 0x3 */,
-        &__midl_frag196,
+        &__midl_frag200,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
@@ -4465,7 +4496,7 @@ static const __midl_frag30_t __midl_frag30 =
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 10 /* 0xa */,
-        &__midl_frag196,
+        &__midl_frag200,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
@@ -4483,7 +4514,7 @@ static const __midl_frag30_t __midl_frag30 =
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 8 /* 0x8 */,
-        &__midl_frag180,
+        &__midl_frag199,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
@@ -4621,7 +4652,7 @@ static const __midl_frag30_t __midl_frag30 =
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 19 /* 0x13 */,
-        &__midl_frag196,
+        &__midl_frag200,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
@@ -4633,13 +4664,13 @@ static const __midl_frag30_t __midl_frag30 =
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 22 /* 0x16 */,
-        &__midl_frag196,
+        &__midl_frag200,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
     /* struct _NDR64_UNION_ARM */
         (NDR64_INT64) 23 /* 0x17 */,
-        &__midl_frag196,
+        &__midl_frag200,
         (NDR64_UINT32) 0 /* 0x0 */
     },
     { 
@@ -4819,7 +4850,7 @@ static const __midl_frag25_t __midl_frag25 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -4849,7 +4880,7 @@ static const __midl_frag22_t __midl_frag22 =
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 12 /* 0xc */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag196
+    &__midl_frag200
 };
 
 static const __midl_frag21_t __midl_frag21 =
@@ -4868,7 +4899,7 @@ static const __midl_frag21_t __midl_frag21 =
     },
     { 
     /* cnt */      /* parameter cnt */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* cnt */
             0,
@@ -4892,7 +4923,7 @@ static const __midl_frag21_t __midl_frag21 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -4987,7 +5018,7 @@ static const __midl_frag16_t __midl_frag16 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag196,
+        &__midl_frag200,
         { 
         /* HRESULT */
             0,
@@ -5311,7 +5342,7 @@ static const FormatInfoRef IMTLEditor_Ndr64ProcTable[] =
     (FormatInfoRef)(LONG_PTR) -1,
     (FormatInfoRef)(LONG_PTR) -1,
     (FormatInfoRef)(LONG_PTR) -1,
-    &__midl_frag178,
+    &__midl_frag197,
     &__midl_frag182,
     &__midl_frag187,
     &__midl_frag192
@@ -5404,6 +5435,101 @@ CInterfaceStubVtbl _IMTLEditorStubVtbl =
     CStdStubBuffer_DELEGATING_METHODS
 };
 
+
+/* Object interface: IMTLScriptHostObject, ver. 0.0,
+   GUID={0x4F2CB374,0x9FA4,0x4135,{0xA9,0x8C,0xC8,0x2B,0x0F,0x42,0x5C,0xD6}} */
+
+#pragma code_seg(".orpc")
+static const FormatInfoRef IMTLScriptHostObject_Ndr64ProcTable[] =
+    {
+    (FormatInfoRef)(LONG_PTR) -1,
+    (FormatInfoRef)(LONG_PTR) -1,
+    (FormatInfoRef)(LONG_PTR) -1,
+    (FormatInfoRef)(LONG_PTR) -1,
+    &__midl_frag197
+    };
+
+
+static const MIDL_SYNTAX_INFO IMTLScriptHostObject_SyntaxInfo [  2 ] = 
+    {
+    {
+    {{0x8A885D04,0x1CEB,0x11C9,{0x9F,0xE8,0x08,0x00,0x2B,0x10,0x48,0x60}},{2,0}},
+    0,
+    Editor__MIDL_ProcFormatString.Format,
+    &IMTLScriptHostObject_FormatStringOffsetTable[-3],
+    Editor__MIDL_TypeFormatString.Format,
+    UserMarshalRoutines,
+    0,
+    0
+    }
+    ,{
+    {{0x71710533,0xbeba,0x4937,{0x83,0x19,0xb5,0xdb,0xef,0x9c,0xcc,0x36}},{1,0}},
+    0,
+    0 ,
+    (unsigned short *) &IMTLScriptHostObject_Ndr64ProcTable[-3],
+    0,
+    NDR64_UserMarshalRoutines,
+    0,
+    0
+    }
+    };
+
+static const MIDL_STUBLESS_PROXY_INFO IMTLScriptHostObject_ProxyInfo =
+    {
+    &Object_StubDesc,
+    Editor__MIDL_ProcFormatString.Format,
+    &IMTLScriptHostObject_FormatStringOffsetTable[-3],
+    (RPC_SYNTAX_IDENTIFIER*)&_RpcTransferSyntax,
+    2,
+    (MIDL_SYNTAX_INFO*)IMTLScriptHostObject_SyntaxInfo
+    
+    };
+
+
+static const MIDL_SERVER_INFO IMTLScriptHostObject_ServerInfo = 
+    {
+    &Object_StubDesc,
+    0,
+    Editor__MIDL_ProcFormatString.Format,
+    (unsigned short *) &IMTLScriptHostObject_FormatStringOffsetTable[-3],
+    0,
+    (RPC_SYNTAX_IDENTIFIER*)&_NDR64_RpcTransferSyntax,
+    2,
+    (MIDL_SYNTAX_INFO*)IMTLScriptHostObject_SyntaxInfo
+    };
+CINTERFACE_PROXY_VTABLE(8) _IMTLScriptHostObjectProxyVtbl = 
+{
+    &IMTLScriptHostObject_ProxyInfo,
+    &IID_IMTLScriptHostObject,
+    IUnknown_QueryInterface_Proxy,
+    IUnknown_AddRef_Proxy,
+    IUnknown_Release_Proxy ,
+    0 /* IDispatch::GetTypeInfoCount */ ,
+    0 /* IDispatch::GetTypeInfo */ ,
+    0 /* IDispatch::GetIDsOfNames */ ,
+    0 /* IDispatch_Invoke_Proxy */ ,
+    (void *) (INT_PTR) -1 /* IMTLScriptHostObject::Import */
+};
+
+
+static const PRPC_STUB_FUNCTION IMTLScriptHostObject_table[] =
+{
+    STUB_FORWARDING_FUNCTION,
+    STUB_FORWARDING_FUNCTION,
+    STUB_FORWARDING_FUNCTION,
+    STUB_FORWARDING_FUNCTION,
+    NdrStubCall3
+};
+
+CInterfaceStubVtbl _IMTLScriptHostObjectStubVtbl =
+{
+    &IID_IMTLScriptHostObject,
+    &IMTLScriptHostObject_ServerInfo,
+    8,
+    &IMTLScriptHostObject_table[-3],
+    CStdStubBuffer_DELEGATING_METHODS
+};
+
 static const MIDL_STUB_DESC Object_StubDesc = 
     {
     0,
@@ -5432,6 +5558,7 @@ const CInterfaceProxyVtbl * const _Editor_ProxyVtblList[] =
 {
     ( CInterfaceProxyVtbl *) &_IMTLEditorDocumentsProxyVtbl,
     ( CInterfaceProxyVtbl *) &_IMTLEditorDocumentProxyVtbl,
+    ( CInterfaceProxyVtbl *) &_IMTLScriptHostObjectProxyVtbl,
     ( CInterfaceProxyVtbl *) &_IMTLEditorProxyVtbl,
     0
 };
@@ -5440,6 +5567,7 @@ const CInterfaceStubVtbl * const _Editor_StubVtblList[] =
 {
     ( CInterfaceStubVtbl *) &_IMTLEditorDocumentsStubVtbl,
     ( CInterfaceStubVtbl *) &_IMTLEditorDocumentStubVtbl,
+    ( CInterfaceStubVtbl *) &_IMTLScriptHostObjectStubVtbl,
     ( CInterfaceStubVtbl *) &_IMTLEditorStubVtbl,
     0
 };
@@ -5448,12 +5576,14 @@ PCInterfaceName const _Editor_InterfaceNamesList[] =
 {
     "IMTLEditorDocuments",
     "IMTLEditorDocument",
+    "IMTLScriptHostObject",
     "IMTLEditor",
     0
 };
 
 const IID *  const _Editor_BaseIIDList[] = 
 {
+    &IID_IDispatch,
     &IID_IDispatch,
     &IID_IDispatch,
     &IID_IDispatch,
@@ -5467,9 +5597,9 @@ int __stdcall _Editor_IID_Lookup( const IID * pIID, int * pIndex )
 {
     IID_BS_LOOKUP_SETUP
 
-    IID_BS_LOOKUP_INITIAL_TEST( _Editor, 3, 2 )
+    IID_BS_LOOKUP_INITIAL_TEST( _Editor, 4, 2 )
     IID_BS_LOOKUP_NEXT_TEST( _Editor, 1 )
-    IID_BS_LOOKUP_RETURN_RESULT( _Editor, 3, *pIndex )
+    IID_BS_LOOKUP_RETURN_RESULT( _Editor, 4, *pIndex )
     
 }
 
@@ -5480,7 +5610,7 @@ const ExtendedProxyFileInfo Editor_ProxyFileInfo =
     (const PCInterfaceName * ) & _Editor_InterfaceNamesList,
     (const IID ** ) & _Editor_BaseIIDList,
     & _Editor_IID_Lookup, 
-    3,
+    4,
     2,
     0, /* table of [async_uuid] interfaces */
     0, /* Filler1 */
