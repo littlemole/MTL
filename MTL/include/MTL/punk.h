@@ -417,7 +417,7 @@ namespace mtl {
 
         const details::protect_refcnt<I>* operator->() const { return (const details::protect_refcnt<I>*) interface_; }
         details::protect_refcnt<I>* operator->()             { return (details::protect_refcnt<I>*) interface_; }
-        I* operator*()                                       { return interface_; }
+        I* operator*()                                 const { return interface_; }
         I** operator&()                                      { return &interface_; }
         operator bool() const                                { return (interface_ != 0); }
         bool operator!() const                               { return (interface_ == 0); }

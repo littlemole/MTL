@@ -237,6 +237,7 @@ namespace mtl {
                 stop_ = true;
                 ::SetEvent(event_);
             }
+            ::SleepEx(100, TRUE);
         }
 
         bool stopped()

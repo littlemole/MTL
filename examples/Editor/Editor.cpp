@@ -214,6 +214,22 @@ public:
 		return mtl::path();
 	}
 
+	mtl::path find_in(const std::wstring& relative_path, const std::wstring& root)
+	{
+		mtl::path p(relative_path);
+		if (p.exists())
+		{
+			return p;
+		}
+
+		mtl::path tmp(root + L"\\" + relative_path);
+		if (tmp.exists())
+		{
+			return tmp;
+		}
+		return find(relative_path);
+	}
+
 	IO_ERROR read(const std::wstring& path, long encoding, bool readonly, std::function<void(IO_ERROR,TextFile)> cb)
 	{
 		mtl::path p = find(path);
@@ -364,71 +380,78 @@ public:
 
 };
 
-class Timeout
-{
-public:
-	unsigned int ts = 0;
 
-	bool operator< (const Timeout& rhs)
-	{
-		return ts > rhs.ts;
-	}
-};
 
-class Timeouts
-{
-public:
-
-	Timeouts()
-	{}
-
-	~Timeouts()
-	{
-		if (worker_.joinable())
-		{
-			worker_.join();
-		}
-	}
-
-private:
-
-	std::priority_queue<Timeout> timeouts;
-
-	std::thread worker_;
-	mtl::thread_box<void()> box_;
-
-	void threadfun()
-	{
-		mtl::MTA enter;
-		box_.wait(100);
-
-	
-	}
-};
+class ScriptService;
 
 class Script
 {
 public:
 
-	Script(const std::wstring& s);
 
-	mtl::punk<IUnknown> hostObj;
-	mtl::punk<mtl::active_script> scripting;
-	Timeouts timeouts;
+	Script(ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
+
+	~Script()
+	{
+		if (scripting_ && scripting_->activeScript)
+		{
+			close();
+		}
+	}
+
 
 	bool run(mtl::punk<IUnknown> obj)
 	{
-		scripting = new mtl::active_script(L"JScript");
-		scripting->add_named_object( *obj, L"mte");
-		scripting->add_named_object(*hostObj, L"", SCRIPTITEM_GLOBALMEMBERS| SCRIPTITEM_ISVISIBLE);
-		scripting->run_script(source_);
+		scripting_ = new mtl::active_script(L"JScript");
+		scripting_->add_named_object( *obj, L"mte");
+		scripting_->add_named_object(*hostObj_, L"", SCRIPTITEM_GLOBALMEMBERS| SCRIPTITEM_ISVISIBLE);
+		scripting_->onError = [this](long line, long pos, std::wstring err, std::wstring src)
+		{
+			if (onError_)
+			{
+				onError_(line, pos, err, src);
+			}
+		};
+		scripting_->run_script(source_);
 
-		return true;
+		if (!wait_)
+		{
+			close();
+			return true;
+		}
+
+		return false;
 	}
 
-	void importSource(std::string content)
+	unsigned int set_timeout(unsigned int ms, IDispatch* cb)
 	{
-		mtl::punk<IActiveScriptParse> asp(*scripting->activeScript);
+		mtl::punk<IDispatch> disp(cb);
+
+		unsigned int id = mtl::timer::set_timeout(ms, [disp]()
+		{
+			DISPPARAMS dispParams = { 0, 0, 0, 0 };
+			IDispatch* d = *disp;
+			if (d)
+			{
+				d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, 0, 0);
+			}
+		});
+
+		return id;
+	}
+
+
+	void close();
+
+	void importSource(std::wstring file)
+	{
+		std::wstring root = mtl::path( filename_ ).parent_dir();
+
+		mtl::path p = fileService_.find_in(file, root);
+
+		std::string content = mtl::slurp(p.str());
+
+		mtl::punk<IActiveScriptParse> asp(*scripting_->activeScript);
 		mtl::variant varResult;
 		if (asp)
 		{
@@ -445,8 +468,31 @@ public:
 		}
 	}
 
+	std::wstring filename() { return filename_;  }
+	std::wstring id() { return id_; }
+	bool wait() { return wait_;  }
+	void wait(bool b) { wait_ = b; }
+
+	void onError(std::function<void(long, long, std::wstring, std::wstring)> cb)
+	{
+		onError_ = cb;
+	}
+
 private:
+	ScriptService& scriptService_;
+	FileService& fileService_;
+
+	bool wait_ = false;
+
+	std::wstring id_;
 	std::wstring source_;
+	std::wstring filename_;
+
+	mtl::punk<IUnknown> hostObj_;
+	mtl::punk<mtl::active_script> scripting_;
+
+	std::function<void(long, long, std::wstring, std::wstring)> onError_;
+
 };
 
 
@@ -454,13 +500,19 @@ class ScriptService
 {
 public:
 
-	ScriptService()
+	FileService& fileService;
+
+	ScriptService(FileService& service)
+		: fileService(service)
 	{
 	}
 
 	~ScriptService()
 	{
-		worker_.join();
+		if (worker_.joinable())
+		{
+			worker_.join();
+		}
 	}
 
 
@@ -477,18 +529,43 @@ public:
 		}
 	}
 
-	void run(std::wstring scriptSource)
+	void run(std::wstring scriptSource, std::wstring filename, std::function<void(long,long,std::wstring,std::wstring)> onError)
 	{
-		box_.submit([this, scriptSource]()
+		box_.submit( [this, scriptSource, filename, onError] ()
 		{
-			Script* script = new Script(scriptSource);
 			std::wstring id = mtl::new_guid();
+			Script* script = new Script(*this, fileService, id, scriptSource, filename);
+			script->onError(onError);
+
 			scripts[id] = std::unique_ptr<Script>(script);
 			bool done = scripts[id]->run(unk_);
 			if (done)
 			{
 				scripts.erase(id);
 			}
+		});
+	}
+
+	void erase(std::wstring id)
+	{
+		scripts.erase(id);
+	}
+
+	void getScripts( std::function<void(std::map<std::wstring, std::wstring>)> cb)
+	{
+		box_.submit([this,cb]() 
+		{
+			std::map<std::wstring, std::wstring> result;
+
+			for (auto& it : scripts)
+			{
+				result[it.first] = it.second->filename();
+			}
+
+			mtl::ui_thread().submit([cb,result]() 
+			{
+				cb(result);
+			});
 		});
 	}
 
@@ -1038,7 +1115,7 @@ public:
 		//mainWnd.menu.item(ID_EDIT_COPY).checked = true;
 
 		// create main window
-		HWND hWnd = mainWnd.create(L"MTL Editor", WS_OVERLAPPEDWINDOW, 0, 0);// *mainWnd.menu);
+		HWND hWnd = mainWnd.create(L"MTL Editor", WS_OVERLAPPEDWINDOW, 0, *mainWnd.menu);
 
 		HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
 		mainWnd.set_icon(hIcon);
@@ -1150,10 +1227,29 @@ public:
 		: script_(script)
 	{}
 
-	virtual HRESULT Import(BSTR value)
+	virtual HRESULT __stdcall Import(BSTR value) override
 	{
-		std::string s = mtl::slurp(mtl::bstr_view(value).str());
-		script_->importSource(s);
+		script_->importSource(mtl::bstr_view(value).str());
+		return S_OK;
+	}
+
+	virtual HRESULT __stdcall setTimeout( long ms, IDispatch* cb, long* id) override
+	{
+		unsigned int i = script_->set_timeout(ms, cb);
+		if (id) *id = i;
+
+		return S_OK;
+	}
+
+	virtual HRESULT __stdcall Wait() override
+	{
+		script_->wait(true);;
+		return S_OK;
+	}
+
+	virtual HRESULT __stdcall Quit() override
+	{
+		script_->close();
 		return S_OK;
 	}
 
@@ -1495,7 +1591,14 @@ public:
 			//mtl::punk<IMTLEditor> editor(*this->editor);
 			//scripting->add_named_object(*editor, L"moe");
 			std::string utf8 = view.documentViews[model.activeDocument]->get_text();
-			scriptService.run( mtl::to_wstring(utf8) );
+			std::wstring fn = model.documents[model.activeDocument]->textFile.filename;
+			scriptService.run(mtl::to_wstring(utf8), fn.c_str(), [this](long line, long pos, std::wstring err, std::wstring src)
+			{
+				std::wostringstream oss;
+				oss << err << L" line " << line << "\r\n";
+				oss << src;
+				::MessageBoxW( *view.mainWnd, oss.str().c_str(), src.c_str(), MB_ICONERROR);
+			});
 
 			//scripting->run_script(mtl::to_wstring(utf8));
 
@@ -1623,6 +1726,22 @@ public:
 		view.mainWnd.onCmd(IDM_SAVE_AS, [this]()
 		{
 			::MessageBox(*view.mainWnd, L"SAVE AS", L"x", 0);
+		});
+
+		view.mainWnd.onCmd(IDM_FILE_NEW, [this]()
+		{
+			scriptService.getScripts([this](std::map<std::wstring, std::wstring> scripts) 
+			{
+				std::wostringstream woss;
+				for (auto& it : scripts)
+				{
+					woss << it.first << ":" << it.second << std::endl;
+				}
+				::MessageBox(*view.mainWnd, woss.str().c_str(), L"Scripts", 0);
+			});
+
+
+			//::MessageBox(*view.mainWnd, L"NEW", L"x", 0);
 		});
 
 		view.toolBar.onBarNotify([this](int id, NMTOOLBAR* nmhdr)
@@ -2227,7 +2346,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		FileService fileService;
 		RotService rotService;
-		ScriptService scriptService;
+		ScriptService scriptService(fileService);
 
 		EditorController controller(opt, fileService, rotService, scriptService);
 
@@ -2247,9 +2366,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 }
 
 
-Script::Script(const std::wstring& s)
-	: source_(s)
+Script::Script(ScriptService& service, FileService& fs,  const std::wstring& i, const std::wstring& s, const std::wstring& fn)
+	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn)
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this));
-	host.query_interface( &hostObj );
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this) );
+	host.query_interface( &hostObj_ );
+}
+
+
+void Script::close()
+{
+	wait_ = false;
+	scripting_->close();
+	scriptService_.erase(id_);
 }

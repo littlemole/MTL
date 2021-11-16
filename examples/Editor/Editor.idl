@@ -83,6 +83,15 @@ interface IMTLScriptHostObject : IDispatch
 	[id(2),  helpstring("Import")]
 	HRESULT Import([in] BSTR value);
 
+	[id(3), helpstring("Timeout")]
+	HRESULT setTimeout([in] long ms, [in] IDispatch* cb, [out,retval] long* id);
+
+	[id(4), helpstring("Wait")]
+	HRESULT Wait();
+
+	[id(5), helpstring("Quit")]
+	HRESULT Quit();
+
 }
 
 [

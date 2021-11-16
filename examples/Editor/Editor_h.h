@@ -573,6 +573,15 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Import( 
             /* [in] */ BSTR value) = 0;
         
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE setTimeout( 
+            /* [in] */ long ms,
+            /* [in] */ IDispatch *cb,
+            /* [retval][out] */ long *id) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Wait( void) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Quit( void) = 0;
+        
     };
     
     
@@ -635,6 +644,18 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
             IMTLScriptHostObject * This,
             /* [in] */ BSTR value);
         
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *setTimeout )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ long ms,
+            /* [in] */ IDispatch *cb,
+            /* [retval][out] */ long *id);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *Wait )( 
+            IMTLScriptHostObject * This);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *Quit )( 
+            IMTLScriptHostObject * This);
+        
         END_INTERFACE
     } IMTLScriptHostObjectVtbl;
 
@@ -673,6 +694,15 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
 
 #define IMTLScriptHostObject_Import(This,value)	\
     ( (This)->lpVtbl -> Import(This,value) ) 
+
+#define IMTLScriptHostObject_setTimeout(This,ms,cb,id)	\
+    ( (This)->lpVtbl -> setTimeout(This,ms,cb,id) ) 
+
+#define IMTLScriptHostObject_Wait(This)	\
+    ( (This)->lpVtbl -> Wait(This) ) 
+
+#define IMTLScriptHostObject_Quit(This)	\
+    ( (This)->lpVtbl -> Quit(This) ) 
 
 #endif /* COBJMACROS */
 

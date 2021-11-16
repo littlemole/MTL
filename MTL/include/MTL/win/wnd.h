@@ -1149,6 +1149,7 @@ namespace mtl {
     public:
 
         UINT_PTR id = 0;
+        unsigned int ts = 0;
 
         timer()
         {}
@@ -1162,9 +1163,10 @@ namespace mtl {
         timer& operator=(const timer& rhs) = delete;
 
         timer(timer&& rhs) noexcept
-            : id(rhs.id)
+            : id(rhs.id), ts(rhs.ts)
         {
             rhs.id = 0;
+            rhs.ts = 0;
         }
 
         timer& operator = (timer&& rhs) noexcept
@@ -1174,7 +1176,9 @@ namespace mtl {
                 return *this;
             }
             id = rhs.id;
+            ts = rhs.ts;
             rhs.id = 0;
+            rhs.ts = 0;
             return *this;
         }
 
@@ -1183,9 +1187,16 @@ namespace mtl {
             timeout(milisecs, cb);
         }
 
+
+        bool operator< (const mtl::timer& rhs) const
+        {
+            return ts > rhs.ts;
+        }
+
         UINT_PTR timeout(int milisecs, std::function<void()> cb)
         {
             cancel();
+            ts = milisecs + time(0);
             id = set_timeout(milisecs, cb);
             return id;
         }
@@ -1193,9 +1204,6 @@ namespace mtl {
         static UINT_PTR set_timeout(int milisecs, std::function<void()> cb)
         {
             UINT_PTR id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
-
-            std::mutex& m = getMutex();
-            std::lock_guard<std::mutex> guard(m);
 
             timers()[id] = cb;
             return id;
@@ -1216,9 +1224,6 @@ namespace mtl {
             {
                 ::KillTimer(nullptr, id);
 
-                std::mutex& m = getMutex();
-                std::lock_guard<std::mutex> guard(m);
-
                 if (timers().count(id))
                 {
                     timers().erase(id);
@@ -1226,13 +1231,16 @@ namespace mtl {
             }
         }
 
-    private:
-
-        static std::mutex& getMutex()
+        static void clear()
         {
-            static std::mutex m;
-            return m;
+            while (!timers().empty())
+            {
+                auto& it = *(timers().begin());
+                cancel(it.first);
+            }
         }
+
+    private:
 
         static void timerProc(
             HWND,
@@ -1242,9 +1250,6 @@ namespace mtl {
         )
         {
             ::KillTimer(nullptr, id);
-
-            std::mutex& m = getMutex();
-            std::lock_guard<std::mutex> guard(m);
 
             if (timers().count(id) == 0)
             {
@@ -1257,7 +1262,7 @@ namespace mtl {
 
         static std::map<UINT_PTR, std::function<void()>>& timers()
         {
-            static std::map<UINT_PTR, std::function<void()>> timermap;
+            static thread_local std::map<UINT_PTR, std::function<void()>> timermap;
             return timermap;
         }
     };

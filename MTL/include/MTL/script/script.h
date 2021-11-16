@@ -15,6 +15,9 @@ namespace mtl {
 	class active_script : public implements< active_script(IActiveScriptSite, IActiveScriptSiteWindow)>
 	{
 	public:
+
+		std::function<void(long, long, std::wstring, std::wstring)> onError;
+
 		active_script()
 		{
 			::ZeroMemory(&ei_, sizeof(ei_));
@@ -99,6 +102,10 @@ namespace mtl {
 
 		HRESULT add_named_object(IUnknown* punk, const std::wstring& obj, int state = SCRIPTITEM_ISVISIBLE)
 		{
+			if (!activeScript)
+			{
+				return E_FAIL;
+			}
 			punk->AddRef();
 			if (objectMap_.count(obj) > 0)
 			{
@@ -153,9 +160,14 @@ namespace mtl {
 			}
 			objectMap_.clear();
 
+			if (asp_)
+			{
+				asp_.release();
+			}
 			if (activeScript)
 			{
 				HRESULT hr = activeScript->Close();
+				activeScript.release();				
 				return hr;
 			}
 			return S_OK;
@@ -274,6 +286,7 @@ namespace mtl {
 			return S_OK;
 		}
 
+
 		virtual HRESULT  __stdcall OnScriptError(IActiveScriptError* pscripterror)
 		{
 			EXCEPINFO ex;
@@ -289,10 +302,17 @@ namespace mtl {
 			bstr source(b_copy(ex.bstrSource));
 			bstr desc(b_copy(ex.bstrDescription));
 
-			std::wostringstream oss;
-			oss << desc.str() << L" line " << line << "\r\n";
-			oss << src.str();
-			::MessageBoxW(0, oss.str().c_str(), source.str().c_str(), MB_ICONERROR);
+			if (onError)
+			{
+				onError(line, pos, desc.str(), source.str());
+			}
+			else
+			{
+				std::wostringstream oss;
+				oss << desc.str() << L" line " << line << "\r\n";
+				oss << src.str();
+				::MessageBoxW(0, oss.str().c_str(), source.str().c_str(), MB_ICONERROR);
+			}
 			return S_OK;
 		}
 
