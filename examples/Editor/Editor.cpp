@@ -17,6 +17,9 @@
 #include <Uxtheme.h>
 #include <queue>
 
+#define USE_EDGEMODE_JSRT
+#include <jsrt.h>
+
 /*
 
 App
@@ -1307,6 +1310,44 @@ public:
 
 /* ----------------------------------------------- */
 
+
+JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 2)
+	{
+		return JS_INVALID_REFERENCE;
+	}
+
+	std::wstring msg;
+
+	JsValueType jst;
+	::JsGetValueType(arguments[1], &jst);
+	/*
+	if (jst == JsString)
+	{
+		const wchar_t* buf = nullptr;
+		size_t len = 0;
+		::JsStringToPointer(arguments[1], &buf, &len);
+
+		msg = std::wstring(buf, len);
+	}
+	else
+		*/
+	{
+		mtl::variant var;
+		JsErrorCode ec = ::JsValueToVariant(arguments[1], &var);
+		if (ec != JsNoError)
+		{
+			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
+		}
+		msg = var.to_wstring();
+	}
+
+	::MessageBox(0, msg.c_str(), L"ALERT", 0);
+	return JS_INVALID_REFERENCE;
+}
+
+
 // Controller handles User Input
 // Controller owns Model and View
 
@@ -1678,6 +1719,77 @@ public:
 
 		view.mainWnd.onCmd(IDM_FILE_OPEN, [this]()
 		{
+			JsRuntimeHandle runtime;
+			JsContextRef context;
+			if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime))
+			{
+				exit(0);
+			}
+
+			::JsCreateContext(runtime, &context);
+
+			::JsSetCurrentContext(context);
+
+			::JsValueRef hostObject;
+
+			mtl::punk<IDispatch> disp(editor);
+			mtl::variant var(*disp);
+
+			::JsVariantToValue( &var, &hostObject);
+
+//			::JsCreateObject(&hostObject);
+
+			::JsValueRef globalObject;
+			::JsGetGlobalObject(&globalObject);
+
+			::JsPropertyIdRef hostPropertyId;
+			::JsGetPropertyIdFromName(L"mte", &hostPropertyId);
+
+			::JsSetProperty(globalObject, hostPropertyId, hostObject, true);
+
+			::JsPropertyIdRef echoPropertyId;
+			::JsGetPropertyIdFromName(L"MsgBox", &echoPropertyId);
+
+
+			JsNativeFunction echo = &Echo;
+
+			JsValueRef function;
+			JsErrorCode ec = ::JsCreateFunction( echo, nullptr, &function);
+			if (ec != JsNoError)
+			{
+				::MessageBox(*view.mainWnd, L"ERRO CREATE FUN", L"x", 0);
+			}
+
+			::JsSetProperty(globalObject, echoPropertyId, function, true);
+
+
+			//::JsSetCurrentContext(JS_INVALID_REFERENCE);
+
+			std::string utf8 = view.documentViews[model.activeDocument]->get_text();
+			std::wstring fn = model.documents[model.activeDocument]->textFile.filename;
+
+			unsigned currentSourceContext = 0;
+
+			::JsValueRef result;
+			if (JsNoError != ::JsRunScript(L"function to_hell(s) { mte.SayHello(s); }", currentSourceContext, fn.c_str(), &result))
+			{
+				::MessageBox(*view.mainWnd, L"JS ERROR", L"ERR 1", MB_ICONERROR);
+			}
+
+			::JsValueRef result2;
+			if (JsNoError != ::JsRunScript(mtl::to_wstring(utf8).c_str(), currentSourceContext, fn.c_str(), &result2))
+			{
+				::MessageBox(*view.mainWnd, L"JS ERROR", L"ERR 2", MB_ICONERROR);
+			}
+
+			::JsSetCurrentContext(JS_INVALID_REFERENCE);
+
+			//
+			// Clean up the runtime.
+			//
+
+			::JsDisposeRuntime(runtime);
+			/*
 			MyFileDialog fd(0);
 
 			fd.filter({ { L"all files (*.*)", L"*.*"} });
@@ -1691,6 +1803,7 @@ public:
 				long enc = fd.encoding();
 				openFile(path, ro, enc);
 			}
+			*/
 		});
 
 		view.toolBar.onCommand(IDM_FILE_OPEN, [this]()
