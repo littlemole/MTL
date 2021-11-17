@@ -1310,6 +1310,411 @@ public:
 
 /* ----------------------------------------------- */
 
+class ChakraValue
+{
+public:
+	ChakraValue() {}
+
+	ChakraValue( JsValueRef value) 
+		: handle(value)
+	{
+		::JsAddRef(handle,nullptr);
+	}
+
+	static JsValueRef from_double(double value)
+	{
+		JsValueRef result = nullptr;
+		::JsDoubleToNumber(value,&result);
+		return result;
+	}
+
+	static JsValueRef from_int(int value)
+	{
+		JsValueRef result = nullptr;
+		::JsIntToNumber(value,&result);
+		return result;
+	}
+
+	static JsValueRef from_string(const std::wstring& str)
+	{
+		JsValueRef result = nullptr;
+		::JsPointerToString(str.c_str(),str.size(),&result);
+		return result;
+	}
+
+	static JsValueRef from_bool(bool b)
+	{
+		JsValueRef result = nullptr;
+		::JsBoolToBoolean(b,&result);
+		return result;
+	}
+
+	static JsValueRef from_variant( VARIANT* var)
+	{
+		JsValueRef result = nullptr;
+		::JsVariantToValue( var, &result);
+		return result;
+	}
+
+	static JsValueRef undefined()
+	{
+		JsValueRef result = nullptr;
+		::JsGetUndefinedValue(&result);
+		return result;
+	}
+
+	static JsValueRef null()
+	{
+		JsValueRef result = nullptr;
+		::JsGetNullValue(&result);
+		return result;
+	}
+
+	~ChakraValue() 
+	{
+		if(handle)
+		{
+			::JsRelease(handle,nullptr);
+			handle = nullptr;
+		}
+	}
+
+	ChakraValue( const ChakraValue& rhs) 
+		: handle(rhs.handle)
+	{
+		if(handle) 
+		{
+			::JsAddRef(handle, nullptr);
+		}
+	}
+
+	ChakraValue( ChakraValue&& rhs) 
+		: handle(rhs.handle)
+	{
+		rhs.handle = nullptr;
+	}
+
+	ChakraValue& operator=( const ChakraValue& rhs) 
+	{
+		if( this == &rhs )
+		{
+			return *this;
+		}
+		handle = rhs.handle;
+		if(handle) 
+		{
+			::JsAddRef(handle, nullptr);
+		}
+		return *this;
+	}
+
+	ChakraValue& operator=( ChakraValue&& rhs) 
+	{
+		if( this == &rhs )
+		{
+			return *this;
+		}
+		handle = rhs.handle;
+		rhs.handle = nullptr;
+		return *this;
+	}
+
+	JsValueRef operator*()
+	{
+		return handle;
+	}
+
+	JsPropertyIdRef property_id( const std::wstring& name )
+	{
+		JsPropertyIdRef result = nullptr;
+		::JsGetPropertyIdFromName( name.c_str(), &result);
+		return result;
+	}
+
+	JsPropertyIdRef property( const std::wstring& name )
+	{
+		JsValueRef result = nullptr;
+		if(handle)
+		{
+			JsPropertyIdRef id = property_id(name);
+			::JsGetProperty(handle,id,&result);
+		}
+		return result;
+	}
+
+	JsPropertyIdRef property( const std::wstring& name, JsValueRef value )
+	{
+		JsValueRef result = nullptr;
+		if(handle)
+		{
+			JsPropertyIdRef id = property_id(name);
+			::JsSetProperty( handle, id, value, true);
+		}
+		return result;
+	}
+
+	JsValueType type()
+	{
+		JsValueType result = JsUndefined;
+		if(handle)
+		{
+			::JsGetValueType( handle, &result );
+		}
+		return result;
+	}
+
+	mtl::variant as_variant()
+	{
+		mtl::variant result;
+		if(handle)
+		{
+			JsErrorCode ec = ::JsValueToVariant(handle, &result);
+		}	
+		return result;
+	}
+
+	bool as_bool()
+	{
+		bool result = false;
+		if(handle)
+		{
+			::JsBooleanToBool(handle,&result);
+		}
+		return result;
+	}
+
+	int as_int()
+	{
+		int result = 0;
+		if(handle)
+		{
+			::JsNumberToInt(handle,&result);
+		}
+		return result;
+	}
+
+	double as_double()
+	{
+		double result = 0;
+		if(handle)
+		{
+			::JsNumberToDouble(handle,&result);
+		}
+		return result;
+	}
+
+	std::wstring as_string()
+	{
+		std::wstring result;
+		if(handle)
+		{
+			const wchar_t* buf = nullptr;
+			size_t len = 0;
+			::JsStringToPointer( handle, &buf, &len);		
+			result = std::wstring(buf,len);
+		}
+		return result;
+	}
+
+private:
+	JsValueRef handle = nullptr;	
+};
+
+
+class ChakraCtx
+{
+public:
+
+	ChakraCtx()
+	{}
+
+	ChakraCtx(JsContextRef ctx)
+		:handle(ctx)
+	{
+		::JsGetCurrentContext(&previous);
+		::JsSetCurrentContext(handle);
+	}
+
+	~ChakraCtx()
+	{
+		if(handle)
+		{
+			if(previous)
+			{
+				::JsGetCurrentContext(&previous);
+				previous = nullptr;
+			}
+			handle = nullptr;
+		}
+	}
+
+	ChakraCtx(const ChakraCtx& rhs) = delete;
+	ChakraCtx(ChakraCtx&& rhs) = delete;
+
+	ChakraCtx& operator=(const ChakraCtx& rhs) = delete;
+	ChakraCtx& operator=(ChakraCtx&& rhs) = delete;
+
+	JsContextRef operator*() 
+	{
+		return handle;
+	}
+
+	JsValueRef create_object()
+	{
+		JsValueRef result;
+		::JsCreateObject(&result);
+		return result;
+	}
+
+	JsValueRef from_variant( VARIANT* var)
+	{
+		JsValueRef result;
+
+		::JsVariantToValue( var, &result);
+		return result;
+	}
+
+	mtl::variant to_variant( JsValueRef value)
+	{
+		mtl::variant result;
+		JsErrorCode ec = ::JsValueToVariant(value, &result);
+		if (ec != JsNoError)
+		{
+			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
+		}	
+		return result;
+	}
+
+	
+	JsValueRef global()
+	{
+		JsValueRef result;
+		::JsGetGlobalObject(&result);
+		return result;
+	}
+
+	JsPropertyIdRef property_id( const std::wstring& name )
+	{
+		JsPropertyIdRef result;
+		::JsGetPropertyIdFromName( name.c_str(), &result);
+		return result;
+	}
+
+	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name )
+	{
+		JsValueRef result;
+		JsPropertyIdRef id = property_id(obj,name);
+		::JsGetProperty(obj,id,&result);
+		return result;
+	}
+
+	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name, JsValueRef value )
+	{
+		JsValueRef result;
+		JsPropertyIdRef id = property_id(obj,name);
+		::JsSetProperty( obj, id, value, true);
+		return result;
+	}
+
+	JsValueType get_type(JsValueRef value)
+	{
+		JsValueType result;
+		::JsGetValueType( value, &result );
+		return result;
+	}
+
+
+	JsValueRef make_fun(JsNativeFunction fun)
+	{
+		JsValueRef result;
+		::JsCreateFunction( fun, nullptr, &result);
+		return result;
+	}
+
+	JsValueRef run( const std::wstring& source, const std::wstring& fn)
+	{
+		static unsigned currentSourceContext = 0;
+
+		::JsValueRef result;
+		if (JsNoError != ::JsRunScript( source.c_str(), currentSourceContext, fn.c_str(), &result))
+		{
+			::MessageBox( 0, L"JS ERROR", L"ERR 1", MB_ICONERROR);
+		}
+	}
+
+
+private:	
+	JsContextRef previous = nullptr;
+	JsContextRef handle = nullptr;
+};
+
+
+class ChakraRuntime
+{
+public:
+
+	ChakraRuntime()
+	{
+		if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &handle))
+		{
+			::OutputDebugString(L"Chakra JSRT init failed");
+			exit(0);
+		}		
+	}
+
+	~ChakraRuntime()
+	{
+		dispose();
+	}
+
+	void dispose()
+	{
+		if(handle)
+		{
+			::JsSetCurrentContext(JS_INVALID_REFERENCE);
+			::JsDisposeRuntime(handle);			
+			handle = nullptr;
+		}
+	}
+
+	ChakraRuntime(const ChakraRuntime& rhs) = delete;
+	ChakraRuntime(ChakraRuntime&& rhs)
+	{
+		handle = rhs.handle;
+		rhs.handle = nullptr;
+	}
+
+	ChakraRuntime& operator=(const ChakraRuntime& rhs) = delete;
+	ChakraRuntime& operator=(ChakraRuntime&& rhs)
+	{
+		if(this == &rhs)
+		{
+			return *this;
+		}
+		
+		handle = rhs.handle;
+		rhs.handle = nullptr;
+
+		return *this;
+	}
+
+	JsRuntimeHandle operator*() 
+	{
+		return handle;
+	}
+
+	JsContextRef make_context()
+	{
+		JsContextRef result;
+		::JsCreateContext(handle, &result);
+		return result;
+	}
+
+private:
+	JsRuntimeHandle handle = nullptr;
+};
+
+
 
 JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
 {
