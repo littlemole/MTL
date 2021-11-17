@@ -1310,6 +1310,47 @@ public:
 
 /* ----------------------------------------------- */
 
+class ChakraProperty
+{
+public:
+
+	ChakraProperty() {}
+
+	ChakraProperty( ::JsValueRef obj, ::JsPropertyIdRef ref) 
+		: value(obj), id(ref) 
+	{}
+	
+	~ChakraProperty() {}
+
+	operator JsValueRef() 
+	{
+		JsValueRef result = nullptr;
+		if(value && id)
+		{
+			::JsGetProperty(value,id,&result);
+		}
+		return result;
+	}
+
+	ChakraProperty& operator=( JsValueRef ref )
+	{
+		if(value && id)
+		{
+			::JsSetProperty( value, id, ref, true);
+		}
+		return *this;
+	}
+
+	::JsPropertyIdRef operator*()
+	{
+		return id;
+	}
+
+private:
+	::JsValueRef value = nullptr;
+	::JsPropertyIdRef id = nullptr;
+};
+
 class ChakraValue
 {
 public:
@@ -1424,6 +1465,32 @@ public:
 		return handle;
 	}
 
+	ChakraProperty operator[](const std::wstring& key)
+	{
+		ChakraProperty prop( handle, property_id(key) );
+		return prop;
+	}
+
+	bool exists(std::wstring& key)
+	{
+		bool result = false;
+		if(handle)
+		{
+			::JsHasProperty(handle,property_id(key),&result);
+		}
+		return result;
+	}
+
+	JsValueRef remove(std::wstring& key)
+	{
+		JsValueRef result = nullptr;
+		if(handle && exists(key))
+		{
+			::JsDeleteProperty(handle,property_id(key),true,&result);
+		}
+		return result;
+	}
+
 	JsPropertyIdRef property_id( const std::wstring& name )
 	{
 		JsPropertyIdRef result = nullptr;
@@ -1516,6 +1583,24 @@ public:
 		return result;
 	}
 
+
+	std::wstring to_string()
+	{
+		std::wstring result;
+		if(handle)
+		{
+			::JsValueRef tmp = nullptr;
+	        ::JsConvertValueToString( handle,&tmp);
+
+			const wchar_t* buf = nullptr;
+			size_t len = 0;
+			::JsStringToPointer( tmp, &buf, &len);		
+			result = std::wstring(buf,len);
+		}
+		return result;
+	}
+
+
 private:
 	JsValueRef handle = nullptr;	
 };
@@ -1603,7 +1688,7 @@ public:
 	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name )
 	{
 		JsValueRef result;
-		JsPropertyIdRef id = property_id(obj,name);
+		JsPropertyIdRef id = property_id(name);
 		::JsGetProperty(obj,id,&result);
 		return result;
 	}
@@ -1611,7 +1696,7 @@ public:
 	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name, JsValueRef value )
 	{
 		JsValueRef result;
-		JsPropertyIdRef id = property_id(obj,name);
+		JsPropertyIdRef id = property_id(name);
 		::JsSetProperty( obj, id, value, true);
 		return result;
 	}
@@ -1640,8 +1725,22 @@ public:
 		{
 			::MessageBox( 0, L"JS ERROR", L"ERR 1", MB_ICONERROR);
 		}
+		return result;
 	}
 
+	bool hasException()
+	{
+		bool result = false;
+		::JsHasException(&result);
+		return result;
+	}
+
+	JsValueRef getAndClearException()
+	{
+		JsValueRef result = nullptr;
+		::JsGetAndClearException(&result);
+		return result;
+	}
 
 private:	
 	JsContextRef previous = nullptr;
@@ -1725,8 +1824,10 @@ JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* ar
 
 	std::wstring msg;
 
-	JsValueType jst;
-	::JsGetValueType(arguments[1], &jst);
+	ChakraValue val(arguments[1]);
+
+	JsValueType jst = val.type();
+//	::JsGetValueType(arguments[1], &jst);
 	/*
 	if (jst == JsString)
 	{
@@ -1739,11 +1840,11 @@ JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* ar
 	else
 		*/
 	{
-		mtl::variant var;
-		JsErrorCode ec = ::JsValueToVariant(arguments[1], &var);
-		if (ec != JsNoError)
+		mtl::variant var = val.as_variant();
+//		JsErrorCode ec = ::JsValueToVariant(arguments[1], &var);
+//		if (ec != JsNoError)
 		{
-			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
+//			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
 		}
 		msg = var.to_wstring();
 	}
@@ -2124,34 +2225,49 @@ public:
 
 		view.mainWnd.onCmd(IDM_FILE_OPEN, [this]()
 		{
-			JsRuntimeHandle runtime;
-			JsContextRef context;
-			if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime))
+			ChakraRuntime runtime;
+//			JsRuntimeHandle runtime;
+		//	JsContextRef context;
+			/*if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime))
 			{
 				exit(0);
 			}
+*/
+		//	::JsCreateContext(*runtime, &context);
 
-			::JsCreateContext(runtime, &context);
+			ChakraCtx ctx(runtime.make_context());
 
-			::JsSetCurrentContext(context);
-
-			::JsValueRef hostObject;
+		//	::JsSetCurrentContext(context);
 
 			mtl::punk<IDispatch> disp(editor);
 			mtl::variant var(*disp);
 
-			::JsVariantToValue( &var, &hostObject);
+//			::JsVariantToValue( &var, &hostObject);
+
+			::JsValueRef hostObject = ChakraValue::from_variant(&var);
+
 
 //			::JsCreateObject(&hostObject);
 
-			::JsValueRef globalObject;
-			::JsGetGlobalObject(&globalObject);
+			ChakraValue globalObject(ctx.global());
 
+//			::JsValueRef globalObject;
+//			::JsGetGlobalObject(&globalObject);
+
+
+			globalObject[L"mte"] = hostObject;
+			globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
+			globalObject[L"HelloWorld"] = ChakraValue::from_string(L"Wonderful World");
+
+			std::wstring tmp = ChakraValue(globalObject[L"HelloWorld"]).to_string();
+
+/*
 			::JsPropertyIdRef hostPropertyId;
 			::JsGetPropertyIdFromName(L"mte", &hostPropertyId);
 
-			::JsSetProperty(globalObject, hostPropertyId, hostObject, true);
-
+			::JsSetProperty(*globalObject, hostPropertyId, hostObject, true);
+*/
+/*
 			::JsPropertyIdRef echoPropertyId;
 			::JsGetPropertyIdFromName(L"MsgBox", &echoPropertyId);
 
@@ -2164,8 +2280,8 @@ public:
 			{
 				::MessageBox(*view.mainWnd, L"ERRO CREATE FUN", L"x", 0);
 			}
-
-			::JsSetProperty(globalObject, echoPropertyId, function, true);
+*/
+		//	::JsSetProperty(*globalObject, echoPropertyId, function, true);
 
 
 			//::JsSetCurrentContext(JS_INVALID_REFERENCE);
@@ -2175,6 +2291,10 @@ public:
 
 			unsigned currentSourceContext = 0;
 
+			::JsValueRef result = ctx.run( L"function to_hell(s) { mte.SayHello(s); }", fn );
+
+			result = ctx.run( mtl::to_wstring(utf8), fn);
+/*
 			::JsValueRef result;
 			if (JsNoError != ::JsRunScript(L"function to_hell(s) { mte.SayHello(s); }", currentSourceContext, fn.c_str(), &result))
 			{
@@ -2186,14 +2306,14 @@ public:
 			{
 				::MessageBox(*view.mainWnd, L"JS ERROR", L"ERR 2", MB_ICONERROR);
 			}
-
-			::JsSetCurrentContext(JS_INVALID_REFERENCE);
+*/
+		//	::JsSetCurrentContext(JS_INVALID_REFERENCE);
 
 			//
 			// Clean up the runtime.
 			//
 
-			::JsDisposeRuntime(runtime);
+			//::JsDisposeRuntime(runtime);
 			/*
 			MyFileDialog fd(0);
 
