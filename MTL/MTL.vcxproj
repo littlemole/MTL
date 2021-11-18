@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,16 +18,16 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
-    <PropertyGroup>
+  <PropertyGroup>
     <VcpkgEnableManifest>True</VcpkgEnableManifest>
     <VCPkgLocalAppDataDisabled>true</VCPkgLocalAppDataDisabled>
     <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
     <VcpkgConfiguration>$(Configuration)</VcpkgConfiguration>
   </PropertyGroup>
   <Import Project="..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets')" />
-
-
+  <PropertyGroup>
+    <VcpkgConfiguration>$(Configuration)</VcpkgConfiguration>
+  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="include\MTL\disp\aut.h" />
     <ClInclude Include="include\MTL\disp\bstr.h" />
@@ -62,6 +61,7 @@
     <ClInclude Include="include\MTL\persist\xml.h" />
     <ClInclude Include="include\MTL\punk.h" />
     <ClInclude Include="include\mtl\scintilla\sci.h" />
+    <ClInclude Include="include\mtl\script\chakra.h" />
     <ClInclude Include="include\MTL\script\script.h" />
     <ClInclude Include="include\MTL\sdk.h" />
     <ClInclude Include="include\MTL\util\base64.h" />

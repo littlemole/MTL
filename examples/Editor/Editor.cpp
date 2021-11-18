@@ -12,7 +12,8 @@
 #include "MTL/obj/localserver.h"
 #include "MTL/obj/marshall.h"
 #include "MTL/util/str.h"
-#include "MTL/script/script.h"
+//#include "MTL/script/script.h"
+#include "MTL/script/chakra.h"
 #include "Editor_h.h"
 #include <Uxtheme.h>
 #include <queue>
@@ -387,36 +388,118 @@ public:
 
 class ScriptService;
 
+
+JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 2)
+	{
+		return JS_INVALID_REFERENCE;
+	}
+
+	std::wstring msg;
+
+	mtl::chakra::value val(arguments[1]);
+
+	JsValueType jst = val.type();
+	//	::JsGetValueType(arguments[1], &jst);
+		/*
+		if (jst == JsString)
+		{
+			const wchar_t* buf = nullptr;
+			size_t len = 0;
+			::JsStringToPointer(arguments[1], &buf, &len);
+
+			msg = std::wstring(buf, len);
+		}
+		else
+			*/
+	{
+		mtl::variant var = val.as_variant();
+		//		JsErrorCode ec = ::JsValueToVariant(arguments[1], &var);
+		//		if (ec != JsNoError)
+		{
+			//			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
+		}
+		msg = var.to_wstring();
+	}
+
+	::MessageBox(0, msg.c_str(), L"ALERT", 0);
+	return JS_INVALID_REFERENCE;
+}
+
+/*
+void jsProjectionEnqueueCallback(JsProjectionCallback jsCB, JsProjectionCallbackContext jsCtx, void* callbackState)
+{
+	jsCB(jsCtx);
+}
+*/
 class Script
 {
 public:
 
+	mtl::chakra::runtime rt;
+	mtl::chakra::script_ctx scriptContext;
+	unsigned currentSourceContext = 0;
 
 	Script(ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
 
 	~Script()
 	{
-		if (scripting_ && scripting_->activeScript)
-		{
-			close();
-		}
 	}
-
 
 	bool run(mtl::punk<IUnknown> obj)
 	{
-		scripting_ = new mtl::active_script(L"JScript");
-		scripting_->add_named_object( *obj, L"mte");
-		scripting_->add_named_object(*hostObj_, L"", SCRIPTITEM_GLOBALMEMBERS| SCRIPTITEM_ISVISIBLE);
-		scripting_->onError = [this](long line, long pos, std::wstring err, std::wstring src)
-		{
-			if (onError_)
-			{
-				onError_(line, pos, err, src);
-			}
-		};
-		scripting_->run_script(source_);
+		mtl::punk<IDispatch> disp(obj);
+		mtl::variant var(*disp);
 
+		{
+			mtl::chakra::active_ctx ctx(*scriptContext);
+			mtl::chakra::value globalObject(ctx.global());
+
+			::JsValueRef hostObject = mtl::chakra::value::from_variant(&var);
+
+			disp = hostObj_;
+			mtl::variant var2(*disp);
+			::JsValueRef host2Object = mtl::chakra::value::from_variant(&var2);
+
+			globalObject[L"Application"] = hostObject;
+			globalObject[L"Chakra"] = host2Object;
+			globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
+			globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
+
+			std::wstring tmp = mtl::chakra::value(globalObject[L"HelloWorld"]).to_string();
+
+			::JsValueRef result = ctx.run(source_, filename_);
+
+			if (ctx.hasException())
+			{
+				::JsValueRef ex = ctx.getAndClearException();
+				mtl::chakra::value tmp(ex);
+				std::wstring x = tmp.to_string();
+
+				::JsValueRef names = nullptr;
+				::JsGetOwnPropertyNames(ex, &names);
+				mtl::chakra::value nameValues(names);
+
+				int len = mtl::chakra::value(nameValues[L"length"]).as_int();
+
+
+				std::wostringstream woss;
+				for (int i = 0; i < len; i++)
+				{
+					std::wstring key = mtl::chakra::value(nameValues[i]).to_string();
+					std::wstring s = mtl::chakra::value(tmp[key]).to_string();
+					woss << key << L":" << s << std::endl;
+				}
+
+				//::MessageBox(0, woss.str().c_str(), x.c_str(), 0);
+
+				mtl::ui_thread().submit([cb = onError_,msg = woss.str(), x]() {
+					cb(0, 0, msg, x);
+				});
+				wait_ = false;
+			}
+		}
 		if (!wait_)
 		{
 			close();
@@ -454,21 +537,9 @@ public:
 
 		std::string content = mtl::slurp(p.str());
 
-		mtl::punk<IActiveScriptParse> asp(*scripting_->activeScript);
-		mtl::variant varResult;
-		if (asp)
-		{
-			EXCEPINFO ei;
-			::ZeroMemory(&ei, sizeof(ei));
+		mtl::chakra::active_ctx ctx(*scriptContext);
 
-			HRESULT hr = asp->ParseScriptText(
-				*mtl::bstr(content),
-				NULL, 0, 0, 1, 0,
-				SCRIPTTEXT_ISPERSISTENT | SCRIPTTEXT_ISVISIBLE,
-				&varResult,
-				&ei
-			);
-		}
+		::JsValueRef result = ctx.run( mtl::to_wstring(content), file);
 	}
 
 	std::wstring filename() { return filename_;  }
@@ -492,7 +563,7 @@ private:
 	std::wstring filename_;
 
 	mtl::punk<IUnknown> hostObj_;
-	mtl::punk<mtl::active_script> scripting_;
+	//mtl::punk<mtl::active_script> scripting_;
 
 	std::function<void(long, long, std::wstring, std::wstring)> onError_;
 
@@ -504,6 +575,8 @@ class ScriptService
 public:
 
 	FileService& fileService;
+
+	//ChakraRuntime* runtime = nullptr;
 
 	ScriptService(FileService& service)
 		: fileService(service)
@@ -529,6 +602,8 @@ public:
 		if (worker_.joinable())
 		{
 			box_.stop();
+			//::SleepEx(200, TRUE);
+			//worker_.join();
 		}
 	}
 
@@ -572,14 +647,26 @@ public:
 		});
 	}
 
+	bool isScript(const std::wstring& id)
+	{
+		return scripts.count(id) > 0;
+	}
+
 private:
 
 	void threadfun( mtl::proxy<IUnknown> p)
 	{
 		mtl::STA enter;
 
+		//ChakraRuntime rt;
+
+		//runtime = &rt;
+
 		unk_ = *p;
 		box_.run();
+
+		//runtime = nullptr;
+		scripts.clear();
 		unk_.release();
 	}
 
@@ -1070,7 +1157,7 @@ public:
 		woss << L"Editor - " << mtl::path(doc.textFile.filename).filename();
 		mainWnd.set_text(woss.str());
 	}
-	
+	 
 	EditorView()
 	{
 		mtl::the_bitmap_cache().img_path(L"\\img");
@@ -1226,9 +1313,11 @@ class MTLScriptHostObject :
 {
 public:
 
-	MTLScriptHostObject(Script* script)
-		: script_(script)
-	{}
+	MTLScriptHostObject(Script* script, ScriptService& service)
+		: script_(script), scriptService_(service)
+	{
+		id_ = script->id();
+	}
 
 	virtual HRESULT __stdcall Import(BSTR value) override
 	{
@@ -1252,12 +1341,36 @@ public:
 
 	virtual HRESULT __stdcall Quit() override
 	{
-		script_->close();
+		if (scriptService_.isScript(id_))
+		{
+			script_->close();
+		}
 		return S_OK;
 	}
 
+	virtual HRESULT __stdcall CreateObject(BSTR progid, IDispatch** result) override
+	{
+		if (!result) return E_INVALIDARG;
+		*result = nullptr;
+
+		mtl::punk<IUnknown> unk;
+		HRESULT hr = unk.create_object(mtl::bstr_view(progid).str());
+		if (hr == S_OK)
+		{
+			return unk.query_interface(result);
+		}
+		return S_FALSE;
+	}
+
+	virtual HRESULT __stdcall WinRT(BSTR ns) override
+	{
+		::JsProjectWinRTNamespace(mtl::bstr_view(ns).str().c_str());
+		return S_OK;
+	}
 private:
 	Script* script_ = nullptr;
+	std::wstring id_;
+	ScriptService& scriptService_;
 };
 
 
@@ -1310,548 +1423,8 @@ public:
 
 /* ----------------------------------------------- */
 
-class ChakraProperty
-{
-public:
 
-	ChakraProperty() {}
 
-	ChakraProperty( ::JsValueRef obj, ::JsPropertyIdRef ref) 
-		: value(obj), id(ref) 
-	{}
-	
-	~ChakraProperty() {}
-
-	operator JsValueRef() 
-	{
-		JsValueRef result = nullptr;
-		if(value && id)
-		{
-			::JsGetProperty(value,id,&result);
-		}
-		return result;
-	}
-
-	ChakraProperty& operator=( JsValueRef ref )
-	{
-		if(value && id)
-		{
-			::JsSetProperty( value, id, ref, true);
-		}
-		return *this;
-	}
-
-	::JsPropertyIdRef operator*()
-	{
-		return id;
-	}
-
-private:
-	::JsValueRef value = nullptr;
-	::JsPropertyIdRef id = nullptr;
-};
-
-class ChakraValue
-{
-public:
-	ChakraValue() {}
-
-	ChakraValue( JsValueRef value) 
-		: handle(value)
-	{
-		::JsAddRef(handle,nullptr);
-	}
-
-	static JsValueRef from_double(double value)
-	{
-		JsValueRef result = nullptr;
-		::JsDoubleToNumber(value,&result);
-		return result;
-	}
-
-	static JsValueRef from_int(int value)
-	{
-		JsValueRef result = nullptr;
-		::JsIntToNumber(value,&result);
-		return result;
-	}
-
-	static JsValueRef from_string(const std::wstring& str)
-	{
-		JsValueRef result = nullptr;
-		::JsPointerToString(str.c_str(),str.size(),&result);
-		return result;
-	}
-
-	static JsValueRef from_bool(bool b)
-	{
-		JsValueRef result = nullptr;
-		::JsBoolToBoolean(b,&result);
-		return result;
-	}
-
-	static JsValueRef from_variant( VARIANT* var)
-	{
-		JsValueRef result = nullptr;
-		::JsVariantToValue( var, &result);
-		return result;
-	}
-
-	static JsValueRef undefined()
-	{
-		JsValueRef result = nullptr;
-		::JsGetUndefinedValue(&result);
-		return result;
-	}
-
-	static JsValueRef null()
-	{
-		JsValueRef result = nullptr;
-		::JsGetNullValue(&result);
-		return result;
-	}
-
-	~ChakraValue() 
-	{
-		if(handle)
-		{
-			::JsRelease(handle,nullptr);
-			handle = nullptr;
-		}
-	}
-
-	ChakraValue( const ChakraValue& rhs) 
-		: handle(rhs.handle)
-	{
-		if(handle) 
-		{
-			::JsAddRef(handle, nullptr);
-		}
-	}
-
-	ChakraValue( ChakraValue&& rhs) 
-		: handle(rhs.handle)
-	{
-		rhs.handle = nullptr;
-	}
-
-	ChakraValue& operator=( const ChakraValue& rhs) 
-	{
-		if( this == &rhs )
-		{
-			return *this;
-		}
-		handle = rhs.handle;
-		if(handle) 
-		{
-			::JsAddRef(handle, nullptr);
-		}
-		return *this;
-	}
-
-	ChakraValue& operator=( ChakraValue&& rhs) 
-	{
-		if( this == &rhs )
-		{
-			return *this;
-		}
-		handle = rhs.handle;
-		rhs.handle = nullptr;
-		return *this;
-	}
-
-	JsValueRef operator*()
-	{
-		return handle;
-	}
-
-	ChakraProperty operator[](const std::wstring& key)
-	{
-		ChakraProperty prop( handle, property_id(key) );
-		return prop;
-	}
-
-	bool exists(std::wstring& key)
-	{
-		bool result = false;
-		if(handle)
-		{
-			::JsHasProperty(handle,property_id(key),&result);
-		}
-		return result;
-	}
-
-	JsValueRef remove(std::wstring& key)
-	{
-		JsValueRef result = nullptr;
-		if(handle && exists(key))
-		{
-			::JsDeleteProperty(handle,property_id(key),true,&result);
-		}
-		return result;
-	}
-
-	JsPropertyIdRef property_id( const std::wstring& name )
-	{
-		JsPropertyIdRef result = nullptr;
-		::JsGetPropertyIdFromName( name.c_str(), &result);
-		return result;
-	}
-
-	JsPropertyIdRef property( const std::wstring& name )
-	{
-		JsValueRef result = nullptr;
-		if(handle)
-		{
-			JsPropertyIdRef id = property_id(name);
-			::JsGetProperty(handle,id,&result);
-		}
-		return result;
-	}
-
-	JsPropertyIdRef property( const std::wstring& name, JsValueRef value )
-	{
-		JsValueRef result = nullptr;
-		if(handle)
-		{
-			JsPropertyIdRef id = property_id(name);
-			::JsSetProperty( handle, id, value, true);
-		}
-		return result;
-	}
-
-	JsValueType type()
-	{
-		JsValueType result = JsUndefined;
-		if(handle)
-		{
-			::JsGetValueType( handle, &result );
-		}
-		return result;
-	}
-
-	mtl::variant as_variant()
-	{
-		mtl::variant result;
-		if(handle)
-		{
-			JsErrorCode ec = ::JsValueToVariant(handle, &result);
-		}	
-		return result;
-	}
-
-	bool as_bool()
-	{
-		bool result = false;
-		if(handle)
-		{
-			::JsBooleanToBool(handle,&result);
-		}
-		return result;
-	}
-
-	int as_int()
-	{
-		int result = 0;
-		if(handle)
-		{
-			::JsNumberToInt(handle,&result);
-		}
-		return result;
-	}
-
-	double as_double()
-	{
-		double result = 0;
-		if(handle)
-		{
-			::JsNumberToDouble(handle,&result);
-		}
-		return result;
-	}
-
-	std::wstring as_string()
-	{
-		std::wstring result;
-		if(handle)
-		{
-			const wchar_t* buf = nullptr;
-			size_t len = 0;
-			::JsStringToPointer( handle, &buf, &len);		
-			result = std::wstring(buf,len);
-		}
-		return result;
-	}
-
-
-	std::wstring to_string()
-	{
-		std::wstring result;
-		if(handle)
-		{
-			::JsValueRef tmp = nullptr;
-	        ::JsConvertValueToString( handle,&tmp);
-
-			const wchar_t* buf = nullptr;
-			size_t len = 0;
-			::JsStringToPointer( tmp, &buf, &len);		
-			result = std::wstring(buf,len);
-		}
-		return result;
-	}
-
-
-private:
-	JsValueRef handle = nullptr;	
-};
-
-
-class ChakraCtx
-{
-public:
-
-	ChakraCtx()
-	{}
-
-	ChakraCtx(JsContextRef ctx)
-		:handle(ctx)
-	{
-		::JsGetCurrentContext(&previous);
-		::JsSetCurrentContext(handle);
-	}
-
-	~ChakraCtx()
-	{
-		if(handle)
-		{
-			if(previous)
-			{
-				::JsGetCurrentContext(&previous);
-				previous = nullptr;
-			}
-			handle = nullptr;
-		}
-	}
-
-	ChakraCtx(const ChakraCtx& rhs) = delete;
-	ChakraCtx(ChakraCtx&& rhs) = delete;
-
-	ChakraCtx& operator=(const ChakraCtx& rhs) = delete;
-	ChakraCtx& operator=(ChakraCtx&& rhs) = delete;
-
-	JsContextRef operator*() 
-	{
-		return handle;
-	}
-
-	JsValueRef create_object()
-	{
-		JsValueRef result;
-		::JsCreateObject(&result);
-		return result;
-	}
-
-	JsValueRef from_variant( VARIANT* var)
-	{
-		JsValueRef result;
-
-		::JsVariantToValue( var, &result);
-		return result;
-	}
-
-	mtl::variant to_variant( JsValueRef value)
-	{
-		mtl::variant result;
-		JsErrorCode ec = ::JsValueToVariant(value, &result);
-		if (ec != JsNoError)
-		{
-			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
-		}	
-		return result;
-	}
-
-	
-	JsValueRef global()
-	{
-		JsValueRef result;
-		::JsGetGlobalObject(&result);
-		return result;
-	}
-
-	JsPropertyIdRef property_id( const std::wstring& name )
-	{
-		JsPropertyIdRef result;
-		::JsGetPropertyIdFromName( name.c_str(), &result);
-		return result;
-	}
-
-	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name )
-	{
-		JsValueRef result;
-		JsPropertyIdRef id = property_id(name);
-		::JsGetProperty(obj,id,&result);
-		return result;
-	}
-
-	JsPropertyIdRef property( JsValueRef obj, const std::wstring& name, JsValueRef value )
-	{
-		JsValueRef result;
-		JsPropertyIdRef id = property_id(name);
-		::JsSetProperty( obj, id, value, true);
-		return result;
-	}
-
-	JsValueType get_type(JsValueRef value)
-	{
-		JsValueType result;
-		::JsGetValueType( value, &result );
-		return result;
-	}
-
-
-	JsValueRef make_fun(JsNativeFunction fun)
-	{
-		JsValueRef result;
-		::JsCreateFunction( fun, nullptr, &result);
-		return result;
-	}
-
-	JsValueRef run( const std::wstring& source, const std::wstring& fn)
-	{
-		static unsigned currentSourceContext = 0;
-
-		::JsValueRef result;
-		if (JsNoError != ::JsRunScript( source.c_str(), currentSourceContext, fn.c_str(), &result))
-		{
-			::MessageBox( 0, L"JS ERROR", L"ERR 1", MB_ICONERROR);
-		}
-		return result;
-	}
-
-	bool hasException()
-	{
-		bool result = false;
-		::JsHasException(&result);
-		return result;
-	}
-
-	JsValueRef getAndClearException()
-	{
-		JsValueRef result = nullptr;
-		::JsGetAndClearException(&result);
-		return result;
-	}
-
-private:	
-	JsContextRef previous = nullptr;
-	JsContextRef handle = nullptr;
-};
-
-
-class ChakraRuntime
-{
-public:
-
-	ChakraRuntime()
-	{
-		if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &handle))
-		{
-			::OutputDebugString(L"Chakra JSRT init failed");
-			exit(0);
-		}		
-	}
-
-	~ChakraRuntime()
-	{
-		dispose();
-	}
-
-	void dispose()
-	{
-		if(handle)
-		{
-			::JsSetCurrentContext(JS_INVALID_REFERENCE);
-			::JsDisposeRuntime(handle);			
-			handle = nullptr;
-		}
-	}
-
-	ChakraRuntime(const ChakraRuntime& rhs) = delete;
-	ChakraRuntime(ChakraRuntime&& rhs)
-	{
-		handle = rhs.handle;
-		rhs.handle = nullptr;
-	}
-
-	ChakraRuntime& operator=(const ChakraRuntime& rhs) = delete;
-	ChakraRuntime& operator=(ChakraRuntime&& rhs)
-	{
-		if(this == &rhs)
-		{
-			return *this;
-		}
-		
-		handle = rhs.handle;
-		rhs.handle = nullptr;
-
-		return *this;
-	}
-
-	JsRuntimeHandle operator*() 
-	{
-		return handle;
-	}
-
-	JsContextRef make_context()
-	{
-		JsContextRef result;
-		::JsCreateContext(handle, &result);
-		return result;
-	}
-
-private:
-	JsRuntimeHandle handle = nullptr;
-};
-
-
-
-JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
-{
-	if (argumentCount < 2)
-	{
-		return JS_INVALID_REFERENCE;
-	}
-
-	std::wstring msg;
-
-	ChakraValue val(arguments[1]);
-
-	JsValueType jst = val.type();
-//	::JsGetValueType(arguments[1], &jst);
-	/*
-	if (jst == JsString)
-	{
-		const wchar_t* buf = nullptr;
-		size_t len = 0;
-		::JsStringToPointer(arguments[1], &buf, &len);
-
-		msg = std::wstring(buf, len);
-	}
-	else
-		*/
-	{
-		mtl::variant var = val.as_variant();
-//		JsErrorCode ec = ::JsValueToVariant(arguments[1], &var);
-//		if (ec != JsNoError)
-		{
-//			::MessageBox(0, L"ERRO CREATE VARIANT", L"x", 0);
-		}
-		msg = var.to_wstring();
-	}
-
-	::MessageBox(0, msg.c_str(), L"ALERT", 0);
-	return JS_INVALID_REFERENCE;
-}
 
 
 // Controller handles User Input
@@ -2225,7 +1798,7 @@ public:
 
 		view.mainWnd.onCmd(IDM_FILE_OPEN, [this]()
 		{
-			ChakraRuntime runtime;
+			mtl::chakra::runtime runtime;
 //			JsRuntimeHandle runtime;
 		//	JsContextRef context;
 			/*if (JsNoError != ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime))
@@ -2235,7 +1808,7 @@ public:
 */
 		//	::JsCreateContext(*runtime, &context);
 
-			ChakraCtx ctx(runtime.make_context());
+			mtl::chakra::active_ctx ctx(runtime.make_context());
 
 		//	::JsSetCurrentContext(context);
 
@@ -2244,12 +1817,12 @@ public:
 
 //			::JsVariantToValue( &var, &hostObject);
 
-			::JsValueRef hostObject = ChakraValue::from_variant(&var);
+			::JsValueRef hostObject = mtl::chakra::value::from_variant(&var);
 
 
 //			::JsCreateObject(&hostObject);
 
-			ChakraValue globalObject(ctx.global());
+			mtl::chakra::value globalObject(ctx.global());
 
 //			::JsValueRef globalObject;
 //			::JsGetGlobalObject(&globalObject);
@@ -2257,9 +1830,15 @@ public:
 
 			globalObject[L"mte"] = hostObject;
 			globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
-			globalObject[L"HelloWorld"] = ChakraValue::from_string(L"Wonderful World");
+			globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
 
-			std::wstring tmp = ChakraValue(globalObject[L"HelloWorld"]).to_string();
+			::JsProjectWinRTNamespace(L"Windows.Foundation");
+			::JsProjectWinRTNamespace(L"Windows.Web");
+			::JsProjectWinRTNamespace(L"Windows.UI.Popups");
+
+			//::JsSetProjectionEnqueueCallback(&jsProjectionEnqueueCallback,this);
+
+			std::wstring tmp = mtl::chakra::value(globalObject[L"HelloWorld"]).to_string();
 
 /*
 			::JsPropertyIdRef hostPropertyId;
@@ -2444,7 +2023,7 @@ public:
 
 			//HICON icon = mtl::shell::file_icon(model.documents[item.id]->textFile.filename);
 			//view.mainWnd.set_icon(icon);
-
+			model.activeDocument = item.id;
 			view.updateStatus(*model.documents[item.id]);
 		});
 
@@ -2828,6 +2407,8 @@ void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 		}
 	);
 
+	documents[id]->fileWatchToken = token;
+
 	/*
 	auto scintilla = view_.createEditorWnd(id, path, textFile.utf8);
 
@@ -2927,8 +2508,24 @@ void EditorModel::saveDocument(std::wstring id, std::wstring path, int enc, EOL_
 
 	textFile.fileEncoding.eol = (mtl::file_encoding::eol_mode)eol;
 
-	fileService_.write(textFile, [this,cb](IO_ERROR e)
+	fileService_.monitor.unwatch(doc->fileWatchToken, path);
+
+	fileService_.write(textFile, [this,id,textFile,cb](IO_ERROR e)
 	{
+		
+		std::wstring token = fileService_.monitor.watch(
+			textFile.filename,
+			[this, id]()
+			{
+				if (documents.count(id) == 0) return;
+
+				std::wstring path = documents[id]->textFile.filename;
+				this->onFileChanged.fire(id, path);
+			}
+		);
+
+		documents[id]->fileWatchToken = token;
+		
 		cb(e);
 	});
 }
@@ -3007,14 +2604,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 Script::Script(ScriptService& service, FileService& fs,  const std::wstring& i, const std::wstring& s, const std::wstring& fn)
 	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn)
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this) );
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this, service));
 	host.query_interface( &hostObj_ );
+
+	//context = scriptService_.runtime->make_context();
+	scriptContext = rt.make_context();
 }
 
 
 void Script::close()
 {
 	wait_ = false;
-	scripting_->close();
+	//scripting_->close();
+	/*
+	if (scriptContext)
+	{
+		::JsSetCurrentContext(JS_INVALID_REFERENCE);
+		::JsRelease(scriptContext,nullptr);
+		scriptContext = nullptr;
+		//::JsCollectGarbage(*rt);// scriptService_.runtime);
+		//::JsCollectGarbage(*rt);// scriptService_.runtime);
+	}
+	*/
 	scriptService_.erase(id_);
 }

@@ -19,7 +19,7 @@
 #include "MTL/ole/explorer.h"
 #include "MTL/ole/img.h"
 #include "MTL/persist/xml.h"
-#include "MTL/script/script.h"
+//#include "MTL/script/script.h"
 
 #include <scintilla/Scintilla.h>
 #include <scintilla/SciLexer.h>
