@@ -18,11 +18,11 @@
   <installPrefix Condition="$(installPrefix)==''">..</installPrefix>
 
   <!-- detected path to mtlgen.exe -->
-  <mtlgen Condition = "$(mtlgen)==''">C:\Users\mike\source\repos\MTL.proto\x64\Debug\mtlgen.exe</mtlgen>
+  <mtlgen Condition = "$(mtlgen)==''">..\..\x64\Debug\mtlgen.exe</mtlgen>
 
  </PropertyGroup>
 
  <!-- import real mtl.xml - all msbuild targets can be found here. -->
- <Import Project='C:\Users\mike\source\repos\MTL.proto\mtlgen\msbuild\mtl.xml'/>
+ <Import Project='..\..\mtlgen\msbuild\mtl.xml'/>
 
  </Project>
