@@ -92,6 +92,12 @@ interface IMTLScriptHostObject : IDispatch
 	[id(5), helpstring("Quit")]
 	HRESULT Quit();
 
+	[id(6), helpstring("CreateObject")]
+	HRESULT CreateObject( [in] BSTR, [out,retval] IDispatch** );
+
+	[id(7), helpstring("WinRT")]
+	HRESULT WinRT([in] BSTR);
+
 }
 
 [

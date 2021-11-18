@@ -582,6 +582,13 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
         
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Quit( void) = 0;
         
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE CreateObject( 
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0000,
+            /* [retval][out] */ IDispatch **__MIDL__IMTLScriptHostObject0001) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE WinRT( 
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002) = 0;
+        
     };
     
     
@@ -656,6 +663,15 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
         /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *Quit )( 
             IMTLScriptHostObject * This);
         
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *CreateObject )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0000,
+            /* [retval][out] */ IDispatch **__MIDL__IMTLScriptHostObject0001);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *WinRT )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002);
+        
         END_INTERFACE
     } IMTLScriptHostObjectVtbl;
 
@@ -703,6 +719,12 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
 
 #define IMTLScriptHostObject_Quit(This)	\
     ( (This)->lpVtbl -> Quit(This) ) 
+
+#define IMTLScriptHostObject_CreateObject(This,__MIDL__IMTLScriptHostObject0000,__MIDL__IMTLScriptHostObject0001)	\
+    ( (This)->lpVtbl -> CreateObject(This,__MIDL__IMTLScriptHostObject0000,__MIDL__IMTLScriptHostObject0001) ) 
+
+#define IMTLScriptHostObject_WinRT(This,__MIDL__IMTLScriptHostObject0002)	\
+    ( (This)->lpVtbl -> WinRT(This,__MIDL__IMTLScriptHostObject0002) ) 
 
 #endif /* COBJMACROS */
 

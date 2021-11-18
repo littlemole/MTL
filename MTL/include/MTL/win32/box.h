@@ -330,6 +330,11 @@ namespace mtl {
                 HANDLE handles = event_;
                 DWORD r = ::MsgWaitForMultipleObjectsEx(1, &handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE | MWMO_ALERTABLE);
 
+                if (stopped())
+                {
+                    break;
+                }
+
                 if (r == WAIT_TIMEOUT)
                 {
 
