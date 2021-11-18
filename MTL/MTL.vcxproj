@@ -28,9 +28,6 @@
   </PropertyGroup>
   <Import Project="..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('..\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets')" />
 
-    <PropertyGroup>
-    <VcpkgConfiguration>$(Configuration)</VcpkgConfiguration>
-  </PropertyGroup>
 
   <ItemGroup>
     <ClInclude Include="include\MTL\disp\aut.h" />

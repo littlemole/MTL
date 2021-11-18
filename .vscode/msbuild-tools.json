@@ -42,6 +42,12 @@
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/examples/helloworld/helloworld/x64/${buildConfig}/helloworld.exe",
             "args": []
+        },
+        {
+            "name": "Editor",
+            "cwd": "${workspaceRoot}",
+            "program": "${workspaceRoot}/examples/Editor/x64/${buildConfig}/Editor.exe",
+            "args": []
         }
     ]
 }
