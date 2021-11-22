@@ -1182,7 +1182,7 @@ namespace mtl {
             return *this;
         }
 
-        timer(int milisecs, std::function<void()> cb)
+        timer(int milisecs, std::function<void(UINT_PTR)> cb)
         {
             timeout(milisecs, cb);
         }
@@ -1193,15 +1193,15 @@ namespace mtl {
             return ts > rhs.ts;
         }
 
-        UINT_PTR timeout(int milisecs, std::function<void()> cb)
+        UINT_PTR timeout(int milisecs, std::function<void(UINT_PTR)> cb)
         {
             cancel();
-            ts = milisecs + time(0);
+            ts = milisecs + (unsigned int) time(0);
             id = set_timeout(milisecs, cb);
             return id;
         }
 
-        static UINT_PTR set_timeout(int milisecs, std::function<void()> cb)
+        static UINT_PTR set_timeout(int milisecs, std::function<void(UINT_PTR)> cb)
         {
             UINT_PTR id = ::SetTimer(nullptr, 0, milisecs, &timer::timerProc);
 
@@ -1255,14 +1255,14 @@ namespace mtl {
             {
                 return;
             }
-            timers()[id]();
+            timers()[id](id);
             timers().erase(id);
         }
 
 
-        static std::map<UINT_PTR, std::function<void()>>& timers()
+        static std::map<UINT_PTR, std::function<void(UINT_PTR)>>& timers()
         {
-            static thread_local std::map<UINT_PTR, std::function<void()>> timermap;
+            static thread_local std::map<UINT_PTR, std::function<void(UINT_PTR)>> timermap;
             return timermap;
         }
     };

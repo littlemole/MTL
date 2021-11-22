@@ -24,6 +24,8 @@ namespace mtl {
 			mtl::event<void(std::wstring)> onClose;
 			mtl::event<void(std::wstring)> onActivate;
 
+			mtl::bitmap cache;
+
 			taskbar_tab(HWND o, HWND m) : owner(o), mainWnd(m)
 			{
 				id = mtl::new_guid();
@@ -35,7 +37,7 @@ namespace mtl {
 
 			virtual LRESULT wm_create() override
 			{
-				BOOL fForceIconic = FALSE;
+				BOOL fForceIconic = TRUE;
 				BOOL fHasIconicBitmap = TRUE;
 
 				mtl::HR hr = ::DwmSetWindowAttribute(
@@ -57,11 +59,27 @@ namespace mtl {
 			{
 				switch (message)
 				{
+				case WM_CREATE:
+				{
+					//mtl::timer::set_timeout(150, [this,hWnd](UINT_PTR) {
+						if (::IsWindowVisible(owner))
+						{
+							RECT r;
+							::GetClientRect(owner, &r);
+							int w = r.right - r.left;
+							int h = r.bottom - r.top;
+							cache = mtl::screenshot(owner, w, h, true);
+							DwmInvalidateIconicBitmaps(hWnd);
+						}
+					//});
+					break;
+				}
 				case WM_ACTIVATE:
 				{
 					if (LOWORD(wParam) == WA_ACTIVE)
 					{
 						onActivate.fire(id);
+						DwmInvalidateIconicBitmaps(hWnd);
 						return 0;
 					}
 					break;
@@ -93,8 +111,11 @@ namespace mtl {
 
 					RECT r;
 					::GetClientRect(owner, &r);
-					auto bmp = mtl::screenshot(owner, r.right, r.bottom, true);
 
+					if (::IsWindowVisible(owner))
+					{
+						cache = mtl::screenshot(owner, r.right, r.bottom, true);
+					}
 					mtl::wnd_dc dc(owner);
 
 					auto thumbnail = mtl::bitmap::make_transparent_dib_section(w, h);
@@ -104,10 +125,10 @@ namespace mtl {
 						cdc.select(*thumbnail);
 
 						mtl::compatible_dc cdc_src(*dc);
-						cdc_src.select(*bmp);
+						cdc_src.select(*cache);
 
 						BITMAP bm;
-						::GetObject(*bmp, sizeof(bm), &bm);
+						::GetObject(*cache, sizeof(bm), &bm);
 
 						if (bm.bmWidth < w && bm.bmHeight < h)
 						{
@@ -115,7 +136,7 @@ namespace mtl {
 						}
 						else
 						{
-							::StretchBlt(*cdc, 0, 0, w, h, *cdc_src, 0, 0, w * 2, h * 2, SRCCOPY);
+							::StretchBlt(*cdc, 0, 0, w, h, *cdc_src, 0, 0, w , h , SRCCOPY);
 						}
 					}
 
@@ -128,20 +149,45 @@ namespace mtl {
 					RECT r;
 					::GetWindowRect(owner, &r);
 
-					RECT rm;
-					::GetWindowRect(mainWnd, &rm);
+					RECT wr;
+					::GetClientRect(mainWnd, &wr);
 
-					int w = r.right - r.left;
-					int h = r.bottom - r.top;
-					auto bmp = mtl::screenshot(owner, w, h, false);
+					::AdjustWindowRect(&wr, WS_OVERLAPPED, TRUE);
+					POINT pt = { wr.left,wr.top };
+					::ClientToScreen(mainWnd, &pt);
 
-					POINT pt = { r.left,r.top };
-					POINT pt2 = { rm.left, rm.top };
 
-					pt.x -= pt2.x;
-					pt.y -= pt2.y;
+					POINT ptOffset = { r.left - pt.x, r.top - pt.y };
 
-					::DwmSetIconicLivePreviewBitmap(handle, *bmp, &pt, 0);// DWM_SIT_DISPLAYFRAME);
+
+					if (::IsWindowVisible(owner))
+					{
+						/*
+						RECT r;
+						::GetClientRect(owner, &r);
+
+						POINT pt = { r.left,r.top };
+						::ClientToScreen(owner, &pt);
+						//::ScreenToClient(owner, &pt);
+
+						RECT rm;
+						::GetClientRect(mainWnd, &rm);
+						POINT pt2 = { rm.left, rm.top };
+
+						::ClientToScreen(mainWnd, &pt2);
+						*/
+						int w = r.right - r.left;
+						int h = r.bottom - r.top;
+						cache = mtl::screenshot(owner, w, h, true);
+
+						//pt.x -= pt2.x;
+						//pt.y =  pt.y - pt2.y;
+
+						//pt.x = 0;
+						//pt.y = 0;
+						//cache = *bmp;
+					}
+					::DwmSetIconicLivePreviewBitmap(handle, *cache, &ptOffset, 1);// DWM_SIT_DISPLAYFRAME);
 
 					return 0;
 					break;

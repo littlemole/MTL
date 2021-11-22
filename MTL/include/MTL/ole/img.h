@@ -749,6 +749,7 @@ namespace mtl {
             BOOL b = ::PrintWindow(hWnd, *cdc, clientOnly);
         }
 
+        /*
         double dw = w <= width ? w : width;
         double ratio = (double) w / (double)h;
         double dh = dw / ratio;
@@ -760,13 +761,15 @@ namespace mtl {
         }
 
         auto result = mtl::bitmap::make_transparent_dib_section(width, height);
+        //mtl::bitmap result = ::CreateCompatibleBitmap(*dc, width, height);
         {
             mtl::compatible_dc cdc(*dc);
             cdc.select(*result);
 
             cdc.stretch_blit(*bmp, 0, 0, (int) dw, (int) dh);
         }
-        return result;
+        */
+        return bmp;
     }
 }
 

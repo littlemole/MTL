@@ -185,7 +185,7 @@ namespace mtl {
 			std::wstring token = dirMons_[dir].onFileChanged([this,cb](std::wstring path) 
 			{
 				queue_[path] = cb;
-				mtl::timer::set_timeout(500, [this]() 
+				mtl::timer::set_timeout(500, [this](UINT_PTR)
 				{
 					auto q = queue_;
 					queue_.clear();

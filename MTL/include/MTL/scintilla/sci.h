@@ -140,6 +140,14 @@ public:
 				return 1;
 				break;
 			}
+			case WM_PRINTCLIENT:
+			{
+				HDC hdc = (HDC)wParam;
+
+				return 1;
+				break;
+			}
+
 		}
 		return ctrl<scintilla_wnd>::wndProc(hwnd, message, wParam, lParam);
 	}

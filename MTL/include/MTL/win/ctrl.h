@@ -1203,7 +1203,7 @@ namespace mtl {
             {
                 // wait a bit might be a drag-drop
                 isMouseDown_ = true;
-                timer_.timeout(250, [this]()
+                timer_.timeout(250, [this](UINT_PTR)
                 {
                     if (isMouseDown_)
                     {

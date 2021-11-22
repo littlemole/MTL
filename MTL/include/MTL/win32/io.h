@@ -466,7 +466,7 @@ namespace mtl
         mtl::file_info fi_;
     };
 
-    std::string slurp(
+    inline std::string slurp(
         const std::wstring& file_name,
         DWORD access = GENERIC_READ,
         DWORD share = FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
@@ -483,7 +483,7 @@ namespace mtl
     }
 
 
-    bool spit(const std::wstring& file_name, const std::string data)
+    inline bool spit(const std::wstring& file_name, const std::string data)
     {
         file f(GENERIC_WRITE);
         if (f.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)
@@ -497,7 +497,7 @@ namespace mtl
         return true;
     }
 
-    bool slurp(
+    inline bool slurp(
         const std::wstring& file_name,
         std::function<void(DWORD,std::string)> cb,
         DWORD access = GENERIC_READ,
@@ -514,7 +514,7 @@ namespace mtl
     }
 
 
-    bool spit(const std::wstring& file_name, const std::string data, std::function<void(DWORD)> cb)
+    inline bool spit(const std::wstring& file_name, const std::string data, std::function<void(DWORD)> cb)
     {
         file f(GENERIC_WRITE);
         if (f.open(file_name, OPEN_ALWAYS | TRUNCATE_EXISTING) != ERROR_SUCCESS)

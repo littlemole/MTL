@@ -686,6 +686,7 @@ namespace mtl {
             }
             case WM_COMMAND:
             {
+                onClick.fire(LOWORD(wParam));
                 switch (LOWORD(wParam))
                 {
                 case IDOK:
@@ -700,7 +701,6 @@ namespace mtl {
                 }
                 default:
                 {
-                    onClick.fire(LOWORD(wParam));
                     return TRUE;
                 }
                 }

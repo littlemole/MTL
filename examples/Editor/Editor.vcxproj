@@ -125,11 +125,12 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>..\..\MTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Comctl32.lib;urlmon.lib;Pathcch.lib;Shlwapi.lib;Windowscodecs.lib;Imm32.lib;Msimg32.lib;msxml6.lib;SciLexer.lib;UxTheme.lib;chakrart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Comctl32.lib;urlmon.lib;Pathcch.lib;Shlwapi.lib;Windowscodecs.lib;Imm32.lib;Msimg32.lib;msxml6.lib;SciLexer.lib;UxTheme.lib;chakrart.lib;Dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -149,15 +150,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="com.h" />
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="dispids.h" />
     <ClInclude Include="Editor.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="mvc.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Service.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="View.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Editor.cpp" />
     <ClCompile Include="id.cpp" />
+    <ClCompile Include="view.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Editor.rc">
