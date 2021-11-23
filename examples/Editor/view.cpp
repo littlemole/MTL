@@ -49,8 +49,7 @@ Encodings& encodings()
 }
 
 
-ScriptDialog::ScriptDialog() //ScriptService& service)//, std::map<std::wstring, std::wstring>& scriptMap)
-		//: scriptService(service)//,scripts(scriptMap)
+ScriptDialog::ScriptDialog() 
 {
 	onInitDlg([this](mtl::dialog& dlg)
 	{
@@ -135,7 +134,7 @@ void ScriptDialog::refresh()
 
 void MyStatusBar::set_text(const std::wstring& str)
 {
-	statusText = str;//SBT_OWNERDRAW
+	statusText = str;
 	send_msg(SB_SETTEXT, SBT_NOBORDERS, (LPARAM)statusText.c_str());
 }
 
@@ -425,6 +424,7 @@ std::shared_ptr<mtl::scintilla_wnd> EditorView::createEditorWnd(std::wstring id,
 	scintilla->load_xml(mtl::path_to_self_directory(L"\\styles.xml"));
 	scintilla->set_code_page(CP_UTF8);
 	scintilla->set_mode(SCLEX_CPP);
+	scintilla->set_tab_width(4);
 	scintilla->set_drop_target(*dropTarget);
 	scintilla->notifications();
 
@@ -537,6 +537,7 @@ EditorView::EditorView()
 			IDM_EDIT_REPLACE_REGEX
 		}},
 		{ ID_HELP, {
+			{IDM_TOGGLE_OWNER_DRAWN},
 			{ IDM_ABOUT}
 		}}
 		});

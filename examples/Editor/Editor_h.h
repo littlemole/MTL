@@ -589,6 +589,12 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE WinRT( 
             /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002) = 0;
         
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE MsgBox( 
+            /* [in] */ BSTR text,
+            /* [in] */ BSTR title,
+            /* [in] */ long options,
+            /* [in] */ VARIANT cb) = 0;
+        
     };
     
     
@@ -672,6 +678,13 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
             IMTLScriptHostObject * This,
             /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002);
         
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *MsgBox )( 
+            IMTLScriptHostObject * This,
+            /* [in] */ BSTR text,
+            /* [in] */ BSTR title,
+            /* [in] */ long options,
+            /* [in] */ VARIANT cb);
+        
         END_INTERFACE
     } IMTLScriptHostObjectVtbl;
 
@@ -725,6 +738,9 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
 
 #define IMTLScriptHostObject_WinRT(This,__MIDL__IMTLScriptHostObject0002)	\
     ( (This)->lpVtbl -> WinRT(This,__MIDL__IMTLScriptHostObject0002) ) 
+
+#define IMTLScriptHostObject_MsgBox(This,text,title,options,cb)	\
+    ( (This)->lpVtbl -> MsgBox(This,text,title,options,cb) ) 
 
 #endif /* COBJMACROS */
 

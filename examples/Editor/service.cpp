@@ -185,10 +185,10 @@ EditorDocument RotService::transferTab(std::wstring instance, const std::wstring
 }
 
 
-Script::Script(ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
+Script::Script(HWND mainWnd, ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
 	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn)
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(this, service));
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(mainWnd, this, service));
 	host.query_interface(&hostObj_);
 
 	//context = scriptService_.runtime->make_context();
@@ -221,7 +221,6 @@ bool Script::run(mtl::punk<IUnknown> obj)
 
 		globalObject[L"Application"] = hostObject;
 		globalObject[L"Chakra"] = host2Object;
-		globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
 		globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
 
 		std::wstring tmp = mtl::chakra::value(globalObject[L"HelloWorld"]).to_string();
@@ -325,8 +324,8 @@ void Script::onError(std::function<void(long, long, std::wstring, std::wstring)>
 
 
 
-ScriptService::ScriptService(FileService& service)
-	: fileService(service)
+ScriptService::ScriptService( FileService& service)
+	:  fileService(service)
 {
 }
 
@@ -359,7 +358,7 @@ void ScriptService::run(std::wstring scriptSource, std::wstring filename, std::f
 	box_.submit([this, scriptSource, filename, onError]()
 	{
 		std::wstring id = mtl::new_guid();
-		Script* script = new Script(*this, fileService, id, scriptSource, filename);
+		Script* script = new Script( mainWnd, *this, fileService, id, scriptSource, filename);
 		script->onError(onError);
 
 		scripts[id] = std::unique_ptr<Script>(script);

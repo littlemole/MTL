@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClCompile Include="Editor.cpp" />
     <ClCompile Include="id.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="view.cpp" />
     <ClCompile Include="service.cpp" />
   </ItemGroup>

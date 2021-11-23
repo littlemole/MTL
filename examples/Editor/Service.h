@@ -30,8 +30,6 @@ public:
 
 class ScriptService;
 
-JsValueRef CALLBACK Echo(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
-
 class Script
 {
 public:
@@ -40,7 +38,7 @@ public:
 	mtl::chakra::script_ctx scriptContext;
 	unsigned currentSourceContext = 0;
 
-	Script(ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
+	Script(HWND mainWnd, ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
 
 	~Script();
 
@@ -81,9 +79,10 @@ class ScriptService
 {
 public:
 
+	HWND mainWnd = nullptr;
 	FileService& fileService;
 
-	ScriptService(FileService& service);
+	ScriptService( FileService& service);
 	~ScriptService();
 
 	void start(mtl::punk<IUnknown> unk);

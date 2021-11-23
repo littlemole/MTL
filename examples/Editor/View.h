@@ -130,6 +130,8 @@ class EditorView
 {
 public:
 
+	bool regexSearch		= false;
+
 	MainWindow				mainWnd;
 	MyStatusBar				statusBar;
 

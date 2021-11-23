@@ -40,17 +40,17 @@ namespace mtl {
 			: cookie_(cookie)
 		{}
 
-		void unwrap(I** i);
-		punk<I> unwrap();
+		void unwrap(I** i) const;
+		punk<I> unwrap() const;
 
 		void revoke();
 
-		punk<I> operator*()
+		punk<I> operator*() const
 		{
 			return unwrap();
 		}
 
-		DWORD cookie()
+		DWORD cookie() const
 		{
 			return cookie_;
 		}
@@ -146,7 +146,7 @@ namespace mtl {
 	};
 
 	template<class I>
-	void proxy<I>::unwrap(I** i)
+	void proxy<I>::unwrap(I** i) const
 	{
 		if (cookie_)
 		{
@@ -158,7 +158,7 @@ namespace mtl {
 	}
 
 	template<class I>
-	punk<I> proxy<I>::unwrap()
+	punk<I> proxy<I>::unwrap() const
 	{
 		punk<I> p;
 		unwrap(&p);

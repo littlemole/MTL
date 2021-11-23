@@ -142,6 +142,8 @@ class EditorController
 {
 public:
 
+	UINT urlFormat = 0;
+	
 	connector on;
 
 	FileService& fileService;
@@ -167,7 +169,7 @@ public:
 	*/
 	void doRemoveDocument(std::wstring id)
 	{
-		if (model.documents.count(id) == 0) return;
+		if (!model.documents.exists(id)) return;
 
 		std::wstring active = view.removeDocumentView(id);
 
@@ -175,9 +177,9 @@ public:
 
 		model.removeDocument(id, active);
 
-		if (!model.activeDocument.empty())
+		if (!model.activeDocument().empty())
 		{
-			view.updateStatus(*model.documents[active]);
+			view.updateStatus(model.documents[active]);
 		}
 
 	}
@@ -208,17 +210,17 @@ public:
 
 		scintilla->onNotify(SCN_MODIFIED, [this, id = doc.id](NMHDR* nmhdr)
 		{
-			view.updateStatus(*model.documents[id]);
+			view.updateStatus(model.documents[id]);
 		});
 
 		scintilla->onNotify(SCN_UPDATEUI, [this, id = doc.id](NMHDR* nmhdr)
 		{
-			view.updateStatus(*model.documents[id]);
+			view.updateStatus(model.documents[id]);
 		});
 
 		view.mainWnd.taskbar.add(doc.id, scintilla->handle, doc.textFile.filename);
 
-		view.updateStatus(*model.documents[doc.id]);
+		view.updateStatus(model.documents[doc.id]);
 	}
 
 	void doCreateNew()
@@ -240,7 +242,7 @@ public:
 	{
 		model.reloadFile(id, [this, id](std::string utf8)
 		{
-			if (model.documents.count(id) == 0) return;
+			if (!model.documents.exists(id)) return;
 
 			view.documentViews[id]->set_text(utf8);
 			view.documentViews[id]->colorize();
@@ -252,6 +254,13 @@ public:
 	{
 		mtl::dialog dlg;
 		dlg.show_modal(IDD_ABOUTBOX, *view.mainWnd);
+	}
+
+	void doActivateDocument(const std::wstring& id)
+	{
+		model.activate(id);
+		view.updateStatus(model.documents[id]);
+		view.mainWnd.taskbar.activate(id);
 	}
 
 	void doShowFileChangedDialog(std::wstring id, std::wstring path)
@@ -286,11 +295,15 @@ public:
 		model(fs, rs, sc)
 		//editor(__uuidof(MTLEditor),model.instanceId)
 	{
+
+		urlFormat = ::RegisterClipboardFormat(CFSTR_INETURLW);
+
 		//scripting = new mtl::active_script(L"JScript");
 
 		//mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(this));
 		//editor = mtlEditor;
 
+		scriptService.mainWnd = *view.mainWnd;
 
 		on(model.onFileChanged).then([this](std::wstring id, std::wstring path)
 		{
@@ -396,7 +409,7 @@ public:
 				std::wstring path = fd.path();
 				long enc = fd.encoding();
 				EOL_TYPE eol = fd.eol_type();
-				doSaveDocument(model.activeDocument, path, enc, eol);
+				doSaveDocument(model.activeDocument(), path, enc, eol);
 			}
 
 		});
@@ -405,10 +418,10 @@ public:
 			.when(IDM_EDIT_FIND)
 			.then([this]()
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
-			model.regexSearch = false;
-			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
+			view.regexSearch = false;
+			view.documentViews[model.activeDocument()]->set_next_search_pos(0);
 			HWND hWnd = view.searchDlg.find(*view.mainWnd);
 			::SetWindowText(hWnd, L"Search");
 		});
@@ -417,10 +430,10 @@ public:
 			.when(IDM_EDIT_FIND_REGEX)
 			.then([this]()
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
-			model.regexSearch = true;
-			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
+			view.regexSearch = true;
+			view.documentViews[model.activeDocument()]->set_next_search_pos(0);
 			HWND hWnd = view.searchDlg.find(*view.mainWnd);
 			::SetWindowText(hWnd, L"RegExp Find");
 		});
@@ -429,10 +442,10 @@ public:
 			.when(IDM_EDIT_REPLACE)
 			.then([this]()
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
-			model.regexSearch = false;
-			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
+			view.regexSearch = false;
+			view.documentViews[model.activeDocument()]->set_next_search_pos(0);
 			HWND hWnd = view.searchDlg.replace(*view.mainWnd);
 			::SetWindowText(hWnd, L"Replace");
 		});
@@ -441,10 +454,10 @@ public:
 			.when(IDM_EDIT_REPLACE_REGEX)
 			.then([this]()
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
-			model.regexSearch = true;
-			view.documentViews[model.activeDocument]->set_next_search_pos_(0);
+			view.regexSearch = true;
+			view.documentViews[model.activeDocument()]->set_next_search_pos(0);
 			HWND hWnd = view.searchDlg.replace(*view.mainWnd);
 			::SetWindowText(hWnd, L"RegExp Replace");
 		});
@@ -452,12 +465,12 @@ public:
 
 		view.toolBar.onCommand(IDM_RUN, [this]()
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
 			//mtl::punk<IMTLEditor> editor(*this->editor);
 			//scripting->add_named_object(*editor, L"moe");
-			std::string utf8 = view.documentViews[model.activeDocument]->get_text();
-			std::wstring fn = model.documents[model.activeDocument]->textFile.filename;
+			std::string utf8 = view.documentViews[model.activeDocument()]->get_text();
+			std::wstring fn = model.documents[model.activeDocument()].textFile.filename;
 			scriptService.run(mtl::to_wstring(utf8), fn.c_str(), [this](long line, long pos, std::wstring err, std::wstring src)
 			{
 				std::wostringstream oss;
@@ -473,15 +486,15 @@ public:
 		on(view.mainWnd.onFind)
 			.then([this](FINDREPLACE* fr)
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
 			DWORD flags = fr->Flags;
-			if (model.regexSearch == true)
+			if (view.regexSearch == true)
 			{
 				flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
 			}
 
-			view.documentViews[model.activeDocument]->search(
+			view.documentViews[model.activeDocument()]->search(
 				mtl::to_string(fr->lpstrFindWhat),
 				flags
 			);
@@ -490,17 +503,17 @@ public:
 		on(view.mainWnd.onReplace)
 			.then([this](FINDREPLACE* fr)
 		{
-			if (model.activeDocument.empty()) return;
+			if (model.activeDocument().empty()) return;
 
 			DWORD flags = fr->Flags;
-			if (model.regexSearch == true)
+			if (view.regexSearch == true)
 			{
 				flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
 			}
 
 			if (flags & FR_REPLACEALL)
 			{
-				while (view.documentViews[model.activeDocument]->replace(
+				while (view.documentViews[model.activeDocument()]->replace(
 					mtl::to_string(fr->lpstrFindWhat),
 					mtl::to_string(fr->lpstrReplaceWith),
 					flags
@@ -508,7 +521,7 @@ public:
 			}
 			else
 			{
-				view.documentViews[model.activeDocument]->replace(
+				view.documentViews[model.activeDocument()]->replace(
 					mtl::to_string(fr->lpstrFindWhat),
 					mtl::to_string(fr->lpstrReplaceWith),
 					flags
@@ -575,7 +588,7 @@ public:
 
 
 			globalObject[L"mte"] = hostObject;
-			globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
+		//	globalObject[L"MsgBox"] = ctx.make_fun(&Echo);
 			globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
 
 			::JsProjectWinRTNamespace(L"Windows.Foundation");
@@ -611,8 +624,8 @@ public:
 
 				//::JsSetCurrentContext(JS_INVALID_REFERENCE);
 
-			std::string utf8 = view.documentViews[model.activeDocument]->get_text();
-			std::wstring fn = model.documents[model.activeDocument]->textFile.filename;
+			std::string utf8 = view.documentViews[model.activeDocument()]->get_text();
+			std::wstring fn = model.documents[model.activeDocument()].textFile.filename;
 
 			unsigned currentSourceContext = 0;
 
@@ -767,20 +780,12 @@ public:
 
 		view.tabControl.onSelect([this](mtl::tab_ctrl::tab& item)
 		{
-
 			if (view.tabControl.hit_icon_test())
 			{
-				::OutputDebugString(L"CLOSE: view.tabControl.onSelect\r\n");
 				return;
 			}
 
-			::OutputDebugString(L"SELECT: view.tabControl.onSelect\r\n");
-
-			//HICON icon = mtl::shell::file_icon(model.documents[item.id]->textFile.filename);
-			//view.mainWnd.set_icon(icon);
-			model.activeDocument = item.id;
-			view.updateStatus(*model.documents[item.id]);
-			view.mainWnd.taskbar.activate(item.id);
+			doActivateDocument(item.id);
 		});
 
 		view.tabControl.onDropExternal([this](int index_to, IDataObject* d)
@@ -788,19 +793,12 @@ public:
 			DWORD effect;
 			view.dropTarget->onDrop.fire(d, 0, effect);
 			return;
-			mtl::dataobj_view dov(d);
-			std::wstring from = dov.wstring(view.tabControl.dragTabFormat);
-
-			//::MessageBox(0, id.c_str(), id.c_str(), 0);
-
-			doTransferDocument(from, index_to);
 		});
 
-		static UINT chromeFormat = ::RegisterClipboardFormat(L"Chromium Web Custom MIME Data Format");
+//		static UINT chromeFormat = ::RegisterClipboardFormat(L"Chromium Web Custom MIME Data Format");
 		//static UINT tabTextFormat = ::RegisterClipboardFormat(L"text/xml");
-		static UINT taintFormat = ::RegisterClipboardFormat(L"chromium/x-renderer-taint");
+	//	static UINT taintFormat = ::RegisterClipboardFormat(L"chromium/x-renderer-taint");
 
-		static UINT urlFormat = ::RegisterClipboardFormat(CFSTR_INETURLW);
 
 		view.tabControl.onPopulateDataObj([this](mtl::tab_ctrl::tab& tab, IDataObject* dao)
 		{
@@ -873,7 +871,7 @@ public:
 			{
 				std::wstring id = dov.wstring(view.tabControl.dragTabFormat);
 
-				if (model.documents.count(id))
+				if (model.documents.exists(id))
 				{
 					std::wostringstream woss;
 					woss << L"/split " << id;
@@ -908,8 +906,8 @@ public:
 				auto s = dov.wstring(fdu);
 				std::string utf8 = mtl::to_string(s);
 
-				if (model.activeDocument.empty()) return;
-				view.documentViews[model.activeDocument]->insert_text(utf8);
+				if (model.activeDocument().empty()) return;
+				view.documentViews[model.activeDocument()]->insert_text(utf8);
 
 				if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 				{
@@ -924,8 +922,8 @@ public:
 				std::wstring ws = mtl::to_wstring(s, CP_WINANSI);
 				std::string utf8 = mtl::to_string(ws);
 
-				if (model.activeDocument.empty()) return;
-				view.documentViews[model.activeDocument]->insert_text(utf8);
+				if (model.activeDocument().empty()) return;
+				view.documentViews[model.activeDocument()]->insert_text(utf8);
 
 				if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 				{

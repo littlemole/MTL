@@ -280,7 +280,7 @@ namespace mtl {
             onNotify(NM_RCLICK, [this](NMHDR* nmhdr)
             {
                 NMMOUSE* nm = (NMMOUSE*)nmhdr;
-                onLeftClick.fire((int)nm->dwItemSpec);
+                onRightClick.fire((int)nm->dwItemSpec);
             });
         }
 

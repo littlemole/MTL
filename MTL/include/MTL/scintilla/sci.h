@@ -388,7 +388,7 @@ public:
 		return *this;
 	}
 
-	scintilla_wnd& set_next_search_pos_(int i)
+	scintilla_wnd& set_next_search_pos(int i)
 	{
 		nextSearchPos_ = i;
 		return *this;
