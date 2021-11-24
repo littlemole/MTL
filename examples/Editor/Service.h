@@ -85,7 +85,7 @@ public:
 	ScriptService( FileService& service);
 	~ScriptService();
 
-	void start(mtl::punk<IUnknown> unk);
+	void start(mtl::punk<IUnknown> unk, HWND hWnd);
 	void stop();
 
 	void run(std::wstring scriptSource, std::wstring filename, std::function<void(long, long, std::wstring, std::wstring)> onError);

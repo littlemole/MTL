@@ -437,6 +437,8 @@ std::shared_ptr<mtl::scintilla_wnd> EditorView::createEditorWnd(std::wstring id,
 	std::wstring title = mtl::path(path).filename();
 	tabControl.add({ title, path, id }, scintilla->handle);
 
+	mainWnd.taskbar.add(id, scintilla->handle, path);
+
 	return scintilla;
 }
 
@@ -451,6 +453,8 @@ std::wstring EditorView::removeDocumentView(const std::wstring& id)
 	documentViews.erase(id);
 
 	tabControl.remove(id);
+	mainWnd.taskbar.remove(id);
+
 	if (documentViews.size() == 0)
 	{
 		HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
@@ -500,6 +504,8 @@ void EditorView::updateStatus(EditorDocument& doc)
 EditorView::EditorView()
 {
 	mtl::the_bitmap_cache().img_path(L"\\img");
+
+	urlFormat = ::RegisterClipboardFormat(CFSTR_INETURLW);
 
 	dropTarget = mtl::drop_target(tabControl.dragTabFormat, DROPEFFECT_MOVE);
 
@@ -607,6 +613,89 @@ EditorView::EditorView()
 
 	tooltip.set_font(colorTheme->font());
 
-}
 
+
+	// events
+
+	tabControl.onPopulateDataObj([this](mtl::tab_ctrl::tab& tab, IDataObject* dao)
+	{
+		mtl::format_etc furl(urlFormat);
+		mtl::stg_medium stgm_url(std::wstring(L"mte://") + tab.id);
+		dao->SetData(&furl, &stgm_url, FALSE);
+	});
+
+	tabControl.onDropExternal([this](int index_to, IDataObject* d)
+	{
+		DWORD effect;
+		dropTarget->onDrop.fire(d, 0, effect);
+		return;
+	});
+
+	toolBar.onBarNotify([this](int id, NMTOOLBAR* nmhdr)
+	{
+		if (id == IDM_SAVE)
+		{
+			mtl::menu m;
+			m.create_popup();
+			mtl::menu_builder mb(m, 32, 32);
+			mb.add({ {IDM_SAVE}, {IDM_SAVE_AS} });
+
+			m.popup(*mainWnd);
+		}
+		if (id == IDM_EDIT_FIND)
+		{
+			mtl::menu m;
+			m.create_popup();
+			mtl::menu_builder mb(m, 32, 32);
+			mb.add({ {IDM_EDIT_FIND}, {IDM_EDIT_REPLACE}, {IDM_EDIT_FIND_REGEX}, {IDM_EDIT_REPLACE_REGEX} });
+
+			m.popup(*mainWnd);
+		}
+	});
+
+	toolBar.onCommand(IDM_SAVE, [this]()
+	{
+		mainWnd.onCmd.fire(IDM_SAVE);
+	});
+
+
+	statusBar.onLeftClick(MyStatusBar::EOL, [this]()
+	{
+		mtl::menu m;
+		m.create_popup();
+		mtl::menu_builder mb(m, 20, 20);
+		mb.add({
+			{IDM_EOL_WIN32}, {IDM_EOL_UNIX}
+			});
+
+		m.popup(*mainWnd);
+	});
+
+	mainWnd.onCmd(IDM_TOGGLE_OWNER_DRAWN, [this]()
+	{
+		bool checked = mainWnd.menu.item(IDM_TOGGLE_OWNER_DRAWN).checked;
+		if (checked)
+		{
+			mainWnd.menu.item(IDM_TOGGLE_OWNER_DRAWN).check(false);
+			colorTheme->enabled(false);
+			colorTheme->update();
+			mainWnd.update();
+
+		}
+		else
+		{
+			mainWnd.menu.item(IDM_TOGGLE_OWNER_DRAWN).check(true);
+			colorTheme->enabled(true);
+			colorTheme->update();
+			mainWnd.update();
+		}
+	});
+
+	mainWnd.onCmd(ID_EDIT_PASTE, [this]()
+	{
+		bool toggle = !mainWnd.menu.item(ID_EDIT_PASTE).checked;
+		mainWnd.menu.item(ID_EDIT_PASTE).check(toggle);
+	});
+
+}
 

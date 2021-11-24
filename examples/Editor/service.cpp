@@ -338,8 +338,9 @@ ScriptService::~ScriptService()
 }
 
 
-void ScriptService::start(mtl::punk<IUnknown> unk)
+void ScriptService::start(mtl::punk<IUnknown> unk, HWND hWnd)
 {
+	mainWnd = hWnd;
 	worker_ = std::thread(&ScriptService::threadfun, this, mtl::proxy<IUnknown>(unk));
 }
 

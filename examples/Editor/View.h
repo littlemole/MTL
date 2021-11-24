@@ -124,13 +124,122 @@ public:
 	virtual LRESULT on_alt_key() override;
 };
 
+enum DocumentViewType {
+	DOCVIEW_TXT,
+	DOCVIEW_IMG
+};
 
+class DocumentView
+{
+public:
+
+	virtual ~DocumentView() {}
+
+	virtual std::wstring id() = 0;
+	virtual HWND handle() = 0;
+	virtual DocumentViewType type() = 0;
+private:
+};
+
+class ScintillaDocumentView : public DocumentView
+{
+public:
+
+	mtl::scintilla_wnd scintilla;
+
+	ScintillaDocumentView(const std::wstring& id)
+		: id_(id)
+	{
+
+	}
+
+	virtual ~ScintillaDocumentView() {}
+
+	virtual std::wstring id() override
+	{
+		return id_;
+	}
+
+	virtual HWND handle() override
+	{
+		return scintilla.handle;
+	}
+
+	virtual DocumentViewType type() override
+	{
+		return DOCVIEW_TXT;
+	}
+
+private:
+	std::wstring id_;
+};
+
+class DocumentViews
+{
+public:
+
+	void insert(DocumentView* doc)
+	{
+		std::shared_ptr<DocumentView> d(doc);
+		views[doc->id()] = d;
+		lookup[doc->handle()] = doc->id();
+	}
+
+	std::wstring id(HWND hWnd)
+	{
+		if (!lookup.count(hWnd)) return L"";
+		return lookup[hWnd];
+	}
+
+	void erase(std::wstring id)
+	{
+		if (!views.count(id)) return;
+
+		HWND hWnd = views[id]->handle();
+		lookup.erase(hWnd);
+		views.erase(id);
+	}
+
+	DocumentView& get(std::wstring id)
+	{
+		static ScintillaDocumentView empty(L"");
+		if (!views.count(id)) return empty;
+
+		return *views[id];
+	}
+
+	DocumentView& get(HWND hWnd)
+	{
+		return get(id(hWnd));
+	}
+
+	DocumentView& operator[](std::wstring id)
+	{
+		return get(id);
+	}
+
+	DocumentView& operator[](HWND hWNd)
+	{
+		return get(id(hWnd));
+	}
+
+	size_t size()
+	{
+		return views.size();
+	}
+
+private:
+
+	std::map<std::wstring, std::shared_ptr<DocumentView>> views;
+	std::map<HWND,std::wstring> lookup;
+};
 
 class EditorView
 {
 public:
 
 	bool regexSearch		= false;
+	UINT urlFormat			= 0;
 
 	MainWindow				mainWnd;
 	MyStatusBar				statusBar;

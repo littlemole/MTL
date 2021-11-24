@@ -255,12 +255,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		EditorController controller(opt, fileService, rotService, scriptService);
 
-		mtl::rotten<IMTLEditor> editor(__uuidof(MTLEditor), controller.model.instanceId());
-		mtl::punk<IMTLEditor> mtlEditor(new MTLEditor(&controller));
-		editor = mtlEditor;
-		controller.editor = *editor;
 
-		scriptService.start(controller.editor);
 
 
 		mtl::accelerator() = mtl::accelerators(*controller.view.mainWnd, IDC_EDITOR);

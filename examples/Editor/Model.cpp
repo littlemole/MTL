@@ -85,7 +85,7 @@ void EditorModel::updateStatus(std::wstring id)
 void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 {
 	activeDocument_ = id;
-	documents[id] = EditorDocument(id, textFile);
+	documents.insert( id, new EditorDocument(id, textFile) );
 
 	std::wstring token = fileService_.monitor.watch(
 		textFile.filename,
