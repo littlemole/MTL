@@ -274,14 +274,54 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 	mtl::punk<IDispatch> disp(cb);
 	std::shared_ptr<Script> that = this->shared_from_this();
 
-	UINT_PTR id = mtl::timer::set_timeout(ms, [that, disp](UINT_PTR id)
+	UINT_PTR id = mtl::timer::set_timeout(ms, [this,that, disp](UINT_PTR id)
 	{
 		that->timeouts_.erase(id);
 		DISPPARAMS dispParams = { 0, 0, 0, 0 };
 		IDispatch* d = *disp;
 		if (d)
 		{
-			d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, 0, 0);
+			EXCEPINFO ex;
+			::ZeroMemory(&ex, sizeof(ex));
+
+			HRESULT hr = d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, &ex, 0);
+			if (hr!= S_OK)
+			{
+				if (scriptContext.hasException())
+				{
+					::JsValueRef ex = scriptContext.getAndClearException();
+					mtl::chakra::value tmp(ex);
+					std::wstring x = tmp.to_string();
+
+					::JsValueRef names = nullptr;
+					::JsGetOwnPropertyNames(ex, &names);
+					mtl::chakra::value nameValues(names);
+
+					int len = mtl::chakra::value(nameValues[L"length"]).as_int();
+
+
+					std::wostringstream woss;
+					for (int i = 0; i < len; i++)
+					{
+						std::wstring key = mtl::chakra::value(nameValues[i]).to_string();
+						std::wstring s = mtl::chakra::value(tmp[key]).to_string();
+						woss << key << L":" << s << std::endl;
+					}
+
+					//::MessageBox(0, woss.str().c_str(), x.c_str(), 0);
+
+					mtl::ui_thread().submit([cb = onError_, msg = woss.str(), x]() {
+						cb(0, 0, msg, x);
+					});
+				}
+				else
+				{
+					mtl::ui_thread().submit( [cb = onError_]() {
+						cb(0, 0, L"error in timeout", L"script error");
+					});
+				}
+				close();
+			}
 		}
 	});
 

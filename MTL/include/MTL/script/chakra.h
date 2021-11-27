@@ -381,6 +381,22 @@ namespace mtl {
 				return ctx;
 			}
 
+
+			bool hasException()
+			{
+				bool result = false;
+				::JsHasException(&result);
+				return result;
+			}
+
+			JsValueRef getAndClearException()
+			{
+				JsValueRef result = nullptr;
+				::JsGetAndClearException(&result);
+				return result;
+			}
+
+
 		private:
 			::JsContextRef ctx = nullptr;
 		};
