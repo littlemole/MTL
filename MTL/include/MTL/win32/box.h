@@ -385,26 +385,28 @@ namespace mtl {
 
         bool pull()
         {
-            task_t task;
+            std::deque<task_t> tasks;
             {
                 std::lock_guard<std::mutex> lock(mutex_);
-                if (stop_)
-                {
-                    return false;
-                }
-                if (queue_.empty())
-                    return false;
-
-                task = queue_.front();
-                queue_.pop_front();
+                tasks = std::move(queue_);
             }
-            try
-            {
-                task();
-            }
-            catch (...)
+            if (stop_)
             {
                 return false;
+            }
+            task_t task;
+            while (!tasks.empty())
+            {
+                task = tasks.front();
+                tasks.pop_front();
+                try
+                {
+                    task();
+                }
+                catch (...)
+                {
+                    // swallow
+                }
             }
 
             return true;

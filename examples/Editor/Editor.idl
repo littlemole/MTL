@@ -99,7 +99,7 @@ interface IMTLScriptHostObject : IDispatch
 	HRESULT WinRT([in] BSTR);
 
 	[id(8), helpstring("MsgBox")]
-	HRESULT MsgBox([in] BSTR text, [in] BSTR title, [in] long options, [in] VARIANT cb);
+	HRESULT MsgBox([in] BSTR text, [in] BSTR title, [in] long options, [out,retval] long* result);
 }
 
 [

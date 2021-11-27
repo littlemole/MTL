@@ -218,7 +218,7 @@ public:
 		return get(id);
 	}
 
-	DocumentView& operator[](HWND hWNd)
+	DocumentView& operator[](HWND hWnd)
 	{
 		return get(id(hWnd));
 	}
@@ -273,5 +273,18 @@ public:
 	std::wstring removeDocumentView(const std::wstring& id);
 
 	void updateStatus(EditorDocument& doc);
+
+	std::wstring activeDocument() { return activeDocument_; }
+
+	void activate(EditorDocument& doc);
+
+	void doShowFindReplaceDialog(int id);
+
+	void doFind(FINDREPLACE* fr);
+	void doReplace(FINDREPLACE* fr);
+
+private:
+
+	std::wstring activeDocument_;
 };
 

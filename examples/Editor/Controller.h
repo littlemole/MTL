@@ -161,9 +161,7 @@ public:
 
 		std::wstring active = view.removeDocumentView(id);
 
-		//view.mainWnd.taskbar.remove(id);
-
-		model.removeDocument(id, active);
+		model.removeDocument(id);
 
 		if (!active.empty())
 		{
@@ -206,8 +204,6 @@ public:
 			view.updateStatus(model.documents[id]);
 		});
 
-		//view.mainWnd.taskbar.add(doc.id, scintilla->handle, doc.textFile.filename);
-
 		view.updateStatus(model.documents[doc.id]);
 	}
 
@@ -246,9 +242,7 @@ public:
 
 	void doActivateDocument(std::wstring id)
 	{
-		model.activate(id);
-		view.updateStatus(model.documents[id]);
-		view.mainWnd.taskbar.activate(id);
+		view.activate(model.documents[id]);
 	}
 
 	void doDragOut(std::wstring id)
@@ -264,7 +258,6 @@ public:
 		//			view.mainWnd.destroy();
 		scriptService.stop();
 		::PostQuitMessage(0);
-
 	};
 
 	void doOpenFileDialog()
@@ -286,6 +279,8 @@ public:
 
 	void doSaveFileDialog()
 	{
+		if (view.activeDocument().empty()) return;
+
 		MySaveDialog fd(0);
 
 		fd.filter({ { L"all files (*.*)", L"*.*"} });
@@ -298,16 +293,16 @@ public:
 			std::wstring path = fd.path();
 			long enc = fd.encoding();
 			EOL_TYPE eol = fd.eol_type();
-			doSaveDocument(model.activeDocument(), path, enc, eol);
+			doSaveDocument(view.activeDocument(), path, enc, eol);
 		}
 	};
 
 	void doExecuteScript()
 	{
-		if (model.activeDocument().empty()) return;
+		if (view.activeDocument().empty()) return;
 
-		std::string utf8 = view.documentViews[model.activeDocument()]->get_text();
-		std::wstring fn = model.documents[model.activeDocument()].textFile.filename;
+		std::string utf8 = view.documentViews[view.activeDocument()]->get_text();
+		std::wstring fn = model.documents[view.activeDocument()].textFile.filename;
 		scriptService.run(mtl::to_wstring(utf8), fn.c_str(), [this](long line, long pos, std::wstring err, std::wstring src)
 		{
 			std::wostringstream oss;
@@ -324,82 +319,7 @@ public:
 		::ShowWindow(hWnd, SW_SHOW);
 	};
 
-	void doShowFindReplaceDialog(int id)
-	{
-		if (model.activeDocument().empty()) return;
-		view.documentViews[model.activeDocument()]->set_next_search_pos(0);
 
-		view.regexSearch = false;
-
-		HWND hWnd = view.searchDlg.replace(*view.mainWnd);
-		switch(id)
-		{
-			case IDM_EDIT_FIND: {
-				::SetWindowText(hWnd, L"Search");
-				break;
-			}
-			case IDM_EDIT_REPLACE: {
-				::SetWindowText(hWnd, L"Replace");
-				break;
-			}
-			case IDM_EDIT_FIND_REGEX: {
-				view.regexSearch = true;
-				::SetWindowText(hWnd, L"RegExp Find");
-				break;
-			}
-			case IDM_EDIT_REPLACE_REGEX: {
-				view.regexSearch = true;
-				::SetWindowText(hWnd, L"RegExp Replace");
-				break;
-			}
-		}
-		view.regexSearch = true;
-	};
-
-
-	void doFind(FINDREPLACE* fr)
-	{
-		if (model.activeDocument().empty()) return;
-
-		DWORD flags = fr->Flags;
-		if (view.regexSearch == true)
-		{
-			flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
-		}
-
-		view.documentViews[model.activeDocument()]->search(
-			mtl::to_string(fr->lpstrFindWhat),
-			flags
-		);
-	};
-
-	void doReplace(FINDREPLACE* fr)
-	{
-		if (model.activeDocument().empty()) return;
-
-		DWORD flags = fr->Flags;
-		if (view.regexSearch == true)
-		{
-			flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
-		}
-
-		if (flags & FR_REPLACEALL)
-		{
-			while (view.documentViews[model.activeDocument()]->replace(
-				mtl::to_string(fr->lpstrFindWhat),
-				mtl::to_string(fr->lpstrReplaceWith),
-				flags
-			));
-		}
-		else
-		{
-			view.documentViews[model.activeDocument()]->replace(
-				mtl::to_string(fr->lpstrFindWhat),
-				mtl::to_string(fr->lpstrReplaceWith),
-				flags
-			);
-		}
-	};
 
 
 	void doDrop( IDataObject* ido, DWORD keyState, DWORD& effect)
@@ -446,8 +366,8 @@ public:
 			auto s = dov.wstring(fdu);
 			std::string utf8 = mtl::to_string(s);
 
-			if (model.activeDocument().empty()) return;
-			view.documentViews[model.activeDocument()]->insert_text(utf8);
+			if (view.activeDocument().empty()) return;
+			view.documentViews[view.activeDocument()]->insert_text(utf8);
 
 			if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 			{
@@ -462,8 +382,8 @@ public:
 			std::wstring ws = mtl::to_wstring(s, CP_WINANSI);
 			std::string utf8 = mtl::to_string(ws);
 
-			if (model.activeDocument().empty()) return;
-			view.documentViews[model.activeDocument()]->insert_text(utf8);
+			if (view.activeDocument().empty()) return;
+			view.documentViews[view.activeDocument()]->insert_text(utf8);
 
 			if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 			{
@@ -544,17 +464,16 @@ public:
 			}
 		});
 
-		on(view.mainWnd.onFind) = &EditorController::doFind;
-		on(view.mainWnd.onReplace) = &EditorController::doReplace;
+
 
 		on(view.mainWnd.onCmd)
 			.when(IDM_EXIT).then([this]() { doExit(); })
 			.when(IDM_SAVE).then([this]() { doSaveFileDialog(); })
 			.when(IDM_FILE_NEW).then([this]() { doShowScriptDialog(); })
-			.when(IDM_EDIT_FIND).then([this]() { doShowFindReplaceDialog(IDM_EDIT_FIND); })
-			.when(IDM_EDIT_FIND_REGEX).then([this]() { doShowFindReplaceDialog(IDM_EDIT_FIND_REGEX); })
-			.when(IDM_EDIT_REPLACE).then([this]() { doShowFindReplaceDialog(IDM_EDIT_REPLACE); })
-			.when(IDM_EDIT_REPLACE_REGEX).then([this]() { doShowFindReplaceDialog(IDM_EDIT_REPLACE_REGEX); })
+			.when(IDM_EDIT_FIND).then([this]() { view.doShowFindReplaceDialog(IDM_EDIT_FIND); })
+			.when(IDM_EDIT_FIND_REGEX).then([this]() { view.doShowFindReplaceDialog(IDM_EDIT_FIND_REGEX); })
+			.when(IDM_EDIT_REPLACE).then([this]() { view.doShowFindReplaceDialog(IDM_EDIT_REPLACE); })
+			.when(IDM_EDIT_REPLACE_REGEX).then([this]() { view.doShowFindReplaceDialog(IDM_EDIT_REPLACE_REGEX); })
 			.when(IDM_ABOUT).then([this]() { doShowHelp(); });
 
 

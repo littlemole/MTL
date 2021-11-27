@@ -53,7 +53,6 @@ public:
 
 	Documents documents;
 
-	//mtl::event<void()> onUpdate;
 	mtl::event<void(std::wstring, std::wstring)> onFileChanged;
 
 	EditorModel(FileService& fileService, RotService rotService, ScriptService& scriptService)
@@ -65,23 +64,13 @@ public:
 	}
 
 	std::wstring instanceId() { return instanceId_; }
-	std::wstring activeDocument() { return activeDocument_; }
-
-	void activate(const std::wstring& id)
-	{
-		if (documents.exists(id))
-		{
-			activeDocument_ = id;
-		}
-	}
-
 
 	EditorDocument openNew();
 	EditorDocument transferDocument(const std::wstring& from);
 	IO_ERROR openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb);
 	void insertDocument(const std::wstring& id, TextFile& textFile);
 	void saveDocument(std::wstring id, std::wstring path, int enc, EOL_TYPE eol, std::string utf8, std::function<void(IO_ERROR)> cb);
-	void removeDocument(const std::wstring& id, const std::wstring& active);
+	void removeDocument(const std::wstring& id);
 	void reloadFile(const std::wstring& id, std::function<void(std::string)> cb);
 
 
@@ -91,6 +80,5 @@ private:
 	ScriptService& scriptService_;
 
 	std::wstring instanceId_;
-	std::wstring activeDocument_;
 };
 

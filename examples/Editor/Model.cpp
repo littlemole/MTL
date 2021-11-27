@@ -2,11 +2,9 @@
 
 
 
-void EditorModel::removeDocument(const std::wstring& id, const std::wstring& active)
+void EditorModel::removeDocument(const std::wstring& id)
 {
 	if (!documents.exists(id)) return;
-
-	activeDocument_ = active;
 
 	fileService_.monitor.unwatch(documents[id].fileWatchToken, documents[id].textFile.filename);
 
@@ -84,7 +82,7 @@ void EditorModel::updateStatus(std::wstring id)
 
 void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 {
-	activeDocument_ = id;
+//	activeDocument_ = id;
 	documents.insert( id, new EditorDocument(id, textFile) );
 
 	std::wstring token = fileService_.monitor.watch(

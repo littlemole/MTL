@@ -44,7 +44,7 @@ class MTLScriptHostObject :
 {
 public:
 
-	MTLScriptHostObject(HWND mainWnd, Script* script, ScriptService& service)
+	MTLScriptHostObject(HWND mainWnd, std::shared_ptr<Script> script, ScriptService& service)
 		: hWnd(mainWnd),script_(script), scriptService_(service)
 	{
 		id_ = script->id();
@@ -52,29 +52,44 @@ public:
 
 	virtual HRESULT __stdcall Import(BSTR value) override
 	{
-		script_->importSource(mtl::bstr_view(value).str());
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
+		{
+			script->importSource(mtl::bstr_view(value).str());
+		}
 		return S_OK;
 	}
 
 	virtual HRESULT __stdcall setTimeout(long ms, IDispatch* cb, long* id) override
 	{
-		UINT_PTR i = script_->set_timeout(ms, cb);
-		if (id) *id = (long)i;
-
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
+		{
+			UINT_PTR i = script->set_timeout(ms, cb);
+			if (id) *id = (long)i;
+		}
 		return S_OK;
 	}
 
 	virtual HRESULT __stdcall Wait() override
 	{
-		script_->wait(true);;
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
+		{
+			script->wait(true);;
+		}
 		return S_OK;
 	}
 
 	virtual HRESULT __stdcall Quit() override
 	{
-		if (scriptService_.isScript(id_))
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
 		{
-			script_->close();
+			if (scriptService_.isScript(id_))
+			{
+				script->close();
+			}
 		}
 		return S_OK;
 	}
@@ -100,49 +115,30 @@ public:
 	}
 
 
-	virtual HRESULT __stdcall MsgBox(BSTR text, BSTR title, long options, VARIANT cb) override
+	virtual HRESULT __stdcall MsgBox(BSTR text, BSTR title, long options, long* result) override
 	{
 		std::wstring txt = mtl::bstr_view(text).str();
 		std::wstring caption = mtl::bstr_view(title).str();
 
-		HWND wnd = hWnd;
-
-		if (cb.vt == VT_DISPATCH)
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
 		{
-			mtl::ui_thread().submit([handler = mtl::proxy<IDispatch>(cb.pdispVal), txt, caption, options, wnd]() {
+			long r = ::MessageBox(
+				hWnd,
+				txt.c_str(),
+				caption.c_str(),
+				options
+			);
 
-				long r = ::MessageBox(
-					wnd,
-					txt.c_str(),
-					caption.c_str(),
-					options
-				);
-				mtl::punk<IDispatch> disp = *handler;
-				mtl::variant v(r);
-				DISPPARAMS params = { &v,0,1,0 };
-				disp->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &params, 0, 0, 0);
-			});
+			if (result) *result = r;
 		}
-		else
-		{
-			mtl::ui_thread().submit([txt, caption, options, wnd]() {
-
-				::MessageBox(
-					wnd,
-					txt.c_str(),
-					caption.c_str(),
-					options
-				);
-			});
-		}
-
 		return S_OK;
 	}
 
 
 private:
 	HWND hWnd = nullptr;
-	Script* script_ = nullptr;
+	std::weak_ptr<Script> script_;
 	std::wstring id_;
 	ScriptService& scriptService_;
 };

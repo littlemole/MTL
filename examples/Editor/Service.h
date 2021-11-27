@@ -30,7 +30,7 @@ public:
 
 class ScriptService;
 
-class Script
+class Script : public std::enable_shared_from_this<Script>
 {
 public:
 
@@ -46,6 +46,7 @@ public:
 
 	UINT_PTR set_timeout(unsigned int ms, IDispatch* cb);
 
+	void dispose();
 	void close();
 
 	void importSource(std::wstring file);
@@ -63,6 +64,7 @@ private:
 	ScriptService& scriptService_;
 	FileService& fileService_;
 
+	HWND hWnd = nullptr;
 	bool wait_ = false;
 
 	std::wstring id_;
@@ -107,7 +109,7 @@ private:
 	std::thread worker_;
 	mtl::thread_box<void()> box_;
 
-	std::map<std::wstring, std::unique_ptr<Script>> scripts;
+	std::map<std::wstring, std::shared_ptr<Script>> scripts;
 };
 
 

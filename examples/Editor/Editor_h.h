@@ -593,7 +593,7 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
             /* [in] */ BSTR text,
             /* [in] */ BSTR title,
             /* [in] */ long options,
-            /* [in] */ VARIANT cb) = 0;
+            /* [retval][out] */ long *result) = 0;
         
     };
     
@@ -683,7 +683,7 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
             /* [in] */ BSTR text,
             /* [in] */ BSTR title,
             /* [in] */ long options,
-            /* [in] */ VARIANT cb);
+            /* [retval][out] */ long *result);
         
         END_INTERFACE
     } IMTLScriptHostObjectVtbl;
@@ -739,8 +739,8 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
 #define IMTLScriptHostObject_WinRT(This,__MIDL__IMTLScriptHostObject0002)	\
     ( (This)->lpVtbl -> WinRT(This,__MIDL__IMTLScriptHostObject0002) ) 
 
-#define IMTLScriptHostObject_MsgBox(This,text,title,options,cb)	\
-    ( (This)->lpVtbl -> MsgBox(This,text,title,options,cb) ) 
+#define IMTLScriptHostObject_MsgBox(This,text,title,options,result)	\
+    ( (This)->lpVtbl -> MsgBox(This,text,title,options,result) ) 
 
 #endif /* COBJMACROS */
 

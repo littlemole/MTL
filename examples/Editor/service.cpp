@@ -186,17 +186,17 @@ EditorDocument RotService::transferTab(std::wstring instance, const std::wstring
 
 
 Script::Script(HWND mainWnd, ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
-	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn)
+	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn), hWnd(mainWnd)
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(mainWnd, this, service));
-	host.query_interface(&hostObj_);
-
-	//context = scriptService_.runtime->make_context();
-	scriptContext = rt.make_context();
 }
 
 
 Script::~Script()
+{
+	dispose();
+}
+
+void Script::dispose()
 {
 	for (auto& it : timeouts_)
 	{
@@ -206,6 +206,11 @@ Script::~Script()
 
 bool Script::run(mtl::punk<IUnknown> obj)
 {
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(hWnd, this->shared_from_this(), scriptService_));
+	host.query_interface(&hostObj_);
+
+	scriptContext = rt.make_context();
+
 	mtl::punk<IDispatch> disp(obj);
 	mtl::variant var(*disp);
 
@@ -258,7 +263,6 @@ bool Script::run(mtl::punk<IUnknown> obj)
 	}
 	if (!wait_)
 	{
-		close();
 		return true;
 	}
 
@@ -268,10 +272,11 @@ bool Script::run(mtl::punk<IUnknown> obj)
 UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 {
 	mtl::punk<IDispatch> disp(cb);
+	std::shared_ptr<Script> that = this->shared_from_this();
 
-	UINT_PTR id = mtl::timer::set_timeout(ms, [this, disp](UINT_PTR id)
+	UINT_PTR id = mtl::timer::set_timeout(ms, [that, disp](UINT_PTR id)
 	{
-		timeouts_.erase(id);
+		that->timeouts_.erase(id);
 		DISPPARAMS dispParams = { 0, 0, 0, 0 };
 		IDispatch* d = *disp;
 		if (d)
@@ -289,17 +294,9 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 void Script::close()
 {
 	wait_ = false;
-	//scripting_->close();
-	/*
-	if (scriptContext)
-	{
-		::JsSetCurrentContext(JS_INVALID_REFERENCE);
-		::JsRelease(scriptContext,nullptr);
-		scriptContext = nullptr;
-		//::JsCollectGarbage(*rt);// scriptService_.runtime);
-		//::JsCollectGarbage(*rt);// scriptService_.runtime);
-	}
-	*/
+	//scriptContext.dispose();
+	//rt.dispose();	
+	dispose();
 	scriptService_.erase(id_);
 }
 
@@ -349,8 +346,6 @@ void ScriptService::stop()
 	if (worker_.joinable())
 	{
 		box_.stop();
-		//::SleepEx(200, TRUE);
-		//worker_.join();
 	}
 }
 
@@ -362,7 +357,7 @@ void ScriptService::run(std::wstring scriptSource, std::wstring filename, std::f
 		Script* script = new Script( mainWnd, *this, fileService, id, scriptSource, filename);
 		script->onError(onError);
 
-		scripts[id] = std::unique_ptr<Script>(script);
+		scripts[id] = std::shared_ptr<Script>(script);
 		bool done = scripts[id]->run(unk_);
 		if (done)
 		{
@@ -406,7 +401,13 @@ bool ScriptService::isScript(const std::wstring& id)
 
 void ScriptService::erase(std::wstring id)
 {
-	scripts.erase(id);
+	if (scripts.count(id))
+	{
+		std::shared_ptr<Script> s = scripts[id];
+		s->dispose();
+		scripts.erase(id);
+		//s->close(); // beware recursion ! :(
+	}
 }
 
 
@@ -415,14 +416,9 @@ void ScriptService::threadfun(mtl::proxy<IUnknown> p)
 {
 	mtl::STA enter;
 
-	//ChakraRuntime rt;
-
-	//runtime = &rt;
-
 	unk_ = *p;
 	box_.run();
 
-	//runtime = nullptr;
 	scripts.clear();
 	unk_.release();
 }

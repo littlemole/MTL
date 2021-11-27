@@ -129,6 +129,7 @@ void ScriptDialog::refresh()
 			refresh();
 		});
 	});
+
 }
 
 
@@ -433,11 +434,13 @@ std::shared_ptr<mtl::scintilla_wnd> EditorView::createEditorWnd(std::wstring id,
 	scintilla->colorize();
 
 	documentViews[id] = scintilla;
+	activeDocument_ = id;
 
 	std::wstring title = mtl::path(path).filename();
 	tabControl.add({ title, path, id }, scintilla->handle);
 
 	mainWnd.taskbar.add(id, scintilla->handle, path);
+
 
 	return scintilla;
 }
@@ -455,21 +458,34 @@ std::wstring EditorView::removeDocumentView(const std::wstring& id)
 	tabControl.remove(id);
 	mainWnd.taskbar.remove(id);
 
+	std::wstring result = L"";
+
 	if (documentViews.size() == 0)
 	{
 		HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
 		mainWnd.set_icon(hIcon);
 		statusBar.set_status({ L"open a document ..." });
-		return L"";
 	}
 	else
 	{
 		int index = tabControl.selected();
 		index = index < 0 ? (int)documentViews.size() - 1 : index;
 		std::wstring firstId = tabControl.item(index).id;
-		return firstId;
+		result = firstId;
 	}
+	activeDocument_ = result;
+	return result;
+}
 
+void EditorView::activate(EditorDocument& doc)
+{
+	if (documentViews.count(doc.id))
+	{
+		activeDocument_ = doc.id;
+
+		updateStatus(doc);
+		mainWnd.taskbar.activate(doc.id);
+	}
 }
 
 void EditorView::updateStatus(EditorDocument& doc)
@@ -500,6 +516,83 @@ void EditorView::updateStatus(EditorDocument& doc)
 	woss << L"Editor - " << mtl::path(doc.textFile.filename).filename();
 	mainWnd.set_text(woss.str());
 }
+
+
+
+void EditorView::doFind(FINDREPLACE* fr)
+{
+	if (activeDocument().empty()) return;
+
+	DWORD flags = fr->Flags;
+	if (regexSearch == true)
+	{
+		flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
+	}
+
+	documentViews[activeDocument()]->search(
+		mtl::to_string(fr->lpstrFindWhat),
+		flags
+	);
+};
+
+void EditorView::doReplace(FINDREPLACE* fr)
+{
+	if (activeDocument().empty()) return;
+
+	DWORD flags = fr->Flags;
+	if (regexSearch == true)
+	{
+		flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
+	}
+
+	if (flags & FR_REPLACEALL)
+	{
+		while (documentViews[activeDocument()]->replace(
+			mtl::to_string(fr->lpstrFindWhat),
+			mtl::to_string(fr->lpstrReplaceWith),
+			flags
+		));
+	}
+	else
+	{
+		documentViews[activeDocument()]->replace(
+			mtl::to_string(fr->lpstrFindWhat),
+			mtl::to_string(fr->lpstrReplaceWith),
+			flags
+		);
+	}
+};
+
+void EditorView::doShowFindReplaceDialog(int id)
+{
+	if (activeDocument().empty()) return;
+	documentViews[activeDocument()]->set_next_search_pos(0);
+
+	regexSearch = false;
+
+	HWND hWnd = searchDlg.replace(*mainWnd);
+	switch (id)
+	{
+		case IDM_EDIT_FIND: {
+			::SetWindowText(hWnd, L"Search");
+			break;
+		}
+		case IDM_EDIT_REPLACE: {
+			::SetWindowText(hWnd, L"Replace");
+			break;
+		}
+		case IDM_EDIT_FIND_REGEX: {
+			regexSearch = true;
+			::SetWindowText(hWnd, L"RegExp Find");
+			break;
+		}
+		case IDM_EDIT_REPLACE_REGEX: {
+			regexSearch = true;
+			::SetWindowText(hWnd, L"RegExp Replace");
+			break;
+		}
+	}
+};
 
 EditorView::EditorView()
 {
@@ -697,5 +790,7 @@ EditorView::EditorView()
 		mainWnd.menu.item(ID_EDIT_PASTE).check(toggle);
 	});
 
+	mainWnd.onFind([this](FINDREPLACE* fr) { doFind(fr);  });
+	mainWnd.onReplace([this](FINDREPLACE* fr) { doReplace(fr);  });
 }
 
