@@ -180,7 +180,7 @@ namespace mtl {
 				return *this;
 			}
 
-			JsValueRef operator*()
+			JsValueRef operator*() const
 			{
 				return handle;
 			}
@@ -331,6 +331,30 @@ namespace mtl {
 			JsValueRef handle = nullptr;
 		};
 
+		template<class F>
+		class function
+		{
+		public:
+
+			function(F f)
+				:fun(f)
+			{}
+			
+			JsValueRef callback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount)
+			{
+				return fun(callee, isConstructCall, arguments, argumentCount);
+			}
+
+			static JsValueRef CALLBACK functionCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+			{
+				function* f = (function*)callbackState;
+				return f->callback(callee, isConstructCall, arguments, argumentCount);
+			}
+
+		private:
+			F fun;
+		};
+
 		class script_ctx
 		{
 		public:
@@ -406,7 +430,9 @@ namespace mtl {
 		public:
 
 			active_ctx()
-			{}
+			{
+				::JsGetCurrentContext(&handle);
+			}
 
 			active_ctx(JsContextRef ctx)
 				:handle(ctx)
@@ -421,7 +447,7 @@ namespace mtl {
 				{
 					if (previous)
 					{
-						::JsGetCurrentContext(&previous);
+						::JsSetCurrentContext(previous);
 						previous = nullptr;
 					}
 					handle = nullptr;
@@ -504,10 +530,18 @@ namespace mtl {
 			}
 
 
-			JsValueRef make_fun(JsNativeFunction fun)
+			JsValueRef make_fun(JsNativeFunction fun,void* data = nullptr)
 			{
 				JsValueRef result;
-				::JsCreateFunction(fun, nullptr, &result);
+				::JsCreateFunction(fun, data, &result);
+				return result;
+			}
+
+			template<class T>
+			JsValueRef make_fun(function<T>& f)
+			{
+				JsValueRef result;
+				::JsCreateFunction(&function<T>::functionCallback, &f, &result);
 				return result;
 			}
 

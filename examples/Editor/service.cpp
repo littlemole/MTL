@@ -1,5 +1,6 @@
 #include "Service.h"
 #include "com.h"
+#include "View.h"
 
 mtl::path FileService::find(const std::wstring& relative_path)
 {
@@ -185,8 +186,8 @@ EditorDocument RotService::transferTab(std::wstring instance, const std::wstring
 }
 
 
-Script::Script(HWND mainWnd, ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
-	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn), hWnd(mainWnd)
+Script::Script(MainWindow* mainWnd, ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
+	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn), mainWnd_(mainWnd)
 {
 }
 
@@ -198,15 +199,145 @@ Script::~Script()
 
 void Script::dispose()
 {
+	wait_ = false;
+	quit_ = true;
 	for (auto& it : timeouts_)
 	{
 		mtl::timer::cancel(it);
 	}
 }
 
-bool Script::run(mtl::punk<IUnknown> obj)
+
+void Script::close()
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(hWnd, this->shared_from_this(), scriptService_));
+	//scriptContext.dispose();
+	//rt.dispose();	
+	dispose();
+	scriptService_.kill(id_);
+}
+
+
+
+JsValueRef CALLBACK Script::msgBoxCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+	
+	if (script->quit_) return mtl::chakra::value::from_int(IDCANCEL);
+
+	std::wstring title = L"title";
+	std::wstring msg = L"msg";
+	long options = 0;
+
+	mtl::chakra::active_ctx ctx;
+
+	if (argumentCount > 1)
+	{
+		msg = mtl::chakra::value(arguments[1]).to_string();
+	}
+	if (argumentCount > 2)
+	{
+		title = mtl::chakra::value(arguments[2]).to_string();
+	}
+	if (argumentCount > 3)
+	{
+		options = mtl::chakra::value(arguments[3]).as_int();
+	}
+
+	LRESULT r = ::MessageBox(script->mainWnd_->handle, msg.c_str(), title.c_str(), options);
+
+	return mtl::chakra::value::from_int(r);
+}
+
+
+JsValueRef CALLBACK Script::waitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+
+	script->wait(true);
+
+	return JS_INVALID_REFERENCE;
+}
+
+
+JsValueRef CALLBACK Script::quitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+
+	if (script->quit_ == true) return JS_INVALID_REFERENCE;
+
+	script->close();
+
+	return JS_INVALID_REFERENCE;
+}
+
+
+JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+
+	if (script->quit_ == true) return JS_INVALID_REFERENCE;
+
+	if(argumentCount < 3) return JS_INVALID_REFERENCE;
+
+	mtl::chakra::active_ctx ctx;
+	long ms = mtl::chakra::value(arguments[1]).as_int();
+
+	mtl::chakra::value fun = arguments[2];
+	mtl::chakra::value that = callee;
+
+	std::weak_ptr<Script> weak(lock);
+
+	UINT_PTR id = mtl::timer::set_timeout(ms, [weak,fun,that](UINT_PTR id)
+	{
+		auto s = weak.lock();
+
+		if (s)
+		{
+			if (s->quit_ == true)
+			{
+				s->timeouts_.erase(id);
+				return;
+			}
+
+			s->scriptService_.submit([that,fun,weak,id]() 
+			{
+				auto s = weak.lock();
+
+				if (s)
+				{
+					s->timeouts_.erase(id);
+
+					if (s->quit_ == true)
+					{
+						return;
+					}
+
+					mtl::chakra::active_ctx ctx(*s->scriptContext);
+
+					::JsValueRef t = *that;
+					::JsValueRef r = nullptr;
+					::JsValueRef f = *fun;
+					JsErrorCode ec = ::JsCallFunction(f, &t, 1, &r);
+				}
+			});
+		}
+	});
+
+	script->timeouts_.insert(id);
+	return JS_INVALID_REFERENCE;
+}
+
+bool Script::run(IUnknown* obj)
+{
+	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(mainWnd_->handle, this->shared_from_this(), scriptService_));
 	host.query_interface(&hostObj_);
 
 	scriptContext = rt.make_context();
@@ -224,9 +355,27 @@ bool Script::run(mtl::punk<IUnknown> obj)
 		mtl::variant var2(*disp);
 		::JsValueRef host2Object = mtl::chakra::value::from_variant(&var2);
 
+		mtl::chakra::value nativeObject = ctx.create_object();
+		nativeObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
+
+		nativeObject[L"MsgBox"] = ctx.make_fun(&Script::msgBoxCallback,this);
+
+		nativeObject[L"Wait"] = ctx.make_fun(&Script::waitCallback, this);
+		nativeObject[L"Quit"] = ctx.make_fun(&Script::quitCallback, this);
+		nativeObject[L"setTimeout"] = ctx.make_fun(&Script::timeoutCallback, this);
+
+//		nativeObject[L"magic"] = ctx.make_fun(f);
+		/*
+		static mtl::chakra::function f([](JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount) 
+		{
+			return JS_INVALID_REFERENCE;
+		});
+		*/
+		//nativeObject[L"magic"] = ctx.make_fun(f);
 		globalObject[L"Application"] = hostObject;
 		globalObject[L"Chakra"] = host2Object;
 		globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
+		globalObject[L"Native"] = *nativeObject;
 
 		std::wstring tmp = mtl::chakra::value(globalObject[L"HelloWorld"]).to_string();
 
@@ -263,6 +412,7 @@ bool Script::run(mtl::punk<IUnknown> obj)
 	}
 	if (!wait_)
 	{
+		quit_ = true;
 		return true;
 	}
 
@@ -271,12 +421,24 @@ bool Script::run(mtl::punk<IUnknown> obj)
 
 UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 {
+	if (quit_ == true) return 0;
+
 	mtl::punk<IDispatch> disp(cb);
 	std::shared_ptr<Script> that = this->shared_from_this();
 
-	UINT_PTR id = mtl::timer::set_timeout(ms, [this,that, disp](UINT_PTR id)
+	UINT_PTR id = mtl::timer::set_timeout(ms, [this, that, disp](UINT_PTR id)
 	{
+		mtl::chakra::active_ctx ctx(*scriptContext);
+
+		auto lock = that;
+
 		that->timeouts_.erase(id);
+
+		if (lock->quit_ == true)
+		{
+			return;
+		}
+
 		DISPPARAMS dispParams = { 0, 0, 0, 0 };
 		IDispatch* d = *disp;
 		if (d)
@@ -284,9 +446,18 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 			EXCEPINFO ex;
 			::ZeroMemory(&ex, sizeof(ex));
 
-			HRESULT hr = d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, &ex, 0);
+			UINT n = 0;
+			HRESULT hr = d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, &ex, &n);
 			if (hr!= S_OK)
 			{
+				mtl::punk<IErrorInfo> ei;
+				::GetErrorInfo(0, &ei);
+				if (ei)
+				{
+					mtl::bstr desc;
+					ei->GetDescription(&desc);
+					::MessageBox(0, desc.str().c_str(), L"err", 0);
+				}
 				if (scriptContext.hasException())
 				{
 					::JsValueRef ex = scriptContext.getAndClearException();
@@ -331,16 +502,6 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 }
 
 
-void Script::close()
-{
-	wait_ = false;
-	//scriptContext.dispose();
-	//rt.dispose();	
-	dispose();
-	scriptService_.erase(id_);
-}
-
-
 void Script::importSource(std::wstring file)
 {
 	std::wstring root = mtl::path(filename_).parent_dir();
@@ -375,9 +536,9 @@ ScriptService::~ScriptService()
 }
 
 
-void ScriptService::start(mtl::punk<IUnknown> unk, HWND hWnd)
+void ScriptService::start(mtl::punk<IUnknown> unk, MainWindow* wnd)
 {
-	mainWnd = hWnd;
+	mainWnd = wnd;
 	worker_ = std::thread(&ScriptService::threadfun, this, mtl::proxy<IUnknown>(unk));
 }
 
@@ -398,7 +559,7 @@ void ScriptService::run(std::wstring scriptSource, std::wstring filename, std::f
 		script->onError(onError);
 
 		scripts[id] = std::shared_ptr<Script>(script);
-		bool done = scripts[id]->run(unk_);
+		bool done = scripts[id]->run( *unk_ );
 		if (done)
 		{
 			scripts.erase(id);

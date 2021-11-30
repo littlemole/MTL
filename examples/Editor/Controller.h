@@ -427,7 +427,7 @@ public:
 		editor = mtlEditor;
 
 		// start scriptService 
-		scriptService.start(mtlEditor, *view.mainWnd);
+		scriptService.start(mtlEditor, &view.mainWnd);
 
 		bind();
 		handleCommandline(opt);

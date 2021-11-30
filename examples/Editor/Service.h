@@ -29,6 +29,7 @@ public:
 
 
 class ScriptService;
+class MainWindow;
 
 class Script : public std::enable_shared_from_this<Script>
 {
@@ -38,11 +39,11 @@ public:
 	mtl::chakra::script_ctx scriptContext;
 	unsigned currentSourceContext = 0;
 
-	Script(HWND mainWnd, ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
+	Script(MainWindow* mainWnd, ScriptService& service, FileService& fs, const std::wstring& id, const std::wstring& s, const std::wstring& fn);
 
 	~Script();
 
-	bool run(mtl::punk<IUnknown> obj);
+	bool run( IUnknown* obj);
 
 	UINT_PTR set_timeout(unsigned int ms, IDispatch* cb);
 
@@ -58,14 +59,17 @@ public:
 
 	void onError(std::function<void(long, long, std::wstring, std::wstring)> cb);
 
+	template<class T>
+	void submit(T t);
 
 private:
 
 	ScriptService& scriptService_;
 	FileService& fileService_;
 
-	HWND hWnd = nullptr;
+	MainWindow* mainWnd_ = nullptr;
 	bool wait_ = false;
+	bool quit_ = false;
 
 	std::wstring id_;
 	std::wstring source_;
@@ -74,6 +78,11 @@ private:
 	mtl::punk<IUnknown> hostObj_;
 	std::function<void(long, long, std::wstring, std::wstring)> onError_;
 	std::set<UINT_PTR> timeouts_;
+
+	static JsValueRef CALLBACK msgBoxCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+	static JsValueRef CALLBACK waitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+	static JsValueRef CALLBACK quitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+	static JsValueRef CALLBACK timeoutCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 };
 
 
@@ -81,13 +90,13 @@ class ScriptService
 {
 public:
 
-	HWND mainWnd = nullptr;
+	MainWindow* mainWnd = nullptr;
 	FileService& fileService;
 
 	ScriptService( FileService& service);
 	~ScriptService();
 
-	void start(mtl::punk<IUnknown> unk, HWND hWnd);
+	void start(mtl::punk<IUnknown> unk, MainWindow* wnd);
 	void stop();
 
 	void run(std::wstring scriptSource, std::wstring filename, std::function<void(long, long, std::wstring, std::wstring)> onError);
@@ -100,6 +109,11 @@ public:
 	bool isScript(const std::wstring& id);
 	void erase(std::wstring id);
 
+	template<class T>
+	void submit(T t)
+	{
+		box_.submit(t);
+	}
 
 private:
 
@@ -113,3 +127,8 @@ private:
 };
 
 
+template<class T>
+void Script::submit(T t)
+{
+	scriptService_.submit(t);
+}
