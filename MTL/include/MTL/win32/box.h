@@ -351,6 +351,11 @@ namespace mtl {
                    continue;
                 }
 
+                if (!::PeekMessage(&msg, NULL, NULL, NULL, 0))
+                {
+                    continue;
+                }
+
                 if (!::GetMessage(&msg, 0, 0, 0))
                 {
                     break;
