@@ -437,7 +437,12 @@ namespace mtl {
 			active_ctx(JsContextRef ctx)
 				:handle(ctx)
 			{
-				::JsGetCurrentContext(&previous);
+				::JsContextRef ref = nullptr;
+				::JsGetCurrentContext(&ref);
+
+				if (ref == ctx) return;
+ 
+				previous = ref;
 				::JsSetCurrentContext(handle);
 			}
 
@@ -452,6 +457,11 @@ namespace mtl {
 					}
 					handle = nullptr;
 				}
+			}
+
+			operator bool()
+			{
+				return handle != nullptr;
 			}
 
 			active_ctx(const active_ctx& rhs) = delete;
@@ -641,9 +651,5 @@ namespace mtl {
 		private:
 			JsRuntimeHandle handle = nullptr;
 		};
-
-
-
 	}
-
 }

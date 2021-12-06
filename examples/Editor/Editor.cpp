@@ -190,6 +190,9 @@ HRESULT __stdcall MTLEditorDocuments::get_count(long* cnt)
 
 HRESULT __stdcall MTLEditorDocuments::item(VARIANT idx, IMTLEditorDocument** doc)
 {
+	if (!doc) return E_INVALIDARG;
+	*doc = nullptr;
+
 	if (idx.vt == VT_BSTR)
 	{
 		mtl::variant_view vv(idx);

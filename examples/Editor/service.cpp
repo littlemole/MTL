@@ -307,6 +307,7 @@ JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructC
 				return;
 			}
 
+			// double dispatch to ensure timer callback returns and keeps up msg loop
 			s->scriptService_.submit([that,fun,weak,id]() 
 			{
 				auto s = weak.lock();

@@ -14,57 +14,6 @@ void EditorModel::removeDocument(const std::wstring& id)
 EditorDocument EditorModel::transferDocument(const std::wstring& from)
 {
 	return rotService_.transferTab(instanceId(), from);
-	/*EditorDocument result;
-
-	auto info = mtl::split(from, ':');
-	if (info.size() != 2)
-	{
-		return result;
-	}
-
-	std::wstring instanceId = info[0];
-	std::wstring documentId = info[1];
-
-	mtl::punk<IMTLEditor> remoteEditor = mtl::rot::object<IMTLEditor>(__uuidof(MTLEditor), instanceId);
-	if (!remoteEditor) return result;
-
-	mtl::punk<IMTLEditorDocuments> docs;
-	HRESULT hr = remoteEditor->get_documents(&docs);
-	if (!docs) return result;
-
-	mtl::punk<IMTLEditorDocument> doc;
-	mtl::variant vId{ mtl::ole_char(from.c_str()) };
-	docs->item(vId, &doc);
-	if (!doc) return result;
-
-	mtl::bstr fn;
-	doc->get_filename(&fn);
-	mtl::bstr content;
-	doc->get_content(&content);
-
-	std::wostringstream woss;
-	woss << this->instanceId << L":" << documentId;
-
-	std::wstring newId = woss.str();
-
-	std::string utf8 = content.to_string();
-	TextFile textFile;
-	textFile.fileEncoding.code_page = CP_UTF8;
-	textFile.fileEncoding.eol = mtl::file_encoding::UNIX;
-	textFile.fileEncoding.has_bom = false;
-	textFile.fileEncoding.is_binary = false;
-	textFile.filename = fn.str();
-	textFile.last_written = 0;
-	textFile.readonly = false;
-	textFile.size = utf8.size();
-	textFile.utf8 = utf8;
-
-	result.id = newId;
-	result.textFile = std::move(textFile);
-
-	docs->remove(vId);
-	*/
-	//return result;
 }
 
 /*
@@ -82,8 +31,7 @@ void EditorModel::updateStatus(std::wstring id)
 
 void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 {
-//	activeDocument_ = id;
-	documents.insert( id, new EditorDocument(id, textFile) );
+	documents.insert(id, new EditorDocument{ id, textFile });
 
 	std::wstring token = fileService_.monitor.watch(
 		textFile.filename,
@@ -97,36 +45,6 @@ void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
 	);
 
 	documents[id].fileWatchToken = token;
-
-	/*
-	auto scintilla = view_.createEditorWnd(id, path, textFile.utf8);
-
-
-//	scintilla->set_text(textFile.utf8);
-
-	scintilla->onNotify(SCN_MODIFIED, [this, id](NMHDR* nmhdr)
-	{
-		SCNotification* notify = (SCNotification*)nmhdr;
-		if (notify->nmhdr.code == SCN_MODIFIED)
-		{
-			updateStatus(id);
-		}
-	});
-
-	scintilla->onNotify(SCN_UPDATEUI, [this, id](NMHDR* nmhdr)
-	{
-		updateStatus(id);
-	});
-
-	updateStatus(id);
-
-
-	HICON icon = mtl::shell::file_icon(documents[id]->textFile.filename);
-	view_.mainWnd.set_icon(icon);
-
-	std::wstring title = mtl::path(path).filename();
-	view_.tabControl.add({ title, path, id }, scintilla->handle);
-	*/
 }
 
 IO_ERROR EditorModel::openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb)
