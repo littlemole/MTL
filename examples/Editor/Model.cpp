@@ -6,7 +6,7 @@ void EditorModel::removeDocument(const std::wstring& id)
 {
 	if (!documents.exists(id)) return;
 
-	fileService_.monitor.unwatch(documents[id].fileWatchToken, documents[id].textFile.filename);
+	fileService_.monitor.unwatch(documents[id].fileWatchToken(), documents[id].filename());
 
 	documents.erase(id);
 }
@@ -29,39 +29,40 @@ void EditorModel::updateStatus(std::wstring id)
 }
 */
 
-void EditorModel::insertDocument(const std::wstring& id, TextFile& textFile)
+void EditorModel::insertDocument(const std::wstring& id, const TextFile& textFile)
 {
-	documents.insert(id, new EditorDocument{ id, textFile });
 
 	std::wstring token = fileService_.monitor.watch(
 		textFile.filename,
 		[this, id]()
-	{
-		if (!documents.exists(id)) return;
+		{
+			if (!documents.exists(id)) return;
 
-		std::wstring path = documents[id].textFile.filename;
-		this->onFileChanged.fire(id, path);
-	}
+			std::wstring path = documents[id].filename();
+			this->onFileChanged.fire(id, path);
+		}
 	);
 
-	documents[id].fileWatchToken = token;
+	auto doc = new EditorDocument{ id, textFile, token };
+	documents.insert(id, doc);
 }
 
-IO_ERROR EditorModel::openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb)
+IO_ERROR EditorModel::openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(TextFile)> cb)
 {
 	IO_ERROR ie = fileService_.read(path, enc, readOnly, [this, cb](IO_ERROR e, TextFile textFile)
 	{
 		if (e == IO_ERROR_SUCCESS)
 		{
+			/*
 			std::wostringstream woss;
 			woss << instanceId() << ":" << mtl::new_guid();
 			std::wstring id = woss.str();
 
-			EditorDocument result;
+			EditorDocument result{ id, std::move(textFile) , }
 			result.id = id;
 			result.textFile = std::move(textFile);
-
-			cb(result);
+			*/
+			cb(textFile);
 		}
 	});
 	return ie;
@@ -86,9 +87,7 @@ EditorDocument EditorModel::openNew()
 	textFile.fileEncoding.has_bom = false;
 	textFile.fileEncoding.is_binary = false;
 
-	EditorDocument doc;
-	doc.id = id;
-	doc.textFile = std::move(textFile);
+	EditorDocument doc{ id, textFile, L"" };
 	return doc;
 }
 
@@ -100,8 +99,16 @@ void EditorModel::saveDocument(std::wstring id, std::wstring path, int enc, EOL_
 		return;
 	}
 
-	auto doc = documents[id];
-	TextFile textFile = doc.textFile;
+	auto& doc = documents[id];
+
+	if (doc.type() != DOC_TXT)
+	{
+		return;
+	}
+
+	EditorDocument& document = dynamic_cast<EditorDocument&>(doc);
+
+	TextFile textFile = document.textFile;
 
 	textFile.utf8 = utf8;
 	textFile.size = utf8.size();
@@ -115,7 +122,7 @@ void EditorModel::saveDocument(std::wstring id, std::wstring path, int enc, EOL_
 
 	textFile.fileEncoding.eol = (mtl::file_encoding::eol_mode)eol;
 
-	fileService_.monitor.unwatch(doc.fileWatchToken, path);
+	fileService_.monitor.unwatch(doc.fileWatchToken(), path);
 
 	fileService_.write(textFile, [this, id, textFile, cb](IO_ERROR e)
 	{
@@ -127,12 +134,12 @@ void EditorModel::saveDocument(std::wstring id, std::wstring path, int enc, EOL_
 			{
 				if (documents.exists(id) == 0) return;
 
-				std::wstring path = documents[id].textFile.filename;
+				std::wstring path = documents[id].filename();
 				this->onFileChanged.fire(id, path);
 			}
 			);
 
-			documents[id].fileWatchToken = token;
+			documents[id].fileWatchToken(token);
 
 			cb(e);
 		});
@@ -146,16 +153,25 @@ void EditorModel::reloadFile(const std::wstring& id, std::function<void(std::str
 		return;
 	}
 
-	std::wstring path = documents[id].textFile.filename;
-	bool readOnly = documents[id].textFile.readonly;
-	long enc = documents[id].textFile.fileEncoding.code_page;
-	openFile(path, readOnly, enc, [this, id, cb](EditorDocument doc)
+	auto& doc = documents[id];
+	if (doc.type() != DOC_TXT)
+	{
+		return;
+	}
+
+	EditorDocument& document = dynamic_cast<EditorDocument&>(doc);
+
+
+	std::wstring path = doc.filename();
+	bool readOnly = document.textFile.readonly;
+	long enc = document.textFile.fileEncoding.code_page;
+	openFile(path, readOnly, enc, [this, id, cb](TextFile textFile)
 	{
 		if (!documents.exists(id))
 		{
 			return;
 		}
 
-		cb(doc.textFile.utf8);
+		cb(textFile.utf8);
 	});
 }

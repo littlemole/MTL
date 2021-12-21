@@ -51,6 +51,8 @@ public:
 	void close();
 
 	void importSource(std::wstring file);
+	JsValueRef eval(std::wstring src);
+
 
 	std::wstring filename() { return filename_; }
 	std::wstring id() { return id_; }
@@ -79,10 +81,17 @@ private:
 	std::function<void(long, long, std::wstring, std::wstring)> onError_;
 	std::set<UINT_PTR> timeouts_;
 
+	void promiseContinuation(JsValueRef task);
+
 	static JsValueRef CALLBACK msgBoxCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 	static JsValueRef CALLBACK waitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 	static JsValueRef CALLBACK quitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 	static JsValueRef CALLBACK timeoutCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+
+	static JsValueRef CALLBACK CreateObjectCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+	static JsValueRef CALLBACK WinRTCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+
+	static void CALLBACK PromiseContinuationCallback(JsValueRef task, void* callbackState);
 };
 
 

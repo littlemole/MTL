@@ -108,9 +108,16 @@ public:
 		return S_FALSE;
 	}
 
-	virtual HRESULT __stdcall WinRT(BSTR ns) override
+	virtual HRESULT __stdcall WinRT(BSTR ns, VARIANT* result) override
 	{
 		::JsProjectWinRTNamespace(mtl::bstr_view(ns).str().c_str());
+
+		std::shared_ptr<Script> script = script_.lock();
+		if (script)
+		{
+			mtl::chakra::value r = script->eval(mtl::bstr_view(ns).str());
+			::JsValueToVariant(*r, result);
+		}
 		return S_OK;
 	}
 

@@ -35,6 +35,7 @@
     <ClInclude Include="include\MTL\disp\sf_array.h" />
     <ClInclude Include="include\mtl\disp\typeinfo.h" />
     <ClInclude Include="include\MTL\disp\variant.h" />
+    <ClInclude Include="include\mtl\edge\chrome.h" />
     <ClInclude Include="include\MTL\fwd.h" />
     <ClInclude Include="include\MTL\mtl.h" />
     <ClInclude Include="include\MTL\obj\collection.h" />

@@ -9,9 +9,9 @@ class Documents
 {
 public:
 
-	void insert(std::wstring id, EditorDocument* doc)
+	void insert(std::wstring id, Document* doc)
 	{
-		documents_[id] = std::shared_ptr<EditorDocument>(doc);
+		documents_[id] = std::shared_ptr<Document>(doc);
 	}
 
 	void erase(std::wstring id)
@@ -32,7 +32,7 @@ public:
 		return documents_.size();
 	}
 
-	EditorDocument& operator[](const std::wstring& id)
+	Document& operator[](const std::wstring& id)
 	{
 		static EditorDocument empty;
 		if (documents_.count(id))
@@ -44,7 +44,7 @@ public:
 
 private:
 
-	std::map<std::wstring, std::shared_ptr<EditorDocument>> documents_;
+	std::map<std::wstring, std::shared_ptr<Document>> documents_;
 };
 
 class EditorModel
@@ -67,8 +67,8 @@ public:
 
 	EditorDocument openNew();
 	EditorDocument transferDocument(const std::wstring& from);
-	IO_ERROR openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(EditorDocument)> cb);
-	void insertDocument(const std::wstring& id, TextFile& textFile);
+	IO_ERROR openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(TextFile)> cb);
+	void insertDocument(const std::wstring& id, const TextFile& textFile);
 	void saveDocument(std::wstring id, std::wstring path, int enc, EOL_TYPE eol, std::string utf8, std::function<void(IO_ERROR)> cb);
 	void removeDocument(const std::wstring& id);
 	void reloadFile(const std::wstring& id, std::function<void(std::string)> cb);

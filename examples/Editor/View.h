@@ -272,11 +272,11 @@ public:
 
 	std::wstring removeDocumentView(const std::wstring& id);
 
-	void updateStatus(EditorDocument& doc);
+	void updateStatus(Document& doc);
 
 	std::wstring activeDocument() { return activeDocument_; }
 
-	void activate(EditorDocument& doc);
+	void activate(Document& doc);
 
 	void doShowFindReplaceDialog(int id);
 

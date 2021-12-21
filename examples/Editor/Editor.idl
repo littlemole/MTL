@@ -96,7 +96,7 @@ interface IMTLScriptHostObject : IDispatch
 	HRESULT CreateObject( [in] BSTR, [out,retval] IDispatch** );
 
 	[id(7), helpstring("WinRT")]
-	HRESULT WinRT([in] BSTR);
+	HRESULT WinRT([in] BSTR, [out,retval] VARIANT* result);
 
 	[id(8), helpstring("MsgBox")]
 	HRESULT MsgBox([in] BSTR text, [in] BSTR title, [in] long options, [out,retval] long* result);

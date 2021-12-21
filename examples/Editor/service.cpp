@@ -178,8 +178,7 @@ EditorDocument RotService::transferTab(std::wstring instance, const std::wstring
 	textFile.size = utf8.size();
 	textFile.utf8 = utf8;
 
-	result.id = newId;
-	result.textFile = std::move(textFile);
+	result = EditorDocument{ newId,textFile, L"" };
 
 	docs->remove(vId);
 	return result;
@@ -262,6 +261,97 @@ JsValueRef CALLBACK Script::waitCallback(JsValueRef callee, bool isConstructCall
 	return JS_INVALID_REFERENCE;
 }
 
+void Script::promiseContinuation(JsValueRef task)
+{
+	JsValueRef ctx = nullptr;
+	::JsGetContextOfObject(task, &ctx);
+
+	::JsAddRef(ctx,nullptr);
+
+	scriptService_.submit([task,ctx]() 
+	{
+		JsValueRef result = nullptr;
+		JsValueRef global = nullptr;
+		JsValueRef oldCtx = nullptr;
+
+		::JsGetCurrentContext(&oldCtx);
+		::JsSetCurrentContext(ctx);
+		::JsGetGlobalObject(&global);
+		::JsCallFunction(task, &global, 1, &result);
+		::JsSetCurrentContext(oldCtx);
+		::JsRelease(ctx, nullptr);
+	});
+}
+
+void CALLBACK Script::PromiseContinuationCallback(JsValueRef task, void* callbackState)
+{
+	// Save promise task in taskQueue.
+	//queue<JsValueRef>* q = (queue<JsValueRef> *)callbackState;
+	//q->push(task);
+//	JsAddRef(task, nullptr);
+
+	Script* script = (Script*)callbackState;
+	script->promiseContinuation(task);
+
+	/*
+	JsValueRef result;
+	JsValueRef global;
+	JsGetGlobalObject(&global);
+	JsCallFunction(task, &global, 1, &result);
+	*/
+	//JsRelease(task, nullptr);
+}
+
+
+JsValueRef CALLBACK Script::CreateObjectCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 2)
+	{
+		return JS_INVALID_REFERENCE;
+	}
+
+	Script* script = (Script*)callbackState;
+	auto lock = script->shared_from_this();
+	if (script->quit_) return JS_INVALID_REFERENCE;
+
+	//mtl::chakra::active_ctx ctx;
+
+	std::wstring progid = mtl::chakra::value(arguments[1]).to_string();
+
+	mtl::punk<IUnknown> unk;
+	HRESULT hr = unk.create_object(progid);
+	if (hr != S_OK) return JS_INVALID_REFERENCE;
+	if (!unk) return JS_INVALID_REFERENCE;
+
+	mtl::punk<IDispatch> disp(unk);
+	if (!disp) return JS_INVALID_REFERENCE;
+
+	mtl::variant v(disp);
+	JsValueRef ref = JS_INVALID_REFERENCE;
+	::JsVariantToValue(&v, &ref);
+	return ref;
+}
+
+
+JsValueRef CALLBACK Script::WinRTCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 2)
+	{
+		return JS_INVALID_REFERENCE;
+	}
+
+	Script* script = (Script*)callbackState;
+	auto lock = script->shared_from_this();
+	if (script->quit_) return JS_INVALID_REFERENCE;
+
+	std::wstring ns = mtl::chakra::value(arguments[1]).to_string();
+	::JsProjectWinRTNamespace(ns.c_str());
+
+	mtl::chakra::value r = script->eval(ns);
+	return *r;
+}
+
+
 
 JsValueRef CALLBACK Script::quitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
 {
@@ -341,13 +431,20 @@ bool Script::run(IUnknown* obj)
 	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(mainWnd_->handle, this->shared_from_this(), scriptService_));
 	host.query_interface(&hostObj_);
 
+	
+
 	scriptContext = rt.make_context();
+
+//	jse = ::JsSetPromiseContinuationCallback(&Script::PromiseContinuationCallback, this);
 
 	mtl::punk<IDispatch> disp(obj);
 	mtl::variant var(*disp);
 
 	{
 		mtl::chakra::active_ctx ctx(*scriptContext);
+
+		JsErrorCode jse = ::JsSetPromiseContinuationCallback(&Script::PromiseContinuationCallback, this);
+
 		mtl::chakra::value globalObject(ctx.global());
 
 		::JsValueRef hostObject = mtl::chakra::value::from_variant(&var);
@@ -359,11 +456,13 @@ bool Script::run(IUnknown* obj)
 		mtl::chakra::value nativeObject = ctx.create_object();
 		nativeObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
 
-		nativeObject[L"MsgBox"] = ctx.make_fun(&Script::msgBoxCallback,this);
+		globalObject[L"MsgBox"] = ctx.make_fun(&Script::msgBoxCallback,this);
 
-		nativeObject[L"Wait"] = ctx.make_fun(&Script::waitCallback, this);
-		nativeObject[L"Quit"] = ctx.make_fun(&Script::quitCallback, this);
-		nativeObject[L"setTimeout"] = ctx.make_fun(&Script::timeoutCallback, this);
+		globalObject[L"Wait"] = ctx.make_fun(&Script::waitCallback, this);
+		globalObject[L"Quit"] = ctx.make_fun(&Script::quitCallback, this);
+		globalObject[L"setTimeout"] = ctx.make_fun(&Script::timeoutCallback, this);
+		globalObject[L"winRT"] = ctx.make_fun(&Script::WinRTCallback, this);
+		globalObject[L"createObject"] = ctx.make_fun(&Script::CreateObjectCallback, this);
 
 //		nativeObject[L"magic"] = ctx.make_fun(f);
 		/*
@@ -502,6 +601,14 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 	return id;
 }
 
+JsValueRef Script::eval(std::wstring src)
+{
+	mtl::chakra::active_ctx ctx(*scriptContext);
+
+	JsValueRef result = ctx.run(src, L"");
+
+	return result;
+}
 
 void Script::importSource(std::wstring file)
 {

@@ -160,7 +160,7 @@ HRESULT __stdcall MTLEditorDocument::get_filename(BSTR* fn)
 		return S_OK;
 	}
 
-	std::wstring filename = controller->model.documents[id].textFile.filename;
+	std::wstring filename = controller->model.documents[id].filename();
 
 	*fn = ::SysAllocString(filename.c_str());
 	return S_OK;

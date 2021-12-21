@@ -174,43 +174,47 @@ public:
 	{
 		EditorDocument document = model.transferDocument(from);
 
-		if (document.id.empty()) return;
+		if (document.id().empty()) return;
 
-		doInsertDocument(document);
+		doInsertDocument(document.textFile);
 	}
 
 	void doOpenFile(const std::wstring& path, bool readOnly, long enc)
 	{
-		model.openFile(path, readOnly, enc, [this](EditorDocument doc)
+		model.openFile(path, readOnly, enc, [this](const TextFile& doc)
 		{
 			doInsertDocument(doc);
 		});
 	}
 
 
-	void doInsertDocument(EditorDocument doc)
+	void doInsertDocument(const TextFile& doc)
 	{
-		model.insertDocument(doc.id, doc.textFile);
+		std::wostringstream woss;
+		woss << model.instanceId() << ":" << mtl::new_guid();
+		std::wstring id = woss.str();
 
-		auto scintilla = view.createEditorWnd(doc.id, doc.textFile.filename, doc.textFile.utf8);
+		model.insertDocument(id, doc);
 
-		scintilla->onNotify(SCN_MODIFIED, [this, id = doc.id](NMHDR* nmhdr)
+		auto scintilla = view.createEditorWnd(id, doc.filename, doc.utf8);
+
+		scintilla->onNotify(SCN_MODIFIED, [this, id = id](NMHDR* nmhdr)
 		{
 			view.updateStatus(model.documents[id]);
 		});
 
-		scintilla->onNotify(SCN_UPDATEUI, [this, id = doc.id](NMHDR* nmhdr)
+		scintilla->onNotify(SCN_UPDATEUI, [this, id = id](NMHDR* nmhdr)
 		{
 			view.updateStatus(model.documents[id]);
 		});
 
-		view.updateStatus(model.documents[doc.id]);
+		view.updateStatus(model.documents[id]);
 	}
 
 	void doCreateNew()
 	{
 		EditorDocument doc = model.openNew();
-		doInsertDocument(doc);
+		doInsertDocument(doc.textFile);
 	}
 
 	void doSaveDocument(std::wstring id, std::wstring path, long enc, EOL_TYPE eol)
@@ -302,7 +306,7 @@ public:
 		if (view.activeDocument().empty()) return;
 
 		std::string utf8 = view.documentViews[view.activeDocument()]->get_text();
-		std::wstring fn = model.documents[view.activeDocument()].textFile.filename;
+		std::wstring fn = model.documents[view.activeDocument()].filename();
 		scriptService.run(mtl::to_wstring(utf8), fn.c_str(), [this](long line, long pos, std::wstring err, std::wstring src)
 		{
 			std::wostringstream oss;
@@ -414,6 +418,7 @@ public:
 		}
 	}
 
+
 	EditorController(mtl::options& opt, FileService& fs, RotService& rs, ScriptService& sc)
 		: editor(__uuidof(MTLEditor), model.instanceId()),
 		on(this),
@@ -455,10 +460,11 @@ public:
 		});
 
 		on(view.mainWnd.taskbar.onClose) = &EditorController::doRemoveDocument;
-		on(view.mainWnd.taskbar.onActivate).then([this](std::wstring id) 
+		on(view.mainWnd.taskbar.onActivate).then([this](std::wstring id)
 		{
 			if (model.documents.exists(id))
 			{
+				::SetForegroundWindow(*view.mainWnd);
 				view.tabControl.select(id);
 				doActivateDocument(id);
 			}
@@ -482,6 +488,7 @@ public:
 			doDrop(ido, keyState, effect);
 		});
 
+	}
 
 	void handleCommandline(mtl::options& opt)
 	{

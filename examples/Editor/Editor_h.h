@@ -587,7 +587,8 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
             /* [retval][out] */ IDispatch **__MIDL__IMTLScriptHostObject0001) = 0;
         
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE WinRT( 
-            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002) = 0;
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002,
+            /* [retval][out] */ VARIANT *result) = 0;
         
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE MsgBox( 
             /* [in] */ BSTR text,
@@ -676,7 +677,8 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
         
         /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *WinRT )( 
             IMTLScriptHostObject * This,
-            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002);
+            /* [in] */ BSTR __MIDL__IMTLScriptHostObject0002,
+            /* [retval][out] */ VARIANT *result);
         
         /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *MsgBox )( 
             IMTLScriptHostObject * This,
@@ -736,8 +738,8 @@ EXTERN_C const IID IID_IMTLScriptHostObject;
 #define IMTLScriptHostObject_CreateObject(This,__MIDL__IMTLScriptHostObject0000,__MIDL__IMTLScriptHostObject0001)	\
     ( (This)->lpVtbl -> CreateObject(This,__MIDL__IMTLScriptHostObject0000,__MIDL__IMTLScriptHostObject0001) ) 
 
-#define IMTLScriptHostObject_WinRT(This,__MIDL__IMTLScriptHostObject0002)	\
-    ( (This)->lpVtbl -> WinRT(This,__MIDL__IMTLScriptHostObject0002) ) 
+#define IMTLScriptHostObject_WinRT(This,__MIDL__IMTLScriptHostObject0002,result)	\
+    ( (This)->lpVtbl -> WinRT(This,__MIDL__IMTLScriptHostObject0002,result) ) 
 
 #define IMTLScriptHostObject_MsgBox(This,text,title,options,result)	\
     ( (This)->lpVtbl -> MsgBox(This,text,title,options,result) ) 

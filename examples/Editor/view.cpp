@@ -477,20 +477,27 @@ std::wstring EditorView::removeDocumentView(const std::wstring& id)
 	return result;
 }
 
-void EditorView::activate(EditorDocument& doc)
+void EditorView::activate(Document& doc)
 {
-	if (documentViews.count(doc.id))
+	if (documentViews.count(doc.id()))
 	{
-		activeDocument_ = doc.id;
+		activeDocument_ = doc.id();
 
 		updateStatus(doc);
-		mainWnd.taskbar.activate(doc.id);
+		mainWnd.taskbar.activate(doc.id());
 	}
 }
 
-void EditorView::updateStatus(EditorDocument& doc)
+void EditorView::updateStatus(Document& doc)
 {
-	auto sci = documentViews[doc.id];
+	if (doc.type() != DOC_TXT)
+	{
+		return;
+	}
+
+	EditorDocument& document = dynamic_cast<EditorDocument&>(doc);
+
+	auto sci = documentViews[doc.id()];
 	int pos = sci->pos();
 	int line = sci->line_from_pos(pos);
 	int line_pos = pos - sci->pos_from_line(line);
@@ -502,18 +509,18 @@ void EditorView::updateStatus(EditorDocument& doc)
 	swprintf_s(pos_buf, 100, L"Pos %3i", line_pos);
 
 	statusBar.set_status({
-		doc.textFile.filename, L"",
-		encodings().item(encodings().index(doc.textFile.fileEncoding.code_page)).second,
-		doc.textFile.fileEncoding.eol == EOL_UNIX ? L"UNIX" : L" DOS",
+		document.textFile.filename, L"",
+		encodings().item(encodings().index(document.textFile.fileEncoding.code_page)).second,
+		document.textFile.fileEncoding.eol == EOL_UNIX ? L"UNIX" : L" DOS",
 		line_buf,
 		pos_buf
 		});
 
-	HICON icon = mtl::shell::file_icon(doc.textFile.filename);
+	HICON icon = mtl::shell::file_icon(document.textFile.filename);
 	mainWnd.set_icon(icon);
 
 	std::wstringstream woss;
-	woss << L"Editor - " << mtl::path(doc.textFile.filename).filename();
+	woss << L"Editor - " << mtl::path(document.textFile.filename).filename();
 	mainWnd.set_text(woss.str());
 }
 

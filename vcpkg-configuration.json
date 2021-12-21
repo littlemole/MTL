@@ -8,8 +8,8 @@
       {
         "kind": "git",
         "repository": "https://github.com/littlemole/vcpkg-registry",
-        "baseline": "038fc09184ae5e10466bfe58f168f6167e2b33fa",
-        "packages": [ "beison", "beicode", "metacpp", "patex" ]
+        "baseline": "3393df155cccd8f9a8169af3b40bbf1f373dc578",
+        "packages": [ "beison", "beicode", "metacpp", "patex", "webview2" ]
       }
     ]
 }
