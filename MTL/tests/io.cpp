@@ -516,11 +516,11 @@ TEST_F(IOTest, testPipedProcess)
 TEST_F(IOTest, testPipedProcessAsync)
 {
     //mtl::Process::exec(L"git.exe -C \"C:\\moe\" status .", [](std::wstring result) 
-
+    // MÖP
     std::wstring p = mtl::path(mtl::path_to_self_directory()).parent_dir().parent_dir();
 
     std::wostringstream woss;
-    woss << L"git.exe -C \"" << p << "\" status .";
+    woss << L"git.exe -C \"" << p << "\" diff .";
 
     {
         mtl::Process::exec(woss.str(), [](std::wstring result)

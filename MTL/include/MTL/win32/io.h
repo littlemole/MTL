@@ -680,14 +680,30 @@ namespace mtl
             siStartInfo.hStdInput = hChildStd_IN_Rd;
             siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
+            std::wostringstream woss;
+            wchar_t* env = ::GetEnvironmentStrings();
+            while (*env)
+            {
+                woss << env;
+                woss.write(L"\0", 1);
+                env += wcslen(env) + 1;
+            }
+
+            woss << L"LC_ALL=C.UTF-8";
+            woss.write(L"\0\0", 2);
+
+            std::wstring envBlock = woss.str();
+
+           // ::FreeEnvironmentStrings(env);
+
             BOOL bSuccess = FALSE;
             bSuccess = ::CreateProcess(NULL,
                 (LPWSTR)cli.c_str(),     // command line
                 NULL,          // process security attributes
                 NULL,          // primary thread security attributes
                 TRUE,          // handles are inherited
-                0,             // creation flags
-                NULL,          // use parent's environment
+                CREATE_UNICODE_ENVIRONMENT,             // creation flags
+                (LPVOID)envBlock.c_str(),          // use parent's environment
                 NULL,          // use parent's current directory
                 &siStartInfo,  // STARTUPINFO pointer
                 &piProcInfo);  // receives PROCESS_INFORMATION
@@ -750,6 +766,8 @@ namespace mtl
         void readFromPipeAsync(std::function<void(std::wstring)> cb)
         {
             mtl::file file(hChildStd_OUT_Rd);
+
+            hChildStd_OUT_Rd = nullptr;
 
             file.async_content([cb](DWORD e, std::string s)
             {
