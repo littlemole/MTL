@@ -116,6 +116,8 @@ namespace mtl {
 	{
 	public:
 
+		splitter_layout() {}
+
 		splitter_layout(HWND w1, HWND w2, HWND w3);
 
 		void do_layout(RECT& r, RECT& p) override;
@@ -401,6 +403,12 @@ namespace mtl {
 
 	inline void splitter_layout::do_layout(RECT& r, RECT& p)
 	{
+		if (widgets_.size() < 3) return;
+
+/*		if (!::IsWindow(widgets_[0].hWnd)) return;
+		if (!::IsWindow(widgets_[1].hWnd)) return;
+		if (!::IsWindow(widgets_[2].hWnd)) return;
+		*/
 		RECT wr1;
 		RECT wr2;
 		RECT wr3;

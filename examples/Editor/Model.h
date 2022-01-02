@@ -68,7 +68,7 @@ public:
 	EditorDocument openNew();
 	EditorDocument transferDocument(const std::wstring& from);
 	IO_ERROR openFile(const std::wstring& path, bool readOnly, long enc, std::function<void(TextFile)> cb);
-	void insertDocument(const std::wstring& id, const TextFile& textFile);
+	void insertDocument(const std::wstring& id, Document* doc);
 	void saveDocument(std::wstring id, std::wstring path, int enc, EOL_TYPE eol, std::string utf8, std::function<void(IO_ERROR)> cb);
 	void removeDocument(const std::wstring& id);
 	void reloadFile(const std::wstring& id, std::function<void(std::string)> cb);

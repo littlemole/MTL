@@ -185,10 +185,48 @@ EditorDocument RotService::transferTab(std::wstring instance, const std::wstring
 }
 
 
-Script::Script(MainWindow* mainWnd, ScriptService& service, FileService& fs, const std::wstring& i, const std::wstring& s, const std::wstring& fn)
-	: scriptService_(service), fileService_(fs), id_(i), source_(s), filename_(fn), mainWnd_(mainWnd)
+
+void report_exception(mtl::chakra::active_ctx& ctx, std::function<void(long, long, std::wstring, std::wstring)>& onError)
 {
+	::JsValueRef ex = ctx.getAndClearException();
+	mtl::chakra::value tmp(ex);
+	std::wstring x = tmp.to_string();
+
+	::JsValueRef names = nullptr;
+	::JsGetOwnPropertyNames(ex, &names);
+	mtl::chakra::value nameValues(names);
+
+	int len = mtl::chakra::value(nameValues[L"length"]).as_int();
+
+	std::wostringstream woss;
+	for (int i = 0; i < len; i++)
+	{
+		std::wstring key = mtl::chakra::value(nameValues[i]).to_string();
+		std::wstring s = mtl::chakra::value(tmp[key]).to_string();
+		woss << key << L":" << s << std::endl;
+	}
+
+	mtl::ui_thread().submit([cb = onError, msg = woss.str(), x]() {
+		cb(0, 0, msg, x);
+	});
 }
+
+
+Script::Script(
+	MainWindow* mainWnd, 
+	ScriptService& service, 
+	FileService& fs, 
+	const std::wstring& i, 
+	const std::wstring& s, 
+	const std::wstring& fn )
+	: 
+		scriptService_(service), 
+		fileService_(fs), 
+		id_(i), 
+		source_(s), 
+		filename_(fn), 
+		mainWnd_(mainWnd)
+{}
 
 
 Script::~Script()
@@ -209,9 +247,6 @@ void Script::dispose()
 
 void Script::close()
 {
-	//scriptContext.dispose();
-	//rt.dispose();	
-	dispose();
 	scriptService_.kill(id_);
 }
 
@@ -229,7 +264,7 @@ JsValueRef CALLBACK Script::msgBoxCallback(JsValueRef callee, bool isConstructCa
 	std::wstring msg = L"msg";
 	long options = 0;
 
-	mtl::chakra::active_ctx ctx;
+	mtl::chakra::active_ctx ctx(*script->scriptContext);
 
 	if (argumentCount > 1)
 	{
@@ -244,7 +279,7 @@ JsValueRef CALLBACK Script::msgBoxCallback(JsValueRef callee, bool isConstructCa
 		options = mtl::chakra::value(arguments[3]).as_int();
 	}
 
-	LRESULT r = ::MessageBox(script->mainWnd_->handle, msg.c_str(), title.c_str(), options);
+	int r = (int) ::MessageBox(script->mainWnd_->handle, msg.c_str(), title.c_str(), options);
 
 	return mtl::chakra::value::from_int(r);
 }
@@ -265,41 +300,32 @@ void Script::promiseContinuation(JsValueRef task)
 {
 	JsValueRef ctx = nullptr;
 	::JsGetContextOfObject(task, &ctx);
-
 	::JsAddRef(ctx,nullptr);
 
-	scriptService_.submit([task,ctx]() 
+	scriptService_.submit([this,task, ctx]()
 	{
-		JsValueRef result = nullptr;
-		JsValueRef global = nullptr;
-		JsValueRef oldCtx = nullptr;
+		{
+			mtl::chakra::active_ctx ac(ctx);
 
-		::JsGetCurrentContext(&oldCtx);
-		::JsSetCurrentContext(ctx);
-		::JsGetGlobalObject(&global);
-		::JsCallFunction(task, &global, 1, &result);
-		::JsSetCurrentContext(oldCtx);
+			JsValueRef result = nullptr;
+			JsValueRef global = nullptr;
+
+			::JsGetGlobalObject(&global);
+			::JsCallFunction(task, &global, 1, &result);
+
+			if (ac.hasException())
+			{
+				report_exception(ac, onError_);
+			}
+		}
 		::JsRelease(ctx, nullptr);
 	});
 }
 
 void CALLBACK Script::PromiseContinuationCallback(JsValueRef task, void* callbackState)
 {
-	// Save promise task in taskQueue.
-	//queue<JsValueRef>* q = (queue<JsValueRef> *)callbackState;
-	//q->push(task);
-//	JsAddRef(task, nullptr);
-
 	Script* script = (Script*)callbackState;
 	script->promiseContinuation(task);
-
-	/*
-	JsValueRef result;
-	JsValueRef global;
-	JsGetGlobalObject(&global);
-	JsCallFunction(task, &global, 1, &result);
-	*/
-	//JsRelease(task, nullptr);
 }
 
 
@@ -313,8 +339,6 @@ JsValueRef CALLBACK Script::CreateObjectCallback(JsValueRef callee, bool isConst
 	Script* script = (Script*)callbackState;
 	auto lock = script->shared_from_this();
 	if (script->quit_) return JS_INVALID_REFERENCE;
-
-	//mtl::chakra::active_ctx ctx;
 
 	std::wstring progid = mtl::chakra::value(arguments[1]).to_string();
 
@@ -352,6 +376,30 @@ JsValueRef CALLBACK Script::WinRTCallback(JsValueRef callee, bool isConstructCal
 }
 
 
+JsValueRef CALLBACK Script::importCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 2)
+	{
+		return JS_INVALID_REFERENCE;
+	}
+
+	std::wstring src = mtl::chakra::value(arguments[1]).to_string();
+
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+
+	if (script->quit_ == true) return JS_INVALID_REFERENCE;
+
+//	mtl::ui_thread().submit([script,src]()
+	//{
+	JsValueRef result =	script->importSource(src);
+	//});
+
+	return result;
+
+	//return JS_INVALID_REFERENCE;
+}
 
 JsValueRef CALLBACK Script::quitCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
 {
@@ -361,11 +409,42 @@ JsValueRef CALLBACK Script::quitCallback(JsValueRef callee, bool isConstructCall
 
 	if (script->quit_ == true) return JS_INVALID_REFERENCE;
 
-	script->close();
+	mtl::ui_thread().submit([script]() 
+	{
+		script->close();
+	});
+
 
 	return JS_INVALID_REFERENCE;
 }
 
+
+JsValueRef CALLBACK Script::pipeCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
+{
+	if (argumentCount < 3) return JS_INVALID_REFERENCE;
+
+	Script* script = (Script*)callbackState;
+
+	auto lock = script->shared_from_this();
+
+	if (script->quit_ == true) return JS_INVALID_REFERENCE;
+
+	std::wstring cli = mtl::chakra::value(arguments[1]).as_string();
+	mtl::variant cb = mtl::chakra::value(arguments[2]).as_variant();
+
+	if(cb.vt != VT_DISPATCH) return JS_INVALID_REFERENCE;
+
+//	mtl::
+
+
+	mtl::ui_thread().submit([script]()
+	{
+		script->close();
+	});
+
+
+	return JS_INVALID_REFERENCE;
+}
 
 JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState)
 {
@@ -377,7 +456,7 @@ JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructC
 
 	if(argumentCount < 3) return JS_INVALID_REFERENCE;
 
-	mtl::chakra::active_ctx ctx;
+	mtl::chakra::active_ctx ctx(*script->scriptContext);
 	long ms = mtl::chakra::value(arguments[1]).as_int();
 
 	mtl::chakra::value fun = arguments[2];
@@ -417,6 +496,11 @@ JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructC
 					::JsValueRef r = nullptr;
 					::JsValueRef f = *fun;
 					JsErrorCode ec = ::JsCallFunction(f, &t, 1, &r);
+
+					if (ctx.hasException())
+					{
+						report_exception(ctx, s->onError_);
+					}
 				}
 			});
 		}
@@ -428,14 +512,7 @@ JsValueRef CALLBACK Script::timeoutCallback(JsValueRef callee, bool isConstructC
 
 bool Script::run(IUnknown* obj)
 {
-	mtl::punk<MTLScriptHostObject> host(new MTLScriptHostObject(mainWnd_->handle, this->shared_from_this(), scriptService_));
-	host.query_interface(&hostObj_);
-
-	
-
 	scriptContext = rt.make_context();
-
-//	jse = ::JsSetPromiseContinuationCallback(&Script::PromiseContinuationCallback, this);
 
 	mtl::punk<IDispatch> disp(obj);
 	mtl::variant var(*disp);
@@ -447,66 +524,23 @@ bool Script::run(IUnknown* obj)
 
 		mtl::chakra::value globalObject(ctx.global());
 
-		::JsValueRef hostObject = mtl::chakra::value::from_variant(&var);
-
-		disp = hostObj_;
-		mtl::variant var2(*disp);
-		::JsValueRef host2Object = mtl::chakra::value::from_variant(&var2);
-
-		mtl::chakra::value nativeObject = ctx.create_object();
-		nativeObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
-
+		globalObject[L"Import"] = ctx.make_fun(&Script::importCallback, this);
 		globalObject[L"MsgBox"] = ctx.make_fun(&Script::msgBoxCallback,this);
-
 		globalObject[L"Wait"] = ctx.make_fun(&Script::waitCallback, this);
 		globalObject[L"Quit"] = ctx.make_fun(&Script::quitCallback, this);
 		globalObject[L"setTimeout"] = ctx.make_fun(&Script::timeoutCallback, this);
 		globalObject[L"winRT"] = ctx.make_fun(&Script::WinRTCallback, this);
 		globalObject[L"createObject"] = ctx.make_fun(&Script::CreateObjectCallback, this);
 
-//		nativeObject[L"magic"] = ctx.make_fun(f);
-		/*
-		static mtl::chakra::function f([](JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount) 
-		{
-			return JS_INVALID_REFERENCE;
-		});
-		*/
-		//nativeObject[L"magic"] = ctx.make_fun(f);
+		::JsValueRef hostObject = mtl::chakra::value::from_variant(&var);
 		globalObject[L"Application"] = hostObject;
-		globalObject[L"Chakra"] = host2Object;
-		globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
-		globalObject[L"Native"] = *nativeObject;
-
-		std::wstring tmp = mtl::chakra::value(globalObject[L"HelloWorld"]).to_string();
+		//globalObject[L"HelloWorld"] = mtl::chakra::value::from_string(L"Wonderful World");
 
 		::JsValueRef result = ctx.run(source_, filename_);
 
 		if (ctx.hasException())
 		{
-			::JsValueRef ex = ctx.getAndClearException();
-			mtl::chakra::value tmp(ex);
-			std::wstring x = tmp.to_string();
-
-			::JsValueRef names = nullptr;
-			::JsGetOwnPropertyNames(ex, &names);
-			mtl::chakra::value nameValues(names);
-
-			int len = mtl::chakra::value(nameValues[L"length"]).as_int();
-
-
-			std::wostringstream woss;
-			for (int i = 0; i < len; i++)
-			{
-				std::wstring key = mtl::chakra::value(nameValues[i]).to_string();
-				std::wstring s = mtl::chakra::value(tmp[key]).to_string();
-				woss << key << L":" << s << std::endl;
-			}
-
-			//::MessageBox(0, woss.str().c_str(), x.c_str(), 0);
-
-			mtl::ui_thread().submit([cb = onError_, msg = woss.str(), x]() {
-				cb(0, 0, msg, x);
-			});
+			report_exception(ctx, onError_);
 			wait_ = false;
 		}
 	}
@@ -519,6 +553,7 @@ bool Script::run(IUnknown* obj)
 	return false;
 }
 
+/*
 UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 {
 	if (quit_ == true) return 0;
@@ -539,16 +574,14 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 			return;
 		}
 
-		DISPPARAMS dispParams = { 0, 0, 0, 0 };
 		IDispatch* d = *disp;
 		if (d)
 		{
-			EXCEPINFO ex;
-			::ZeroMemory(&ex, sizeof(ex));
-
-			UINT n = 0;
-			HRESULT hr = d->Invoke(DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD, &dispParams, 0, &ex, &n);
-			if (hr!= S_OK)
+			try {
+				mtl::automation call(d, DISPID_VALUE);
+				call.invoke();
+			}
+			catch (HRESULT hr)
 			{
 				mtl::punk<IErrorInfo> ei;
 				::GetErrorInfo(0, &ei);
@@ -556,34 +589,15 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 				{
 					mtl::bstr desc;
 					ei->GetDescription(&desc);
-					::MessageBox(0, desc.str().c_str(), L"err", 0);
-				}
-				if (scriptContext.hasException())
-				{
-					::JsValueRef ex = scriptContext.getAndClearException();
-					mtl::chakra::value tmp(ex);
-					std::wstring x = tmp.to_string();
 
-					::JsValueRef names = nullptr;
-					::JsGetOwnPropertyNames(ex, &names);
-					mtl::chakra::value nameValues(names);
-
-					int len = mtl::chakra::value(nameValues[L"length"]).as_int();
-
-
-					std::wostringstream woss;
-					for (int i = 0; i < len; i++)
-					{
-						std::wstring key = mtl::chakra::value(nameValues[i]).to_string();
-						std::wstring s = mtl::chakra::value(tmp[key]).to_string();
-						woss << key << L":" << s << std::endl;
-					}
-
-					//::MessageBox(0, woss.str().c_str(), x.c_str(), 0);
-
-					mtl::ui_thread().submit([cb = onError_, msg = woss.str(), x]() {
-						cb(0, 0, msg, x);
+					std::wstring msg = desc.str();
+					mtl::ui_thread().submit([cb = onError_,msg]() {
+						cb(0, 0, msg, L"script error");
 					});
+				}
+				else if (scriptContext.hasException())
+				{
+					report_exception(ctx, onError_);
 				}
 				else
 				{
@@ -600,17 +614,21 @@ UINT_PTR Script::set_timeout(unsigned int ms, IDispatch* cb)
 
 	return id;
 }
+*/
 
 JsValueRef Script::eval(std::wstring src)
 {
 	mtl::chakra::active_ctx ctx(*scriptContext);
 
 	JsValueRef result = ctx.run(src, L"");
-
+	if (ctx.hasException())
+	{
+		report_exception(ctx, onError_);
+	}
 	return result;
 }
 
-void Script::importSource(std::wstring file)
+JsValueRef Script::importSource(std::wstring file)
 {
 	std::wstring root = mtl::path(filename_).parent_dir();
 
@@ -621,6 +639,12 @@ void Script::importSource(std::wstring file)
 	mtl::chakra::active_ctx ctx(*scriptContext);
 
 	::JsValueRef result = ctx.run(mtl::to_wstring(content), file);
+	if (ctx.hasException())
+	{
+		report_exception(ctx, onError_);
+	}
+
+	return result;
 }
 
 void Script::onError(std::function<void(long, long, std::wstring, std::wstring)> cb)
@@ -628,6 +652,8 @@ void Script::onError(std::function<void(long, long, std::wstring, std::wstring)>
 	onError_ = cb;
 }
 
+
+/* -------------------------------- */
 
 
 ScriptService::ScriptService( FileService& service)

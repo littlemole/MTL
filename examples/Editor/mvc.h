@@ -2,6 +2,7 @@
 
 #include "Editor.h"
 
+
 enum EOL_TYPE {
 	EOL_UNIX,
 	EOL_DOS
@@ -16,7 +17,7 @@ enum IO_ERROR {
 enum DOC_TYPE {
 	DOC_TXT,
 	DOC_IMG,
-	DOC_HMTL
+	DOC_HTML
 };
 
 class TextFile
@@ -34,7 +35,12 @@ class Document
 {
 public:
 
-	virtual ~Document() {};
+	mtl::event<void(std::wstring)> onClose;
+
+	virtual ~Document() 
+	{
+		onClose.fire(id_);
+	};
 
 	virtual std::wstring id() = 0;
 	virtual std::wstring filename() = 0;
@@ -59,6 +65,56 @@ public:
 
 	EditorDocument(const std::wstring& id, const TextFile& f, std::wstring t)
 		: textFile(f)
+	{
+		id_ = id;
+		fileWatchToken_ = t;
+	}
+
+	virtual std::wstring id() override;
+	virtual std::wstring filename() override;
+	virtual std::wstring fileWatchToken() override;
+	virtual void fileWatchToken(std::wstring) override;
+	virtual DOC_TYPE type() override;
+
+};
+
+
+class ImageDocument : public Document
+{
+public:
+
+	std::wstring filename_;
+
+	ImageDocument()
+	{}
+
+	ImageDocument(const std::wstring& id, std::wstring p, std::wstring t)
+		: filename_(p)
+	{
+		id_ = id;
+		fileWatchToken_ = t;
+	}
+
+	virtual std::wstring id() override;
+	virtual std::wstring filename() override;
+	virtual std::wstring fileWatchToken() override;
+	virtual void fileWatchToken(std::wstring) override;
+	virtual DOC_TYPE type() override;
+
+};
+
+
+class HtmlDocument : public Document
+{
+public:
+
+	std::wstring filename_;
+
+	HtmlDocument()
+	{}
+
+	HtmlDocument(const std::wstring& id, const std::wstring& f, std::wstring t)
+		:filename_(f)
 	{
 		id_ = id;
 		fileWatchToken_ = t;

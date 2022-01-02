@@ -172,14 +172,38 @@ HRESULT __stdcall MTLEditorDocument::get_content(BSTR* cnt)
 
 	*cnt = 0;
 
-	std::string bytes;
-	if (controller->model.documents.exists(id) != 0)
+	if (!controller->model.documents.exists(id) )
 	{
-		bytes = controller->view.documentViews[id]->get_text();
+		return S_OK;
 	}
+
+	auto& v = controller->view.documentViews[id];
+	if (v.type() != DOC_TXT) return S_OK;
+
+	auto& editorView = dynamic_cast<ScintillaDocumentView&>(v);
+
+	std::string bytes = editorView.viewWnd.scintilla.get_text();
 
 	*cnt = ::SysAllocString(mtl::to_wstring(bytes).c_str());
 	return S_OK;
+}
+
+HRESULT __stdcall MTLEditorDocument::get_obj(IDispatch** obj)
+{
+	if (!obj) return E_INVALIDARG;
+
+	*obj = 0;
+
+	if (!controller->model.documents.exists(id))
+	{
+		auto& doc = controller->model.documents[id];
+		if (doc.type() == DOC_HTML)
+		{
+			mtl::punk<IMTLHtmlDocument> htmlDoc(new MTLHtmlDocument(id, controller));
+			return htmlDoc.query_interface(obj);
+		}
+	}
+	return S_FALSE;
 }
 
 HRESULT __stdcall MTLEditorDocuments::get_count(long* cnt)
@@ -220,8 +244,221 @@ HRESULT __stdcall MTLEditorDocuments::remove(VARIANT idx)
 	return S_OK;
 }
 
+HRESULT __stdcall MTLEditorDocuments::openHTML(BSTR path, IDispatch** cb)
+{
+	if (!cb) return E_INVALIDARG;
+	*cb = 0;
+
+	auto& view = controller->doInsertHtml(mtl::bstr_view(path).str());
+
+	mtl::punk<MTLHtmlDocument> html(new MTLHtmlDocument(view.id(), controller));
+	if (!html) return E_FAIL;
+
+	HRESULT hr = html.query_interface(cb);
+	if (hr != S_OK) return hr;
+
+	mtl::punk<IDispatch> disp(html);
+
+	view.htmlWnd.onDocumentLoad([disp, &view]()
+	{
+		mtl::variant v(*disp);
+		view.htmlWnd.webview->AddHostObjectToScript(L"Frame", &v);
+	});
+
+	return S_OK;
+}
 
 /* ------------------------------------ */
+
+void MTLHtmlDocument::clear()
+{
+	onNavigateCb.release();
+	onCloseCb.release();
+	onLoadCb.release();
+	scriptController.release();
+	onMsg.release();
+
+	onNavigateSink.clear();
+	onLoadSink.clear();
+	onCloseSink.clear();
+	onMsgSink.clear();
+}
+
+MTLHtmlDocument::MTLHtmlDocument(const std::wstring& docId, EditorController* ctrl)
+	: id(docId), controller(ctrl)
+{
+	if (controller->model.documents.exists(id))
+	{
+		auto& doc = controller->model.documents[id];
+		onCloseSink(doc.onClose).then([this](std::wstring id)
+		{
+			if (onCloseCb)
+			{
+				IDispatch* disp = nullptr; 
+				onCloseCb.query_interface(&disp);
+
+				clear();
+
+				mtl::ui_thread().submit([disp]()
+				{
+					try {
+						mtl::automation call(disp, DISPID_VALUE);
+						call.invoke();
+					}
+					catch (HRESULT)
+					{
+						// ignore
+					}
+					disp->Release();
+				});
+
+				return;
+			}
+
+			clear();
+		});
+
+		auto& view = controller->view.documentViews[id];
+		HtmlDocumentView& htmlView = dynamic_cast<HtmlDocumentView&>(view);
+		onLoadSink(htmlView.htmlWnd.onDocumentLoad).then([this]()
+		{
+			if (onLoadCb)
+			{
+				mtl::ui_thread().submit([this]()
+				{
+					try {
+						mtl::automation call(*onLoadCb, DISPID_VALUE);
+						call.invoke();
+					}
+					catch (HRESULT)
+					{
+						// ignore
+					}
+				});
+			}
+
+		});
+
+		onMsgSink(htmlView.htmlWnd.onMessage).then( [this] (std::wstring msg) 
+		{
+			if (onMsg)
+			{
+				mtl::ui_thread().submit([this,msg]()
+				{
+					try {
+						mtl::automation disp(*onMsg, DISPID_VALUE);
+						mtl::variant v{ mtl::ole_char(msg.c_str()) };
+						disp.invoke(v);
+					}
+					catch (HRESULT)
+					{
+						// ignore
+					}
+				});
+			}
+		});
+
+		onNavigateSink(htmlView.htmlWnd.onNavigationStarted).then([this](std::wstring uri, bool& cancel) 
+		{
+			cancel = false;
+			if (onNavigateCb)
+			{
+				try {
+					mtl::automation disp(*onNavigateCb, DISPID_VALUE);
+
+					mtl::variant v{ mtl::ole_char(uri.c_str()) };
+					mtl::variant r = disp.invoke(v);
+					if (r.vt == VT_BOOL)
+					{
+						if (r.boolVal == VARIANT_TRUE)
+						{
+							cancel = true;
+						}
+					}
+				}
+				catch (HRESULT)
+				{
+					// ignore
+				}
+			}
+		});
+	}
+}
+
+HRESULT __stdcall MTLHtmlDocument::postMsg(BSTR msg)
+{
+	if (controller->model.documents.exists(id))
+	{
+		auto& view = controller->view.documentViews[id];
+		
+		auto& htmlView = dynamic_cast<HtmlDocumentView&>(view);
+
+		return htmlView.htmlWnd.webview->PostWebMessageAsJson(mtl::bstr_view(msg).str().c_str());
+	}
+	return S_FALSE;
+}
+
+HRESULT __stdcall MTLHtmlDocument::put_Controller(IDispatch* cb)
+{
+	scriptController = cb;
+
+	if (scriptController)
+	{
+		try {
+
+			mtl::automation disp(*scriptController);
+
+			mtl::variant v;
+			v = disp.member(L"onLoad").get();
+			if (v.is_disp())
+			{
+				onLoadCb.release();
+				v.query_interface(&onLoadCb);
+			}
+
+			v = disp.member(L"onClose").get();
+			if (v.is_disp())
+			{
+				onCloseCb.release();
+				v.query_interface(&onCloseCb);
+			}
+
+			v = disp.member(L"onMsg").get();
+			if (v.is_disp())
+			{
+				onMsg.release();
+				v.query_interface(&onMsg);
+			}
+
+			v = disp.member(L"onNavigate").get();
+			if (v.is_disp())
+			{
+				onNavigateCb.release();
+				v.query_interface(&onNavigateCb);
+			}
+		}
+		catch (HRESULT hr)
+		{
+			return hr;
+		}
+	}
+	return S_OK;
+}
+
+HRESULT __stdcall MTLHtmlDocument::close()
+{
+	if (controller->model.documents.exists(id))
+	{
+		mtl::ui_thread().submit([this]()
+		{
+			if (controller->model.documents.exists(id))
+			{
+				controller->doRemoveDocument(id);
+			}
+		});
+	}
+	return S_OK;
+}
 
 
 /* ------------------------------------------- */
@@ -251,15 +488,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	{
 		mtl::application app(hInstance);
 
-
 		FileService fileService;
 		RotService rotService;
 		ScriptService scriptService(fileService);
 
 		EditorController controller(opt, fileService, rotService, scriptService);
-
-
-
 
 		mtl::accelerator() = mtl::accelerators(*controller.view.mainWnd, IDC_EDITOR);
 

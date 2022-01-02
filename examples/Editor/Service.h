@@ -45,12 +45,12 @@ public:
 
 	bool run( IUnknown* obj);
 
-	UINT_PTR set_timeout(unsigned int ms, IDispatch* cb);
+//	UINT_PTR set_timeout(unsigned int ms, IDispatch* cb);
 
 	void dispose();
 	void close();
 
-	void importSource(std::wstring file);
+	JsValueRef importSource(std::wstring file);
 	JsValueRef eval(std::wstring src);
 
 
@@ -70,14 +70,13 @@ private:
 	FileService& fileService_;
 
 	MainWindow* mainWnd_ = nullptr;
-	bool wait_ = false;
-	bool quit_ = false;
+	std::atomic<bool> wait_ = false;
+	std::atomic<bool> quit_ = false;
 
 	std::wstring id_;
 	std::wstring source_;
 	std::wstring filename_;
 
-	mtl::punk<IUnknown> hostObj_;
 	std::function<void(long, long, std::wstring, std::wstring)> onError_;
 	std::set<UINT_PTR> timeouts_;
 
@@ -90,7 +89,11 @@ private:
 
 	static JsValueRef CALLBACK CreateObjectCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 	static JsValueRef CALLBACK WinRTCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+	static JsValueRef CALLBACK importCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
 
+	static JsValueRef CALLBACK pipeCallback(JsValueRef callee, bool isConstructCall, JsValueRef* arguments, unsigned short argumentCount, void* callbackState);
+
+public:
 	static void CALLBACK PromiseContinuationCallback(JsValueRef task, void* callbackState);
 };
 
@@ -139,5 +142,13 @@ private:
 template<class T>
 void Script::submit(T t)
 {
-	scriptService_.submit(t);
+	JsContextRef ctx = *scriptContext;
+	::JsAddRef(ctx);
+
+	scriptService_.submit([ctx]() 
+	{
+		mtl::chakra::active_ctx ac(ctx);
+		t();
+		::JsRelease(ctx);
+	});
 }

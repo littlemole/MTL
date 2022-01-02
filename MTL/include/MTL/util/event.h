@@ -219,4 +219,139 @@ namespace mtl {
         std::set<std::wstring> ids_;
     };
 
+
+
+    class connector
+    {
+    public:
+
+        template<class T>
+        class connect;
+
+        template<class T, class ... Args>
+        class connect<T(Args...)>
+        {
+        public:
+
+            connect(void* t, mtl::event<T(Args...)>& e)
+                : host_(t), e_(e)
+            {}
+
+            connect<T(Args...)>& when(int id)
+            {
+                id_ = id;
+                return *this;
+            }
+
+            connect<T(Args...)>& then(std::function<void(Args...)> fun)
+            {
+                e_(id_, [fun](Args ... args)
+                {
+                    fun(args...);
+                });
+                return *this;
+            }
+
+            template<class C>
+            connect<T(Args...)>& then(void (C::* fun)(Args...))
+            {
+                C* c = (C*)host_;
+                e_(id_, [fun, c](Args ... args)
+                {
+                    (c->*fun)(args...);
+                });
+
+                return *this;
+            }
+
+            connect<T(Args...)>& operator=(std::function<void(Args...)> fun)
+            {
+                then(fun);
+                return *this;
+            }
+
+            template<class C>
+            connect<T(Args...)>& operator=(void (C::* fun)(Args...))
+            {
+                then(fun);
+                return *this;
+            }
+
+        private:
+            void* host_ = nullptr;
+            mtl::event<T(Args...)>& e_;
+            int id_ = 0;
+        };
+
+        template<class ... Args>
+        class connect<void(Args...)>
+        {
+        public:
+
+            connect(void* t, mtl::event<void(Args...)>& e)
+                : host_(t), e_(e)
+            {}
+
+            void then(std::function<void(Args...)> fun)
+            {
+                e_([fun](Args ... args)
+                {
+                    fun(args...);
+                });
+            }
+
+            template<class C>
+            void then(void (C::* fun)(Args...))
+            {
+                C* c = (C*)host_;
+                e_([fun, c](Args ... args)
+                {
+                    (c->*fun)(args...);
+                });
+            }
+
+            connect<void(Args...)>& operator=(std::function<void(Args...)> fun)
+            {
+                then(fun);
+                return *this;
+            }
+
+            template<class C>
+            connect<void(Args...)>& operator=(void (C::* fun)(Args...))
+            {
+                then(fun);
+                return *this;
+            }
+
+        private:
+            void* host_ = nullptr;
+            mtl::event<void(Args...)>& e_;
+        };
+
+
+        connector()
+        {}
+
+
+        connector(void* t)
+            : host_(t)
+        {}
+
+        template<class T, class ... Args>
+        auto with(mtl::event<T(Args...)>& e)
+        {
+            return connect<T(Args...)>{ host_, e };
+        }
+
+
+        template<class T, class ... Args>
+        auto operator()(mtl::event<T(Args...)>& e)
+        {
+            return with(e);
+        }
+
+    private:
+        void* host_ = nullptr;
+    };
+
 }

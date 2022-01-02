@@ -216,11 +216,10 @@ namespace mtl {
 		punk< ICoreWebView2Controller> webViewController;
 		punk< ICoreWebView2> webview;
 
-		std::function<void(std::wstring)> onMessage;
-		std::function<void()> onDocumentLoad;
-		std::function<void(std::wstring)> onDocumentTitleChanged;
-		std::function<bool(std::wstring)> onNavigationStarted;
-
+		mtl::event<void(std::wstring)> onMessage;
+		mtl::event<void()> onDocumentLoad;
+		mtl::event<void(std::wstring)> onDocumentTitleChanged;
+		mtl::event<void(std::wstring,bool& cancel)> onNavigationStarted;
 
 		// Construction
 
@@ -390,6 +389,11 @@ namespace mtl {
 			webview->Stop();
 		}
 
+		std::wstring location()
+		{
+			return location_;
+		}
+
 
 	protected:
 
@@ -412,10 +416,7 @@ namespace mtl {
 			LPWSTR title = nullptr;
 			webview->get_DocumentTitle(&title);
 			this->set_text(title);
-			if (onDocumentTitleChanged)
-			{
-				onDocumentTitleChanged(title);
-			}
+			onDocumentTitleChanged.fire(title);
 			::CoTaskMemFree(title);
 		}
 
@@ -425,10 +426,7 @@ namespace mtl {
 			args->get_Uri(&uri);
 
 			bool cancel = false;
-			if (onNavigationStarted)
-			{
-				cancel = onNavigationStarted(uri);
-			}
+			onNavigationStarted.fire(uri,cancel);
 			if (cancel)
 			{
 				args->put_Cancel(TRUE);
@@ -520,19 +518,13 @@ namespace mtl {
 				);
 			}
 
-			if (onDocumentLoad)
-			{
-				onDocumentLoad();
-			}
+			onDocumentLoad.fire();
 		}
 
 
 		virtual void on_message_handler(LPCWSTR json)
 		{
-			if (onMessage)
-			{
-				onMessage(json);
-			}
+			onMessage.fire(json);
 		}
 
 

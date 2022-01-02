@@ -44,6 +44,13 @@
 
 /* Forward Declarations */ 
 
+#ifndef __IMTLHtmlDocument_FWD_DEFINED__
+#define __IMTLHtmlDocument_FWD_DEFINED__
+typedef interface IMTLHtmlDocument IMTLHtmlDocument;
+
+#endif 	/* __IMTLHtmlDocument_FWD_DEFINED__ */
+
+
 #ifndef __IMTLEditorDocument_FWD_DEFINED__
 #define __IMTLEditorDocument_FWD_DEFINED__
 typedef interface IMTLEditorDocument IMTLEditorDocument;
@@ -93,6 +100,204 @@ extern "C"{
 #endif 
 
 
+#ifndef __IMTLHtmlDocument_INTERFACE_DEFINED__
+#define __IMTLHtmlDocument_INTERFACE_DEFINED__
+
+/* interface IMTLHtmlDocument */
+/* [dual][oleautomation][object][helpstring][uuid] */ 
+
+
+EXTERN_C const IID IID_IMTLHtmlDocument;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("E0EA2D05-DC44-4C1B-AC13-E878B358FBAB")
+    IMTLHtmlDocument : public IDispatch
+    {
+    public:
+        virtual /* [helpstring][propput][id] */ HRESULT STDMETHODCALLTYPE put_onLoad( 
+            /* [in] */ IDispatch *cb) = 0;
+        
+        virtual /* [helpstring][propput][id] */ HRESULT STDMETHODCALLTYPE put_onClose( 
+            /* [in] */ IDispatch *cb) = 0;
+        
+        virtual /* [helpstring][propput][id] */ HRESULT STDMETHODCALLTYPE put_Controller( 
+            /* [in] */ IDispatch *cb) = 0;
+        
+        virtual /* [helpstring][propget][id] */ HRESULT STDMETHODCALLTYPE get_Controller( 
+            /* [retval][out] */ IDispatch **cb) = 0;
+        
+        virtual /* [helpstring][propput][id] */ HRESULT STDMETHODCALLTYPE put_onMsg( 
+            /* [in] */ IDispatch *cb) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE postMsg( 
+            /* [in] */ BSTR msg) = 0;
+        
+        virtual /* [helpstring][propput][id] */ HRESULT STDMETHODCALLTYPE put_onNavigate( 
+            /* [in] */ IDispatch *cb) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE close( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IMTLHtmlDocumentVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IMTLHtmlDocument * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IMTLHtmlDocument * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfoCount )( 
+            IMTLHtmlDocument * This,
+            /* [out] */ UINT *pctinfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetTypeInfo )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ UINT iTInfo,
+            /* [in] */ LCID lcid,
+            /* [out] */ ITypeInfo **ppTInfo);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ REFIID riid,
+            /* [size_is][in] */ LPOLESTR *rgszNames,
+            /* [range][in] */ UINT cNames,
+            /* [in] */ LCID lcid,
+            /* [size_is][out] */ DISPID *rgDispId);
+        
+        /* [local] */ HRESULT ( STDMETHODCALLTYPE *Invoke )( 
+            IMTLHtmlDocument * This,
+            /* [annotation][in] */ 
+            _In_  DISPID dispIdMember,
+            /* [annotation][in] */ 
+            _In_  REFIID riid,
+            /* [annotation][in] */ 
+            _In_  LCID lcid,
+            /* [annotation][in] */ 
+            _In_  WORD wFlags,
+            /* [annotation][out][in] */ 
+            _In_  DISPPARAMS *pDispParams,
+            /* [annotation][out] */ 
+            _Out_opt_  VARIANT *pVarResult,
+            /* [annotation][out] */ 
+            _Out_opt_  EXCEPINFO *pExcepInfo,
+            /* [annotation][out] */ 
+            _Out_opt_  UINT *puArgErr);
+        
+        /* [helpstring][propput][id] */ HRESULT ( STDMETHODCALLTYPE *put_onLoad )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ IDispatch *cb);
+        
+        /* [helpstring][propput][id] */ HRESULT ( STDMETHODCALLTYPE *put_onClose )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ IDispatch *cb);
+        
+        /* [helpstring][propput][id] */ HRESULT ( STDMETHODCALLTYPE *put_Controller )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ IDispatch *cb);
+        
+        /* [helpstring][propget][id] */ HRESULT ( STDMETHODCALLTYPE *get_Controller )( 
+            IMTLHtmlDocument * This,
+            /* [retval][out] */ IDispatch **cb);
+        
+        /* [helpstring][propput][id] */ HRESULT ( STDMETHODCALLTYPE *put_onMsg )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ IDispatch *cb);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *postMsg )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ BSTR msg);
+        
+        /* [helpstring][propput][id] */ HRESULT ( STDMETHODCALLTYPE *put_onNavigate )( 
+            IMTLHtmlDocument * This,
+            /* [in] */ IDispatch *cb);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *close )( 
+            IMTLHtmlDocument * This);
+        
+        END_INTERFACE
+    } IMTLHtmlDocumentVtbl;
+
+    interface IMTLHtmlDocument
+    {
+        CONST_VTBL struct IMTLHtmlDocumentVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IMTLHtmlDocument_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IMTLHtmlDocument_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IMTLHtmlDocument_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IMTLHtmlDocument_GetTypeInfoCount(This,pctinfo)	\
+    ( (This)->lpVtbl -> GetTypeInfoCount(This,pctinfo) ) 
+
+#define IMTLHtmlDocument_GetTypeInfo(This,iTInfo,lcid,ppTInfo)	\
+    ( (This)->lpVtbl -> GetTypeInfo(This,iTInfo,lcid,ppTInfo) ) 
+
+#define IMTLHtmlDocument_GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)	\
+    ( (This)->lpVtbl -> GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId) ) 
+
+#define IMTLHtmlDocument_Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)	\
+    ( (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr) ) 
+
+
+#define IMTLHtmlDocument_put_onLoad(This,cb)	\
+    ( (This)->lpVtbl -> put_onLoad(This,cb) ) 
+
+#define IMTLHtmlDocument_put_onClose(This,cb)	\
+    ( (This)->lpVtbl -> put_onClose(This,cb) ) 
+
+#define IMTLHtmlDocument_put_Controller(This,cb)	\
+    ( (This)->lpVtbl -> put_Controller(This,cb) ) 
+
+#define IMTLHtmlDocument_get_Controller(This,cb)	\
+    ( (This)->lpVtbl -> get_Controller(This,cb) ) 
+
+#define IMTLHtmlDocument_put_onMsg(This,cb)	\
+    ( (This)->lpVtbl -> put_onMsg(This,cb) ) 
+
+#define IMTLHtmlDocument_postMsg(This,msg)	\
+    ( (This)->lpVtbl -> postMsg(This,msg) ) 
+
+#define IMTLHtmlDocument_put_onNavigate(This,cb)	\
+    ( (This)->lpVtbl -> put_onNavigate(This,cb) ) 
+
+#define IMTLHtmlDocument_close(This)	\
+    ( (This)->lpVtbl -> close(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IMTLHtmlDocument_INTERFACE_DEFINED__ */
+
+
 #ifndef __IMTLEditorDocument_INTERFACE_DEFINED__
 #define __IMTLEditorDocument_INTERFACE_DEFINED__
 
@@ -116,6 +321,9 @@ EXTERN_C const IID IID_IMTLEditorDocument;
         
         virtual /* [helpstring][propget][id] */ HRESULT STDMETHODCALLTYPE get_content( 
             /* [retval][out] */ BSTR *cnt) = 0;
+        
+        virtual /* [helpstring][propget][id] */ HRESULT STDMETHODCALLTYPE get_obj( 
+            /* [retval][out] */ IDispatch **obj) = 0;
         
     };
     
@@ -187,6 +395,10 @@ EXTERN_C const IID IID_IMTLEditorDocument;
             IMTLEditorDocument * This,
             /* [retval][out] */ BSTR *cnt);
         
+        /* [helpstring][propget][id] */ HRESULT ( STDMETHODCALLTYPE *get_obj )( 
+            IMTLEditorDocument * This,
+            /* [retval][out] */ IDispatch **obj);
+        
         END_INTERFACE
     } IMTLEditorDocumentVtbl;
 
@@ -232,6 +444,9 @@ EXTERN_C const IID IID_IMTLEditorDocument;
 #define IMTLEditorDocument_get_content(This,cnt)	\
     ( (This)->lpVtbl -> get_content(This,cnt) ) 
 
+#define IMTLEditorDocument_get_obj(This,obj)	\
+    ( (This)->lpVtbl -> get_obj(This,obj) ) 
+
 #endif /* COBJMACROS */
 
 
@@ -267,6 +482,10 @@ EXTERN_C const IID IID_IMTLEditorDocuments;
         
         virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE remove( 
             /* [in] */ VARIANT idx) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE openHTML( 
+            /* [in] */ BSTR file,
+            /* [retval][out] */ IDispatch **cb) = 0;
         
     };
     
@@ -339,6 +558,11 @@ EXTERN_C const IID IID_IMTLEditorDocuments;
             IMTLEditorDocuments * This,
             /* [in] */ VARIANT idx);
         
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE *openHTML )( 
+            IMTLEditorDocuments * This,
+            /* [in] */ BSTR file,
+            /* [retval][out] */ IDispatch **cb);
+        
         END_INTERFACE
     } IMTLEditorDocumentsVtbl;
 
@@ -383,6 +607,9 @@ EXTERN_C const IID IID_IMTLEditorDocuments;
 
 #define IMTLEditorDocuments_remove(This,idx)	\
     ( (This)->lpVtbl -> remove(This,idx) ) 
+
+#define IMTLEditorDocuments_openHTML(This,file,cb)	\
+    ( (This)->lpVtbl -> openHTML(This,file,cb) ) 
 
 #endif /* COBJMACROS */
 

@@ -395,6 +395,12 @@ namespace mtl {
 			{
 				if (ctx)
 				{
+					JsContextRef ref = nullptr;
+					::JsGetCurrentContext(&ref);
+					if (ref == ctx)
+					{
+						::JsSetCurrentContext(nullptr);
+					}
 					::JsRelease(ctx, nullptr);
 					ctx = nullptr;
 				}
@@ -452,7 +458,7 @@ namespace mtl {
 				{
 					if (previous)
 					{
-						::JsSetCurrentContext(previous);
+						//::JsSetCurrentContext(previous);
 						previous = nullptr;
 					}
 					handle = nullptr;
@@ -598,6 +604,16 @@ namespace mtl {
 					::OutputDebugString(L"Chakra JSRT init failed");
 					exit(0);
 				}
+			}
+
+			runtime(JsRuntimeAttributes attrs)
+			{
+				if (JsNoError != ::JsCreateRuntime(attrs, nullptr, &handle))
+				{
+					::OutputDebugString(L"Chakra JSRT init failed");
+					exit(0);
+				}
+				
 			}
 
 			~runtime()

@@ -52,6 +52,7 @@
 #define IDC_REBAR_EOL                   518
 #define IDC_SELECTOR                    519
 #define IDC_TOOLTIP                     520
+#define IDC_SPLITTER					521
 #define IDI_SMALL                       608
 #define IDI_FILE_OPEN                   609
 #define IDI_FILE_NEW                    610

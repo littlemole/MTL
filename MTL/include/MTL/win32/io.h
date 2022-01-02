@@ -178,6 +178,23 @@ namespace mtl
             create_flags(flags)
         {}
 
+        file(HANDLE f)
+        {
+            handle = f;
+            if (handle != INVALID_HANDLE_VALUE)
+            {
+                ::ZeroMemory(&fi_, sizeof(fi_));
+
+                BOOL r = ::GetFileInformationByHandle(handle, &fi_);
+
+                ULARGE_INTEGER uli;
+                uli.HighPart = fi_.nFileSizeHigh;
+                uli.LowPart = fi_.nFileIndexLow;
+
+                fsize = uli.QuadPart;
+            }
+        }
+
         DWORD open(const std::wstring& file_path, DWORD mode = OPEN_ALWAYS)
         {
             handle = ::CreateFile(
@@ -528,6 +545,230 @@ namespace mtl
         return true;
     }
 
+    class Process
+    {
+    public:
 
+        Process()
+        {}
+
+        ~Process()
+        {
+            dispose();
+        }
+
+        Process(Process&& rhs)
+            : hChildStd_IN_Rd(rhs.hChildStd_IN_Rd),
+            hChildStd_IN_Wr(rhs.hChildStd_IN_Wr),
+            hChildStd_OUT_Rd(rhs.hChildStd_OUT_Rd),
+            hChildStd_OUT_Wr(rhs.hChildStd_OUT_Wr)
+        {
+            rhs.hChildStd_IN_Rd = nullptr;
+            rhs.hChildStd_IN_Wr = nullptr;
+            rhs.hChildStd_OUT_Rd = nullptr;
+            rhs.hChildStd_OUT_Wr = nullptr;
+        }
+
+        Process& operator=(Process&& rhs)
+        {
+            if (this == &rhs)
+            {
+                return *this;
+            }
+
+            hChildStd_IN_Rd = rhs.hChildStd_IN_Rd;
+            hChildStd_IN_Wr = rhs.hChildStd_IN_Wr;
+            hChildStd_OUT_Rd = rhs.hChildStd_OUT_Rd;
+            hChildStd_OUT_Wr = rhs.hChildStd_OUT_Wr;
+
+            rhs.hChildStd_IN_Rd = nullptr;
+            rhs.hChildStd_IN_Wr = nullptr;
+            rhs.hChildStd_OUT_Rd = nullptr;
+            rhs.hChildStd_OUT_Wr = nullptr;
+
+            return *this;
+        }
+
+        void dispose()
+        {
+            ::CloseHandle(hChildStd_IN_Rd);
+            ::CloseHandle(hChildStd_IN_Wr);
+            ::CloseHandle(hChildStd_OUT_Rd);
+            ::CloseHandle(hChildStd_OUT_Wr);
+        }
+
+        void stdIn(const std::wstring& str)
+        {
+            stdIn_ = str;
+        }
+
+        static std::wstring exec(const std::wstring& cli)
+        {
+            Process p;
+            return p.execute(cli);
+        }
+
+        static void exec(const std::wstring& cli, std::function<void(std::wstring)> cb)
+        {
+            Process p;
+            p.execute(cli, cb);
+        }
+
+        static std::wstring exec(const std::wstring& cli, const std::wstring& stdIn)
+        {
+            Process p;
+            p.stdIn(stdIn);
+            return p.execute(cli);
+        }
+
+        static void exec(const std::wstring& cli, const std::wstring& stdIn, std::function<void(std::wstring)> cb)
+        {
+            Process p;
+            p.stdIn(stdIn);
+            p.execute(cli, cb);
+        }
+
+        std::wstring execute(const std::wstring& cli)
+        {
+            createChildProcess(cli.c_str());
+            writeToPipe();
+            return mtl::to_wstring(readFromPipe());
+        }
+
+        void execute(const std::wstring& cli, std::function<void(std::wstring)> cb)
+        {
+            createChildProcess(cli.c_str());
+            writeToPipe();
+            readFromPipeAsync(cb);
+        }
+
+    private:
+
+        std::wstring stdIn_;
+
+        Process(const Process& rhs) = delete;
+        Process& operator=(const Process& rhs) = delete;
+
+        void createChildProcess(const std::wstring& cli)
+        {
+            SECURITY_ATTRIBUTES saAttr;
+            saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+            saAttr.bInheritHandle = TRUE;
+            saAttr.lpSecurityDescriptor = NULL;
+
+            if (!::CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
+                throw std::runtime_error("StdoutRd CreatePipe");
+
+            if (!::SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+                throw  std::runtime_error("Stdout SetHandleInformation");
+
+            if (!::CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
+                throw  std::runtime_error("Stdin CreatePipe");
+
+            if (!::SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
+                throw  std::runtime_error("Stdin SetHandleInformation");
+
+            PROCESS_INFORMATION piProcInfo;
+            ::ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+
+            STARTUPINFO siStartInfo;
+            ::ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+
+            siStartInfo.cb = sizeof(STARTUPINFO);
+            siStartInfo.hStdError = hChildStd_OUT_Wr;
+            siStartInfo.hStdOutput = hChildStd_OUT_Wr;
+            siStartInfo.hStdInput = hChildStd_IN_Rd;
+            siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+            BOOL bSuccess = FALSE;
+            bSuccess = ::CreateProcess(NULL,
+                (LPWSTR)cli.c_str(),     // command line
+                NULL,          // process security attributes
+                NULL,          // primary thread security attributes
+                TRUE,          // handles are inherited
+                0,             // creation flags
+                NULL,          // use parent's environment
+                NULL,          // use parent's current directory
+                &siStartInfo,  // STARTUPINFO pointer
+                &piProcInfo);  // receives PROCESS_INFORMATION
+
+            if (!bSuccess)
+            {
+                throw  std::runtime_error("CreateProcess");
+            }
+            else
+            {
+                ::CloseHandle(piProcInfo.hProcess);
+                ::CloseHandle(piProcInfo.hThread);
+            }
+        }
+
+        void writeToPipe(void)
+        {
+            DWORD dwWritten = 0;
+            BOOL bSuccess = FALSE;
+
+            if (!stdIn_.empty())
+            {
+                std::string raw = mtl::to_string(stdIn_);
+
+                for (;;)
+                {
+                    bSuccess = ::WriteFile(hChildStd_IN_Wr, raw.c_str(), raw.size(), &dwWritten, NULL);
+                    if (!bSuccess) break;
+                }
+            }
+
+            // Close the pipe handle so the child process stops reading.
+            if (!::CloseHandle(hChildStd_IN_Wr))
+                throw  std::runtime_error("StdInWr CloseHandle");
+
+            hChildStd_IN_Wr = nullptr;
+        }
+
+        std::string  readFromPipe(void)
+        {
+            const int BUFSIZE = 4096;
+            DWORD dwRead = 0;
+            CHAR chBuf[BUFSIZE];
+            BOOL bSuccess = FALSE;
+
+            std::ostringstream oss;
+            for (;;)
+            {
+                bSuccess = ::ReadFile(hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+                if (!bSuccess || dwRead == 0) break;
+
+                oss.write(chBuf, dwRead);
+
+                if (dwRead < BUFSIZE) break;
+            }
+
+            return oss.str();
+        }
+
+        void readFromPipeAsync(std::function<void(std::wstring)> cb)
+        {
+            mtl::file file(hChildStd_OUT_Rd);
+
+            file.async_content([cb](DWORD e, std::string s)
+            {
+                if (e != ERROR_SUCCESS)
+                {
+                    cb(L"");
+                    return;
+                }
+
+                cb(mtl::to_wstring(s));
+            });
+        }
+
+        HANDLE hChildStd_IN_Rd = nullptr;
+        HANDLE hChildStd_IN_Wr = nullptr;
+        HANDLE hChildStd_OUT_Rd = nullptr;
+        HANDLE hChildStd_OUT_Wr = nullptr;
+
+        std::ostringstream out;
+    };
 }
 

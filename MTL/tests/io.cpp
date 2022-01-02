@@ -504,6 +504,34 @@ TEST_F(IOTest, testNamedPipeAsyncReadAll)
     t1.join();
 }
 
+
+TEST_F(IOTest, testPipedProcess)
+{
+    std::wstring result = mtl::Process::exec(L"git.exe status .");
+    std::wcout << result << std::endl;
+}
+
+
+
+TEST_F(IOTest, testPipedProcessAsync)
+{
+    //mtl::Process::exec(L"git.exe -C \"C:\\moe\" status .", [](std::wstring result) 
+
+    std::wstring p = mtl::path(mtl::path_to_self_directory()).parent_dir().parent_dir();
+
+    std::wostringstream woss;
+    woss << L"git.exe -C \"" << p << "\" status .";
+
+    {
+        mtl::Process::exec(woss.str(), [](std::wstring result)
+        {
+            std::wcout << result << std::endl;
+            ::PostQuitMessage(0);
+        });
+    }
+    run_msg_loop();
+}
+
 /*
 
 TEST_F(IOTest, testElevatorRead)

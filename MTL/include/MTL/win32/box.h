@@ -361,12 +361,6 @@ namespace mtl {
                     break;
                 }
 
-                if (!::IsWindow(msg.hwnd))
-                {
-                    OutputDebugString(L"INVALID WIND\r\n");
-                    //continue;
-                }
-
                 if (modeless_dlg().is_dialog_message(msg))
                 {
                     continue;

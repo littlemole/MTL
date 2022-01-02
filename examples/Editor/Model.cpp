@@ -29,11 +29,11 @@ void EditorModel::updateStatus(std::wstring id)
 }
 */
 
-void EditorModel::insertDocument(const std::wstring& id, const TextFile& textFile)
+void EditorModel::insertDocument(const std::wstring& id, Document* doc)
 {
 
 	std::wstring token = fileService_.monitor.watch(
-		textFile.filename,
+		doc->filename(),
 		[this, id]()
 		{
 			if (!documents.exists(id)) return;
@@ -43,7 +43,7 @@ void EditorModel::insertDocument(const std::wstring& id, const TextFile& textFil
 		}
 	);
 
-	auto doc = new EditorDocument{ id, textFile, token };
+	//auto doc = new EditorDocument{ id, textFile, token };
 	documents.insert(id, doc);
 }
 

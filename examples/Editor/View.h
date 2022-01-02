@@ -3,6 +3,9 @@
 #include "mvc.h"
 #include "service.h"
 
+#include "mtl/edge/chrome.h"
+
+
 class Encodings
 {
 public:
@@ -98,6 +101,32 @@ private:
 	long eol_ = 0;
 };
 
+class ViewWindow : public mtl::window<ViewWindow>
+{
+public:
+
+	mtl::scintilla_wnd	scintilla;
+	mtl::splitter		splitter;
+	mtl::html_wnd		htmlWnd;
+
+	mtl::splitter_layout	layout;
+
+private:
+
+	virtual LRESULT wm_size(RECT& r) override
+	{
+		RECT p{0,0,0,0};
+
+		layout.do_layout(r, p);
+/*		if (::IsWindow(*scintilla))
+		{
+			::SetWindowPos(*scintilla, NULL, r.left, r.top, r.right-r.left, r.bottom-r.top, SWP_NOZORDER | SWP_NOACTIVATE);
+		}
+		*/
+		return 0;
+	}
+};
+
 
 class MainWindow : public mtl::window<MainWindow>
 {
@@ -124,10 +153,6 @@ public:
 	virtual LRESULT on_alt_key() override;
 };
 
-enum DocumentViewType {
-	DOCVIEW_TXT,
-	DOCVIEW_IMG
-};
 
 class DocumentView
 {
@@ -137,7 +162,9 @@ public:
 
 	virtual std::wstring id() = 0;
 	virtual HWND handle() = 0;
-	virtual DocumentViewType type() = 0;
+	virtual DOC_TYPE type() = 0;
+
+	virtual void destroy() = 0;
 private:
 };
 
@@ -145,7 +172,7 @@ class ScintillaDocumentView : public DocumentView
 {
 public:
 
-	mtl::scintilla_wnd scintilla;
+	ViewWindow						viewWnd;
 
 	ScintillaDocumentView(const std::wstring& id)
 		: id_(id)
@@ -162,12 +189,123 @@ public:
 
 	virtual HWND handle() override
 	{
-		return scintilla.handle;
+		return viewWnd.scintilla.handle;
 	}
 
-	virtual DocumentViewType type() override
+	virtual DOC_TYPE type() override
 	{
-		return DOCVIEW_TXT;
+		return DOC_TXT;
+	}
+
+	virtual void destroy() override
+	{
+		viewWnd.destroy();
+	}
+
+private:
+	std::wstring id_;
+};
+
+class ImageDocumentView : public DocumentView
+{
+public:
+
+	class ImgWnd : public mtl::window<ImgWnd>
+	{
+	public:
+
+		virtual LRESULT wm_draw(HDC hdc, RECT& r) override
+		{
+			mtl::dc dcv(hdc);
+			dcv.bit_blit(*bitmap_, 0, 0);
+			return 0;
+		}
+
+		bool load(const std::wstring filename)
+		{
+			bitmap_ = mtl::load_picture(filename);
+
+			BITMAP bmp;
+			::GetObject(*bitmap_, sizeof(BITMAP), (LPSTR)&bmp);
+
+			w = bmp.bmWidth;
+			h = bmp.bmHeight;
+
+			//resize();
+			return true;
+		}
+
+		int w = 0;
+		int h = 0;
+		mtl::bitmap bitmap_;
+	};
+
+	ImgWnd image;
+
+	ImageDocumentView(const std::wstring& id)
+		: id_(id)
+	{
+
+	}
+
+	virtual ~ImageDocumentView() {}
+
+	virtual std::wstring id() override
+	{
+		return id_;
+	}
+
+	virtual HWND handle() override
+	{
+		return image.handle;
+	}
+
+	virtual DOC_TYPE type() override
+	{
+		return DOC_IMG;
+	}
+
+	virtual void destroy() override
+	{
+		image.destroy();
+	}
+
+private:
+	std::wstring id_;
+};
+
+class HtmlDocumentView : public DocumentView
+{
+public:
+
+	mtl::html_wnd htmlWnd;
+
+	HtmlDocumentView(const std::wstring& id)
+		: id_(id)
+	{
+
+	}
+
+	virtual ~HtmlDocumentView() {}
+
+	virtual std::wstring id() override
+	{
+		return id_;
+	}
+
+	virtual HWND handle() override
+	{
+		return htmlWnd.handle;
+	}
+
+	virtual DOC_TYPE type() override
+	{
+		return DOC_HTML;
+	}
+
+	virtual void destroy() override
+	{
+		htmlWnd.destroy();
 	}
 
 private:
@@ -228,6 +366,12 @@ public:
 		return views.size();
 	}
 
+	bool has(std::wstring id)
+	{
+		if (views.count(id) == 0) return false;
+		return true;
+	}
+
 private:
 
 	std::map<std::wstring, std::shared_ptr<DocumentView>> views;
@@ -238,8 +382,7 @@ class EditorView
 {
 public:
 
-	bool regexSearch		= false;
-	UINT urlFormat			= 0;
+	DocumentViews			documentViews;
 
 	MainWindow				mainWnd;
 	MyStatusBar				statusBar;
@@ -261,27 +404,29 @@ public:
 
 	std::shared_ptr<mtl::color_theme>	colorTheme;
 
+	mtl::punk<mtl::chrome_edge>	edge;
 	mtl::punk<mtl::default_drop_target> dropTarget;
 
-	std::map<std::wstring, std::shared_ptr<mtl::scintilla_wnd>> documentViews;
-
+	bool regexSearch = false;
+	UINT urlFormat = 0;
 
 	EditorView();
 
-	std::shared_ptr<mtl::scintilla_wnd> createEditorWnd(std::wstring id, std::wstring path, std::string utf8);
+
+	ScintillaDocumentView& createEditorWnd(std::wstring id, std::wstring path, std::string utf8);
+	ImageDocumentView& createImageWnd(std::wstring id, std::wstring path);
+	HtmlDocumentView& createHtmlWnd(std::wstring id, std::wstring path);
 
 	std::wstring removeDocumentView(const std::wstring& id);
 
-	void updateStatus(Document& doc);
-
 	std::wstring activeDocument() { return activeDocument_; }
-
 	void activate(Document& doc);
 
 	void doShowFindReplaceDialog(int id);
-
 	void doFind(FINDREPLACE* fr);
 	void doReplace(FINDREPLACE* fr);
+
+	void updateStatus(Document& doc);
 
 private:
 

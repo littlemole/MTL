@@ -53,6 +53,7 @@ static void load_resource_ids()
         { 518, "IDC_REBAR_EOL" },
         { 519, "IDC_SELECTOR" },
         { 520, "IDC_TOOLTIP" },
+        { 521, "IDC_SPLITTER" },
         { 608, "IDI_SMALL" },
         { 609, "IDI_FILE_OPEN" },
         { 610, "IDI_FILE_NEW" },

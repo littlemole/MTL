@@ -6,144 +6,12 @@
 #include "view.h"
 #include "com.h"
 
-class connector
-{
-public:
-
-	template<class T>
-	class connect;
-
-	template<class T, class ... Args>
-	class connect<T(Args...)>
-	{
-	public:
-
-		connect(void* t, mtl::event<T(Args...)>& e)
-			: host_(t), e_(e)
-		{}
-
-		connect<T(Args...)>& when(int id)
-		{
-			id_ = id;
-			return *this;
-		}
-
-		connect<T(Args...)>& then(std::function<void(Args...)> fun)
-		{
-			e_(id_, [fun](Args ... args)
-			{
-				fun(args...);
-			});
-			return *this;
-		}
-
-		template<class C>
-		connect<T(Args...)>& then(void (C::* fun)(Args...))
-		{
-			C* c = (C*)host_;
-			e_(id_, [fun, c](Args ... args)
-			{
-				(c->*fun)(args...);
-			});
-
-			return *this;
-		}
-
-		connect<T(Args...)>& operator=(std::function<void(Args...)> fun)
-		{
-			then(fun);
-			return *this;
-		}
-
-		template<class C>
-		connect<T(Args...)>& operator=(void (C::* fun)(Args...))
-		{
-			then(fun);
-			return *this;
-		}
-
-	private:
-		void* host_ = nullptr;
-		mtl::event<T(Args...)>& e_;
-		int id_ = 0;
-	};
-
-	template<class ... Args>
-	class connect<void(Args...)>
-	{
-	public:
-
-		connect(void* t, mtl::event<void(Args...)>& e)
-			: host_(t), e_(e)
-		{}
-
-		void then(std::function<void(Args...)> fun)
-		{
-			e_([fun](Args ... args)
-			{
-				fun(args...);
-			});
-		}
-
-		template<class C>
-		void then( void (C::*fun)(Args...) )
-		{
-			C* c = (C*)host_;
-			e_([fun,c](Args ... args)
-			{
-				(c->*fun)(args...);
-			});
-		}
-
-		connect<void(Args...)>& operator=(std::function<void(Args...)> fun)
-		{
-			then(fun);
-			return *this;
-		}
-
-		template<class C>
-		connect<void(Args...)>& operator=(void (C::* fun)(Args...))
-		{
-			then(fun);
-			return *this;
-		}
-
-	private:
-		void* host_ = nullptr;
-		mtl::event<void(Args...)>& e_;
-	};
-
-
-	connector()
-	{}
-
-
-	connector(void* t)
-		: host_(t)
-	{}
-
-	template<class T, class ... Args>
-	auto with(mtl::event<T(Args...)>& e)
-	{
-		return connect<T(Args...)>{ host_, e };
-	}
-
-
-	template<class T, class ... Args>
-	auto operator()(mtl::event<T(Args...)>& e)
-	{
-		return with(e);
-	}
-
-private:
-	void* host_ = nullptr;
-};
 
 class EditorController
 {
 public:
 
-	connector on;
+	mtl::connector on;
 
 	FileService& fileService;
 	RotService& rotService;
@@ -179,8 +47,56 @@ public:
 		doInsertDocument(document.textFile);
 	}
 
+	void doInsertImage(const std::wstring& path)
+	{
+		std::wostringstream woss;
+		woss << model.instanceId() << ":" << mtl::new_guid();
+		std::wstring id = woss.str();
+
+		auto img = new ImageDocument(id, path, L"");
+		model.insertDocument(id, img);
+
+		auto& imgView = view.createImageWnd(id, path);
+	}
+
+	HtmlDocumentView& doInsertHtml(const std::wstring& path)
+	{
+		std::wostringstream woss;
+		woss << model.instanceId() << ":" << mtl::new_guid();
+		std::wstring id = woss.str();
+
+		auto html = new HtmlDocument(id, path, L"");
+		model.insertDocument(id, html);
+
+		auto& htmlView = view.createHtmlWnd(id, path);
+
+		htmlView.htmlWnd.onDocumentLoad( [this, &htmlView]()
+		{
+			mtl::punk<IDispatch> disp;
+			mtl::variant v(*editor);
+			htmlView.htmlWnd.webview->AddHostObjectToScript(L"Editor", &v);
+
+		});
+		return htmlView;
+	}
+
 	void doOpenFile(const std::wstring& path, bool readOnly, long enc)
 	{
+		std::wstring ext = mtl::path(path).ext();
+
+		if (ext == L".bmp" || ext == L".jpeg" || ext == L".jpg" || ext == L".gif" || ext == L".png")
+		{
+			doInsertImage(path);
+			return;
+		}
+
+		if (ext == L".html" )
+		{
+			doInsertHtml(path);
+			return;
+		}
+
+
 		model.openFile(path, readOnly, enc, [this](const TextFile& doc)
 		{
 			doInsertDocument(doc);
@@ -188,22 +104,23 @@ public:
 	}
 
 
-	void doInsertDocument(const TextFile& doc)
+	void doInsertDocument(const TextFile& textFile)
 	{
 		std::wostringstream woss;
 		woss << model.instanceId() << ":" << mtl::new_guid();
 		std::wstring id = woss.str();
 
+		auto doc = new EditorDocument{ id, textFile, L"" };
 		model.insertDocument(id, doc);
 
-		auto scintilla = view.createEditorWnd(id, doc.filename, doc.utf8);
+		auto& editorView = view.createEditorWnd(id, textFile.filename, textFile.utf8);
 
-		scintilla->onNotify(SCN_MODIFIED, [this, id = id](NMHDR* nmhdr)
+		editorView.viewWnd.scintilla.onNotify(SCN_MODIFIED, [this, id = id](NMHDR* nmhdr)
 		{
 			view.updateStatus(model.documents[id]);
 		});
 
-		scintilla->onNotify(SCN_UPDATEUI, [this, id = id](NMHDR* nmhdr)
+		editorView.viewWnd.scintilla.onNotify(SCN_UPDATEUI, [this, id = id](NMHDR* nmhdr)
 		{
 			view.updateStatus(model.documents[id]);
 		});
@@ -219,7 +136,11 @@ public:
 
 	void doSaveDocument(std::wstring id, std::wstring path, long enc, EOL_TYPE eol)
 	{
-		std::string utf8 = view.documentViews[id]->get_text();
+		auto& docView = view.documentViews[id];
+		if (docView.type() != DOC_TXT) return;
+
+		auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+		std::string utf8 = editorView.viewWnd.scintilla.get_text();
 		model.saveDocument(id, path, enc, eol, utf8, [this, path](IO_ERROR io)
 		{
 			view.statusBar.set_text(std::wstring(L"file saved to ") + path);
@@ -232,16 +153,34 @@ public:
 		{
 			if (!model.documents.exists(id)) return;
 
-			view.documentViews[id]->set_text(utf8);
-			view.documentViews[id]->colorize();
+			auto& docView = view.documentViews[id];
+			if (docView.type() != DOC_TXT) return;
+
+			auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+
+			editorView.viewWnd.scintilla.set_text(utf8);
+			editorView.viewWnd.scintilla.colorize();
 
 		});
 	}
 
 	void doShowHelp()
 	{
-		mtl::dialog dlg;
-		dlg.show_modal(IDD_ABOUTBOX, *view.mainWnd);
+		//mtl::dialog dlg;
+		//dlg.show_modal(IDD_ABOUTBOX, *view.mainWnd);
+
+		if (!view.activeDocument().empty())
+		{
+			auto& docView = view.documentViews[view.activeDocument()];
+			if (docView.type() != DOC_TXT) return;
+
+			auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+			editorView.viewWnd.splitter.show(SW_SHOW);
+			editorView.viewWnd.htmlWnd.show(SW_SHOW);
+
+			editorView.viewWnd.htmlWnd.navigate(model.documents[view.activeDocument()].filename());
+			editorView.viewWnd.relayout();
+		}
 	}
 
 	void doActivateDocument(std::wstring id)
@@ -261,7 +200,12 @@ public:
 	{
 		//			view.mainWnd.destroy();
 		scriptService.stop();
-		::PostQuitMessage(0);
+
+		mtl::ui_thread().submit([]() 
+		{
+			::PostQuitMessage(0);
+		});
+		
 	};
 
 	void doOpenFileDialog()
@@ -305,7 +249,12 @@ public:
 	{
 		if (view.activeDocument().empty()) return;
 
-		std::string utf8 = view.documentViews[view.activeDocument()]->get_text();
+		auto& docView = view.documentViews[view.activeDocument()];
+		if (docView.type() != DOC_TXT) return;
+
+		auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+
+		std::string utf8 = editorView.viewWnd.scintilla.get_text();
 		std::wstring fn = model.documents[view.activeDocument()].filename();
 		scriptService.run(mtl::to_wstring(utf8), fn.c_str(), [this](long line, long pos, std::wstring err, std::wstring src)
 		{
@@ -371,7 +320,13 @@ public:
 			std::string utf8 = mtl::to_string(s);
 
 			if (view.activeDocument().empty()) return;
-			view.documentViews[view.activeDocument()]->insert_text(utf8);
+
+			auto& docView = view.documentViews[view.activeDocument()];
+			if (docView.type() != DOC_TXT) return;
+
+			auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+
+			editorView.viewWnd.scintilla.insert_text(utf8);
 
 			if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 			{
@@ -387,7 +342,13 @@ public:
 			std::string utf8 = mtl::to_string(ws);
 
 			if (view.activeDocument().empty()) return;
-			view.documentViews[view.activeDocument()]->insert_text(utf8);
+
+			auto& docView = view.documentViews[view.activeDocument()];
+			if (docView.type() != DOC_TXT) return;
+
+			auto& editorView = dynamic_cast<ScintillaDocumentView&>(docView);
+
+			editorView.viewWnd.scintilla.insert_text(utf8);
 
 			if ((keyState & MK_SHIFT) || (keyState & MK_CONTROL))
 			{

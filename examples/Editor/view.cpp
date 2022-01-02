@@ -349,6 +349,8 @@ void MySaveDialog::encoding(long enc)
 MainWindow::MainWindow() : taskbar(handle)
 {
 	mtl::font_desc fontDesc(L"Lucida Console", 14);
+
+	
 }
 
 LRESULT MainWindow::wm_command(int id)
@@ -412,46 +414,95 @@ LRESULT MainWindow::on_alt_key()
 	return 0;
 }
 
-
-
-
-std::shared_ptr<mtl::scintilla_wnd> EditorView::createEditorWnd(std::wstring id, std::wstring path, std::string utf8)
+HtmlDocumentView& EditorView::createHtmlWnd(std::wstring id, std::wstring path)
 {
-	auto scintilla = std::make_shared<mtl::scintilla_wnd>();
+	auto view = new HtmlDocumentView(id);
+	view->htmlWnd.create(IDC_SCINTILLA, *tabControl);
+	view->htmlWnd.show();
+	view->htmlWnd.navigate(path);
 
-	RECT tr = tabControl.display_rect();
-
-	scintilla->create(IDC_SCINTILLA, *tabControl, tr, WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-	scintilla->load_xml(mtl::path_to_self_directory(L"\\styles.xml"));
-	scintilla->set_code_page(CP_UTF8);
-	scintilla->set_mode(SCLEX_CPP);
-	scintilla->set_tab_width(4);
-	scintilla->set_drop_target(*dropTarget);
-	scintilla->notifications();
-
-	scintilla->set_text(utf8);
-	scintilla->show();
-	scintilla->colorize();
-
-	documentViews[id] = scintilla;
+	documentViews.insert(view);
 	activeDocument_ = id;
 
 	std::wstring title = mtl::path(path).filename();
-	tabControl.add({ title, path, id }, scintilla->handle);
+	tabControl.add({ title, path, id }, view->htmlWnd.handle);
 
-	mainWnd.taskbar.add(id, scintilla->handle, path);
+	mainWnd.taskbar.add(id, view->htmlWnd.handle, path);
 
+	return dynamic_cast<HtmlDocumentView&>(documentViews[id]);
 
-	return scintilla;
+}
+
+ImageDocumentView& EditorView::createImageWnd(std::wstring id, std::wstring path)
+{
+	auto view = new ImageDocumentView(id);
+	view->image.create(IDC_SCINTILLA, *tabControl);
+	view->image.show();
+	view->image.load(path);
+
+	documentViews.insert(view);
+	activeDocument_ = id;
+
+	std::wstring title = mtl::path(path).filename();
+	tabControl.add({ title, path, id }, view->image.handle);
+
+	mainWnd.taskbar.add(id, view->image.handle, path);
+
+	return dynamic_cast<ImageDocumentView&>(documentViews[id]);
+
+}
+
+ScintillaDocumentView& EditorView::createEditorWnd(std::wstring id, std::wstring path, std::string utf8)
+{
+	auto view = new ScintillaDocumentView(id);
+	auto& scintilla = view->viewWnd.scintilla;
+
+	RECT tr = tabControl.display_rect();
+
+	RECT r1 = tr;
+	r1.left = 200;
+	r1.right = 208;
+	view->viewWnd.create(IDC_SCINTILLA,*tabControl,tr, WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+	view->viewWnd.splitter.create(IDC_SPLITTER,*view->viewWnd, r1, WS_CHILD  | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+
+	RECT r2 = tr;
+	r2.left = 209;
+	view->viewWnd.htmlWnd.create(IDC_SCINTILLA, *view->viewWnd, r2, WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+
+	scintilla.create(IDC_SCINTILLA, *view->viewWnd, tr, WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+	scintilla.load_xml(mtl::path_to_self_directory(L"\\styles.xml"));
+	scintilla.set_code_page(CP_UTF8);
+	scintilla.set_mode(SCLEX_CPP);
+	scintilla.set_tab_width(4);
+	scintilla.set_drop_target(*dropTarget);
+	scintilla.notifications();
+
+	scintilla.set_text(utf8);
+	scintilla.show();
+	scintilla.colorize();
+
+	view->viewWnd.layout = mtl::splitter_layout {
+		*scintilla, *view->viewWnd.splitter, *view->viewWnd.htmlWnd
+	};
+
+	documentViews.insert(view);
+	activeDocument_ = id;
+
+	std::wstring title = mtl::path(path).filename();
+	tabControl.add({ title, path, id }, view->viewWnd.handle);
+
+	mainWnd.taskbar.add(id, scintilla.handle, path);
+
+	return dynamic_cast<ScintillaDocumentView&>(documentViews[id]);
 }
 
 
 std::wstring EditorView::removeDocumentView(const std::wstring& id)
 {
-	if (documentViews.count(id) == 0) return L"";
+	if (!documentViews.has(id) ) return L"";
 
-	auto scintilla = documentViews[id];
-	scintilla->destroy();
+	auto& view = documentViews[id];
+	view.destroy(); 
 
 	documentViews.erase(id);
 
@@ -479,7 +530,7 @@ std::wstring EditorView::removeDocumentView(const std::wstring& id)
 
 void EditorView::activate(Document& doc)
 {
-	if (documentViews.count(doc.id()))
+	if (documentViews.has(doc.id()))
 	{
 		activeDocument_ = doc.id();
 
@@ -497,10 +548,12 @@ void EditorView::updateStatus(Document& doc)
 
 	EditorDocument& document = dynamic_cast<EditorDocument&>(doc);
 
-	auto sci = documentViews[doc.id()];
-	int pos = sci->pos();
-	int line = sci->line_from_pos(pos);
-	int line_pos = pos - sci->pos_from_line(line);
+	auto& view = documentViews[doc.id()];
+	auto& editorView = dynamic_cast<ScintillaDocumentView&>(view);
+	auto& sci = editorView.viewWnd.scintilla;
+	int pos = sci.pos();
+	int line = sci.line_from_pos(pos);
+	int line_pos = pos - sci.pos_from_line(line);
 
 	wchar_t line_buf[100];
 	swprintf_s(line_buf, 100, L"Line %4i", line);
@@ -529,6 +582,11 @@ void EditorView::updateStatus(Document& doc)
 void EditorView::doFind(FINDREPLACE* fr)
 {
 	if (activeDocument().empty()) return;
+	auto& view = documentViews[activeDocument()];
+	if (view.type() != DOC_TXT)
+	{
+		return;
+	}
 
 	DWORD flags = fr->Flags;
 	if (regexSearch == true)
@@ -536,7 +594,8 @@ void EditorView::doFind(FINDREPLACE* fr)
 		flags |= SCFIND_REGEXP | SCFIND_CXX11REGEX;
 	}
 
-	documentViews[activeDocument()]->search(
+	auto& editorView = dynamic_cast<ScintillaDocumentView&>(view);
+	editorView.viewWnd.scintilla.search(
 		mtl::to_string(fr->lpstrFindWhat),
 		flags
 	);
@@ -545,6 +604,13 @@ void EditorView::doFind(FINDREPLACE* fr)
 void EditorView::doReplace(FINDREPLACE* fr)
 {
 	if (activeDocument().empty()) return;
+	auto& view = documentViews[activeDocument()];
+	if (view.type() != DOC_TXT)
+	{
+		return;
+	}
+
+	auto& editorView = dynamic_cast<ScintillaDocumentView&>(view);
 
 	DWORD flags = fr->Flags;
 	if (regexSearch == true)
@@ -554,7 +620,7 @@ void EditorView::doReplace(FINDREPLACE* fr)
 
 	if (flags & FR_REPLACEALL)
 	{
-		while (documentViews[activeDocument()]->replace(
+		while (editorView.viewWnd.scintilla.replace(
 			mtl::to_string(fr->lpstrFindWhat),
 			mtl::to_string(fr->lpstrReplaceWith),
 			flags
@@ -562,7 +628,7 @@ void EditorView::doReplace(FINDREPLACE* fr)
 	}
 	else
 	{
-		documentViews[activeDocument()]->replace(
+		editorView.viewWnd.scintilla.replace(
 			mtl::to_string(fr->lpstrFindWhat),
 			mtl::to_string(fr->lpstrReplaceWith),
 			flags
@@ -573,7 +639,14 @@ void EditorView::doReplace(FINDREPLACE* fr)
 void EditorView::doShowFindReplaceDialog(int id)
 {
 	if (activeDocument().empty()) return;
-	documentViews[activeDocument()]->set_next_search_pos(0);
+	auto& view = documentViews[activeDocument()];
+	if (view.type() != DOC_TXT)
+	{
+		return;
+	}
+
+	auto& editorView = dynamic_cast<ScintillaDocumentView&>(view);
+	editorView.viewWnd.scintilla.set_next_search_pos(0);
 
 	regexSearch = false;
 
@@ -606,6 +679,7 @@ EditorView::EditorView()
 	mtl::the_bitmap_cache().img_path(L"\\img");
 
 	urlFormat = ::RegisterClipboardFormat(CFSTR_INETURLW);
+
 
 	dropTarget = mtl::drop_target(tabControl.dragTabFormat, DROPEFFECT_MOVE);
 
@@ -653,12 +727,14 @@ EditorView::EditorView()
 	// create main window
 	HWND hWnd = mainWnd.create(L"MTL Editor", WS_OVERLAPPEDWINDOW, 0, 0);// *mainWnd.menu);
 
+
 	HICON hIcon = mtl::shell::file_icon(L"C:\\test.txt");
 	mainWnd.set_icon(hIcon);
 
 	// get main window client rect dimension
 	RECT r1;
 	::GetClientRect(hWnd, &r1);
+
 
 	RECT tbr = { 0,0,48,48 };
 	toolBar.create(IDC_TOOLBAR, *mainWnd, tbr,

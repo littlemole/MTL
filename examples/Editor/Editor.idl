@@ -1,6 +1,39 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
+
+[
+	uuid(E0EA2D05-DC44-4C1B-AC13-E878B358FBAB),
+	helpstring("IMTLEditorDocument"),
+	object, oleautomation, dual
+]
+interface IMTLHtmlDocument : IDispatch
+{
+	[id(1), propput, helpstring("OnLoad")]
+	HRESULT onLoad([in] IDispatch* cb);
+
+	[id(2), propput, helpstring("Filename")]
+	HRESULT onClose([in] IDispatch* cb);
+
+	[id(3), propput, helpstring("Controller")]
+	HRESULT Controller([in] IDispatch* cb);
+
+	[id(3), propget, helpstring("Controller")]
+	HRESULT Controller([out,retval] IDispatch** cb);
+
+	[id(4), propput, helpstring("onMsg")]
+	HRESULT onMsg([in] IDispatch* cb);
+
+	[id(5), helpstring("postMsg")]
+	HRESULT postMsg([in] BSTR msg);
+
+	[id(6), propput, helpstring("onNavigate")]
+	HRESULT onNavigate([in] IDispatch* cb);
+
+	[id(7), helpstring("close")]
+	HRESULT close();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 // IMTLEditorDocument
 ////////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +53,9 @@ interface IMTLEditorDocument : IDispatch
 
 	[id(3), propget, helpstring("Content")]
 	HRESULT content([out, retval] BSTR* cnt);
+
+	[id(4), propget, helpstring("Object")]
+	HRESULT obj([out, retval] IDispatch** obj);
 
 }
 
@@ -43,6 +79,8 @@ interface IMTLEditorDocuments : IDispatch
 	[id(3), helpstring("remove item")]
 	HRESULT remove([in] VARIANT idx);
 
+	[id(4), helpstring("open HTML document")]
+	HRESULT openHTML([in] BSTR file, [out,retval] IDispatch** cb);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -125,5 +163,6 @@ library MTLEditor
 		interface IMTLEditorDocuments;
 		interface IMTLEditorDocument;
 		interface IMTLScriptHostObject;
+		interface IMTLHtmlDocument;
 	}
 }

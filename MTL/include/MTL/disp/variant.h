@@ -465,6 +465,7 @@ namespace mtl {
 
 			::VariantClear(v);
 			::VariantCopy(v, &v_);
+			v->vt = v_.vt;
 		}
 
 		void copyTo(VARIANT& v) const
@@ -474,6 +475,7 @@ namespace mtl {
 
 			::VariantClear(&v);
 			::VariantCopy(&v, &v_);
+			v.vt = v_.vt;
 		}
 
 		bool isType(VARTYPE VT) const
@@ -484,6 +486,7 @@ namespace mtl {
 		void clear()
 		{
 			::VariantClear(&v_);
+			v_.vt = VT_EMPTY;
 		}
 
 		std::string to_string(int cp = CP_UTF8) const;
@@ -506,6 +509,7 @@ namespace mtl {
 		{
 			::VariantInit(this);
 			::VariantCopy(this, &v2);
+			vt = v2.vt;
 		}
 
 		variant(variant&& v2)
@@ -527,12 +531,14 @@ namespace mtl {
 		{
 			::VariantInit(this);
 			::VariantCopy(this, &v2);
+			vt = v2.vt;
 		}
 
 		explicit variant(const VARIANT* v2)
 		{
 			::VariantInit(this);
 			::VariantCopy(this, v2);
+			vt = v2->vt;
 		}
 
 		explicit variant(VARIANT&& v2)
@@ -661,6 +667,8 @@ namespace mtl {
 			::VariantClear(this);
 			VARIANT& tmp = (VARIANT&)v2;
 			::VariantCopy(this, &v2);
+			vt = v2.vt;
+
 			return *this;
 		}
 
@@ -668,6 +676,7 @@ namespace mtl {
 		{
 			::VariantClear(this);
 			::VariantCopy(this, &v2);
+			vt = v2.vt;
 			return *this;
 		}
 
@@ -969,18 +978,21 @@ namespace mtl {
 		{
 			::VariantClear(&v);
 			::VariantCopy(&v, this);
+			v.vt = vt;
 		}
 
 		void copy_to(VARIANT* v) const
 		{
 			::VariantClear(v);
 			::VariantCopy(v, this);
+			v->vt = vt;
 		}
 
 		void copy_to(VARIANT& v) const
 		{
 			::VariantClear(&v);
 			::VariantCopy(&v, this);
+			v.vt = vt;
 		}
 
 		bool is_type(VARTYPE VT) const
@@ -991,6 +1003,7 @@ namespace mtl {
 		void clear()
 		{
 			::VariantClear(this);
+			vt = VT_EMPTY;
 		}
 
 		HRESULT changeType(VARTYPE VT)
@@ -1054,6 +1067,46 @@ namespace mtl {
 			return details::var_traits<T>::value(&tmp);
 		}
 
+		bool is_obj()
+		{
+			if (vt == VT_UNKNOWN || vt == VT_DISPATCH)
+			{
+				if (punkVal != nullptr)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		bool is_disp()
+		{
+			if (vt == VT_DISPATCH)
+			{
+				if (pdispVal != nullptr)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+
+		template<class T>
+		HRESULT query_interface(T** unk)
+		{
+			if (!unk) return E_INVALIDARG;
+
+			*unk = 0;
+
+			if (is_obj())
+			{
+				return punkVal->QueryInterface(__uuidof(T), (void**)unk);
+			}
+
+			return E_FAIL;
+		}
+
 	};
 
 
@@ -1082,6 +1135,7 @@ namespace mtl {
 
 		::VariantClear(&v);
 		::VariantCopy(&v, &v_);
+		v.vt = v_.vt;
 	}
 
 
